@@ -2,90 +2,65 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './detail.module.css';
-import { useState } from 'react';
-
-const restaurantData = {
-    1: {
-        name: 'Warung Halal Barokah',
-        emoji: '🍛',
-        rating: 4.8,
-        reviews: 234,
-        badge: 'certified',
-        badgeLabel: '✅ Certified Halal',
-        category: 'Indonesian · Street Food',
-        address: 'Jl. Sudirman No. 12, Jakarta Pusat',
-        hours: 'Buka · Tutup 22:00',
-        isOpen: true,
-        lastChecked: '28 Feb 2026',
-        description: 'Warung makan khas Indonesia dengan masakan rumahan yang lezat dan dijamin halal. Semua bahan baku dipastikan halal dengan sertifikasi dari MUI. Tempat yang nyaman untuk makan bersama keluarga.',
-        certBody: 'MUI / BPJPH',
-        certExpiry: 'Des 2026',
-        menu: [
-            { name: 'Nasi Gudeg', price: 'Rp 35.000', emoji: '🍛' },
-            { name: 'Sate Ayam', price: 'Rp 40.000', emoji: '🍢' },
-            { name: 'Soto Ayam', price: 'Rp 30.000', emoji: '🍲' },
-            { name: 'Es Teh Manis', price: 'Rp 8.000', emoji: '🧊' },
-        ],
-        reviewsList: [
-            {
-                name: 'Ahmad Fauzi',
-                avatar: '👤',
-                rating: 5,
-                date: '25 Feb 2026',
-                text: 'Dagingnya dijamin halal, bisa lihat sertifikat langsung di kasir. Rasa masakannya seperti masakan rumah, enak banget!',
-                halalTag: '✅ Yakin Halal',
-                ratingRasa: 5,
-            },
-            {
-                name: 'Siti Nurhaliza',
-                avatar: '👩',
-                rating: 4,
-                date: '20 Feb 2026',
-                text: 'Tempatnya bersih dan nyaman. Menu favorit saya soto ayam-nya, kuahnya kaya rempah. Recommended!',
-                halalTag: '✅ Yakin Halal',
-                ratingRasa: 4,
-            },
-        ],
-    },
-};
-
-const defaultResto = {
-    name: 'Restoran Halal',
-    emoji: '🍽',
-    rating: 4.5,
-    reviews: 100,
-    badge: 'certified',
-    badgeLabel: '✅ Certified Halal',
-    category: 'Restaurant',
-    address: 'Jakarta, Indonesia',
-    hours: 'Buka · Tutup 21:00',
-    isOpen: true,
-    lastChecked: '01 Mar 2026',
-    description: 'Restoran halal dengan berbagai menu pilihan. Semua makanan disiapkan dengan memperhatikan standar kehalalan yang ketat.',
-    certBody: 'MUI',
-    certExpiry: 'Des 2026',
-    menu: [
-        { name: 'Menu Spesial', price: 'Rp 45.000', emoji: '🍽' },
-        { name: 'Paket Hemat', price: 'Rp 30.000', emoji: '🍱' },
-    ],
-    reviewsList: [
-        {
-            name: 'User',
-            avatar: '👤',
-            rating: 4,
-            date: '01 Mar 2026',
-            text: 'Makanan enak dan terjamin halal.',
-            halalTag: '✅ Yakin Halal',
-            ratingRasa: 4,
-        },
-    ],
-};
-
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 export default function RestaurantDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const resto = restaurantData[params.id] || defaultResto;
+    const [resto, setResto] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [isBookmarked, setIsBookmarked] = useState(false);
+
+    useEffect(() => {
+        async function fetchPlace() {
+            if (!params?.id) return;
+            try {
+                const docRef = doc(db, 'places', params.id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setResto({
+                        id: docSnap.id,
+                        name: data.name || 'Restoran',
+                        emoji: '🍽️',
+                        rating: data.rating || 0,
+                        reviews: data.reviewCount || 0,
+                        badge: data.certBody ? 'certified' : 'muslim-owned',
+                        badgeLabel: data.certBody ? '✅ Certified Halal' : '🕌 Muslim Owned',
+                        category: data.category || 'Restoran',
+                        address: data.address || 'Alamat tidak tersedia',
+                        hours: data.operatingHours || 'Informasi jam buka tidak tersedia',
+                        isOpen: true,
+                        lastChecked: data.certDate ? new Date(data.certDate).toLocaleDateString() : 'Baru saja',
+                        description: data.description || 'Restoran halal pilihan.',
+                        certBody: data.certBody || 'Klaim Mandiri',
+                        certExpiry: data.certExpiry || '-',
+                        menu: [],
+                        reviewsList: []
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching document:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPlace();
+    }, [params?.id]);
+
+    if (loading) {
+        return <div className="page container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: 'var(--white)' }}>Memuat data...</div>;
+    }
+
+    if (!resto) {
+        return (
+            <div className="page container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: 'var(--white)' }}>
+                <h2>Restoran tidak ditemukan.</h2>
+                <button onClick={() => router.back()} className="btn btn-primary" style={{ marginTop: 'var(--space-md)' }}>Kembali</button>
+            </div>
+        );
+    }
 
     return (
         <div className={`page container ${styles.detailPage}`}>

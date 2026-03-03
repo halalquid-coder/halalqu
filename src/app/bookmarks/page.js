@@ -2,19 +2,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-const bookmarkedRestaurants = [
-    { id: 1, name: 'Warung Halal Barokah', rating: 4.8, reviews: 234, distance: '0.8 km', category: 'Indonesian · Street Food', badge: 'certified', badgeLabel: '✅ Certified', emoji: '🍛' },
-    { id: 2, name: 'Kebab Istanbul', rating: 4.5, reviews: 128, distance: '1.2 km', category: 'Turkish · Cafe', badge: 'muslim-owned', badgeLabel: '🕌 Muslim Owned', emoji: '🥙' },
-    { id: 3, name: 'Sushi Zen Halal', rating: 4.6, reviews: 89, distance: '2.1 km', category: 'Japanese · Fine Dining', badge: 'certified', badgeLabel: '✅ Certified', emoji: '🍱' },
-    { id: 4, name: 'Roti Canai Corner', rating: 4.3, reviews: 67, distance: '3.5 km', category: 'Malaysian · Street Food', badge: 'halal-ingredients', badgeLabel: '🥗 Halal Ing.', emoji: '🫓' },
-    { id: 5, name: 'Nasi Padang Minang', rating: 4.7, reviews: 312, distance: '1.8 km', category: 'Indonesian · Street Food', badge: 'certified', badgeLabel: '✅ Certified', emoji: '🍚' },
-];
-
-const tabs = ['Semua', '✅ Certified', '🕌 Muslim Owned'];
-
 export default function BookmarksPage() {
     const [activeTab, setActiveTab] = useState(0);
-    const [items, setItems] = useState(bookmarkedRestaurants);
+    const [items, setItems] = useState([]);
 
     const filtered = activeTab === 0 ? items :
         activeTab === 1 ? items.filter(r => r.badge === 'certified') :

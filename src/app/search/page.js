@@ -3,11 +3,7 @@ import Link from 'next/link';
 import styles from './search.module.css';
 import { useState } from 'react';
 
-const recentSearches = [
-    { icon: '🍛', name: 'Warung Halal Barokah', meta: 'Indonesian · 0.8 km' },
-    { icon: '📍', name: 'Menteng, Jakarta', meta: '12 restoran halal' },
-    { icon: '🥙', name: 'Kebab Turkish', meta: 'Searched 2 days ago' },
-];
+const recentSearches = [];
 
 const popularCities = [
     { emoji: '🇮🇩', name: 'Jakarta', count: 342 },
@@ -123,7 +119,7 @@ export default function SearchPage() {
             </div>
 
             {/* Recent Searches */}
-            {!query && (
+            {!query && recentSearches.length > 0 && (
                 <section className={styles.recentSection}>
                     <div className={styles.filterTitle}>Pencarian Terakhir</div>
                     {recentSearches.map((item, i) => (

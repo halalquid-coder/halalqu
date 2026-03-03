@@ -12,62 +12,15 @@ const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
 const filters = ['Semua', '✅ Certified', '🕌 Muslim Owned', '🥗 Halal Ingredients'];
 
-const restaurants = [
-  {
-    id: 1,
-    name: 'Warung Halal Barokah',
-    rating: 4.8,
-    reviews: 234,
-    distance: '0.8 km',
-    category: 'Indonesian · Street Food',
-    badge: 'certified',
-    badgeLabel: '✅ Certified Halal',
-    emoji: '🍛',
-    lastChecked: '28 Feb 2026',
-  },
-  {
-    id: 2,
-    name: 'Kebab Istanbul',
-    rating: 4.5,
-    reviews: 128,
-    distance: '1.2 km',
-    category: 'Turkish · Cafe',
-    badge: 'muslim-owned',
-    badgeLabel: '🕌 Muslim Owned',
-    emoji: '🥙',
-    lastChecked: '15 Feb 2026',
-  },
-  {
-    id: 3,
-    name: 'Sushi Zen Halal',
-    rating: 4.6,
-    reviews: 89,
-    distance: '2.1 km',
-    category: 'Japanese · Fine Dining',
-    badge: 'certified',
-    badgeLabel: '✅ Certified Halal',
-    emoji: '🍱',
-    lastChecked: '01 Mar 2026',
-  },
-  {
-    id: 4,
-    name: 'Roti Canai Corner',
-    rating: 4.3,
-    reviews: 67,
-    distance: '3.5 km',
-    category: 'Malaysian · Street Food',
-    badge: 'halal-ingredients',
-    badgeLabel: '🥗 Halal Ingredients',
-    emoji: '🫓',
-    lastChecked: '20 Feb 2026',
-  },
-];
-
-const travelSpots = [
-  { id: 1, name: 'Monas, Jakarta', count: 24, emoji: '🕌', bg: 'linear-gradient(135deg, #2E9B5A 0%, #1a7a3f 100%)' },
-  { id: 2, name: 'Menara Eiffel', count: 18, emoji: '🗼', bg: 'linear-gradient(135deg, #3D444B 0%, #1a1a2e 100%)' },
-  { id: 3, name: 'Hagia Sophia', count: 32, emoji: '🕌', bg: 'linear-gradient(135deg, #D4920A 0%, #b8780a 100%)' },
-  { id: 4, name: 'Tokyo Tower', count: 15, emoji: '🗼', bg: 'linear-gradient(135deg, #E74C3C 0%, #c0392b 100%)' },
+const categories = [
+  { emoji: '🍛', label: 'Street Food' },
+  { emoji: '☕', label: 'Cafe' },
+  { emoji: '🥘', label: 'Fine Dining' },
+  { emoji: '🍰', label: 'Bakery' },
+  { emoji: '🦐', label: 'Seafood' },
+  { emoji: '🍕', label: 'Western' },
+  { emoji: '🍜', label: 'Asian' },
+  { emoji: '🧁', label: 'Dessert' },
 ];
 
 export default function HomePage() {
@@ -103,11 +56,18 @@ export default function HomePage() {
           return {
             id: doc.id,
             name: val.name,
-            // generate random coordinates around Jakarta for MVP testing if missing
             lat: val.lat || (-6.2088 + (Math.random() - 0.5) * 0.1),
             lng: val.lng || (106.8456 + (Math.random() - 0.5) * 0.1),
-            badge: val.certBody ? '✅ Certified' : '🕌 Muslim Owned',
+            badge: val.certBody ? 'certified' : 'muslim-owned',
+            badgeLabel: val.certBody ? '✅ Certified' : '🕌 Muslim Owned',
             emoji: '🍽️',
+            rating: val.rating || 0,
+            reviews: val.reviewCount || 0,
+            distance: '~ km',
+            category: val.category || 'Restoran',
+            isPremium: val.isPremium || false,
+            promoDiscount: val.promoDiscount || null,
+            createdAt: val.createdAt || null,
             ...val
           };
         });
@@ -118,6 +78,16 @@ export default function HomePage() {
     }
     loadPlaces();
   }, []);
+
+  // Derived data for monetization sections
+  const premiumPlaces = places.filter(p => p.isPremium);
+  const promoPlaces = places.filter(p => p.promoDiscount);
+  const topRated = [...places].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
+  const newPlaces = [...places].sort((a, b) => {
+    const da = a.createdAt?.seconds || 0;
+    const db2 = b.createdAt?.seconds || 0;
+    return db2 - da;
+  }).slice(0, 5);
 
   // Mock notifications
   const notifications = [
@@ -132,7 +102,6 @@ export default function HomePage() {
     if (token) {
       setFcmToken(token);
       alert('Push notifications diaktifkan! 🎉');
-      // TODO: Save token to user profile in Firestore
     } else {
       alert('Gagal mengaktifkan notifikasi. Pastikan browser mengizinkan.');
     }
@@ -243,6 +212,95 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🏷️ SECTION 1: Kategori Kuliner */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className={styles.categorySection}>
+        <h2 className="section-title">🏷️ Kategori Kuliner</h2>
+        <div className={styles.categoryGrid}>
+          {categories.map((cat, i) => (
+            <Link
+              key={i}
+              href={`/search?category=${encodeURIComponent(cat.label)}`}
+              className={styles.categoryItem}
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              <div className={styles.categoryIcon}>{cat.emoji}</div>
+              <span className={styles.categoryLabel}>{cat.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🔥 SECTION 2: Promo & Diskon (Sponsored) */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className={styles.promoSection}>
+        <div className="section-header">
+          <h2 className="section-title">🔥 Promo & Diskon</h2>
+          <Link href="/search?promo=true" className="section-link">Semua Promo →</Link>
+        </div>
+
+        {promoPlaces.length > 0 ? (
+          <div className={styles.promoScroll}>
+            {promoPlaces.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.promoCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className={styles.promoEmoji}>{place.emoji || '🍽️'}</div>
+                <div className={styles.promoBadge}>🔥 {place.promoDiscount}% OFF</div>
+                <div className={styles.promoInfo}>
+                  <h3>{place.name}</h3>
+                  <p>⭐ {place.rating} · {place.category}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.promoEmptyBanner}>
+            <div className={styles.promoEmptyIcon}>🎁</div>
+            <div>
+              <h3>Promo Segera Hadir!</h3>
+              <p>Dapatkan diskon eksklusif dari restoran halal pilihan</p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* ⭐ SECTION 3: Rekomendasi Pilihan (Premium) */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className={styles.sponsoredSection}>
+        <div className="section-header">
+          <h2 className="section-title">⭐ Rekomendasi Pilihan</h2>
+          <Link href="/search?featured=true" className="section-link">Lihat Semua →</Link>
+        </div>
+
+        {premiumPlaces.length > 0 ? (
+          <div className={styles.sponsoredScroll}>
+            {premiumPlaces.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className={styles.sponsoredBadge}>⭐ Pilihan Halalqu</div>
+                <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
+                <h3 className={styles.sponsoredName}>{place.name}</h3>
+                <div className={styles.sponsoredMeta}>
+                  <span>⭐ {place.rating}</span>
+                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                </div>
+                <span className={styles.sponsoredCategory}>{place.category}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.sponsoredEmptyBanner}>
+            <div style={{ fontSize: '36px' }}>⭐</div>
+            <div>
+              <h3>Ingin restoran Anda tampil di sini?</h3>
+              <p>Daftarkan merchant Anda dan jadi rekomendasi pilihan Halalqu</p>
+            </div>
+            <Link href="/merchant/register" className={styles.sponsoredCta}>Daftar Merchant →</Link>
+          </div>
+        )}
+      </section>
+
       {/* Filter Chips */}
       <section className={styles.chipsSection}>
         <div className={styles.chipsRow}>
@@ -263,69 +321,102 @@ export default function HomePage() {
         <HalalMap restaurants={places} />
       </section>
 
-      {/* Restaurant List */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🆕 SECTION 4: Baru Dibuka */}
+      {/* ═══════════════════════════════════════════ */}
+      {newPlaces.length > 0 && (
+        <section className={styles.newSection}>
+          <div className="section-header">
+            <h2 className="section-title">🆕 Baru Dibuka</h2>
+            <Link href="/search?sort=newest" className="section-link">Lihat Semua →</Link>
+          </div>
+          <div className={styles.newScroll}>
+            {newPlaces.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.newCard} style={{ animationDelay: `${i * 0.08}s` }}>
+                <div className={styles.newBadge}>🆕 Baru</div>
+                <div className={styles.newEmoji}>{place.emoji || '🍽️'}</div>
+                <h3 className={styles.newName}>{place.name}</h3>
+                <span className={styles.newMeta}>
+                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🏆 SECTION 5: Top Rated */}
+      {/* ═══════════════════════════════════════════ */}
+      {topRated.length > 0 && (
+        <section className={styles.topRatedSection}>
+          <div className="section-header">
+            <h2 className="section-title">🏆 Top Rated</h2>
+            <Link href="/search?sort=rating" className="section-link">Lihat Semua →</Link>
+          </div>
+          <div className={styles.topRatedList}>
+            {topRated.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.topRatedCard} style={{ animationDelay: `${i * 0.08}s` }}>
+                <div className={styles.topRatedRank}>
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                </div>
+                <div className={styles.topRatedEmoji}>{place.emoji || '🍽️'}</div>
+                <div className={styles.topRatedInfo}>
+                  <h3>{place.name}</h3>
+                  <div className={styles.topRatedMeta}>
+                    <span>⭐ {place.rating}</span>
+                    <span>·</span>
+                    <span>{place.category}</span>
+                  </div>
+                </div>
+                <span style={{ color: 'var(--text-muted)', alignSelf: 'center' }}>→</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Restaurant List — Di Sekitarmu */}
       <section className={styles.restaurantSection}>
         <div className="section-header">
           <h2 className="section-title">Di Sekitarmu</h2>
           <Link href="/search" className="section-link">Lihat Semua →</Link>
         </div>
 
-        <div className={`${styles.restaurantList} stagger`}>
-          {restaurants.map((resto, i) => (
-            <Link
-              key={resto.id}
-              href={`/restaurant/${resto.id}`}
-              className={styles.restaurantCard}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <div className={styles.cardImage}>
-                {resto.emoji}
-              </div>
-              <div className={styles.cardContent}>
-                <h3 className={styles.cardName}>{resto.name}</h3>
-                <div className={styles.cardMeta}>
-                  <span className={`badge badge-${resto.badge}`}>
-                    {resto.badgeLabel}
-                  </span>
+        {places.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px' }}>Belum ada restoran terdekat.</p>
+        ) : (
+          <div className={`${styles.restaurantList} stagger`}>
+            {places.map((resto, i) => (
+              <Link
+                key={resto.id}
+                href={`/restaurant/${resto.id}`}
+                className={styles.restaurantCard}
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className={styles.cardImage}>
+                  {resto.emoji}
                 </div>
-                <div className={styles.cardMeta}>
-                  <span className={styles.cardRating}>
-                    <span className="star">⭐</span> {resto.rating}
-                    <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({resto.reviews})</span>
-                  </span>
-                  <span className={styles.cardDistance}>📍 {resto.distance}</span>
+                <div className={styles.cardContent}>
+                  <h3 className={styles.cardName}>{resto.name}</h3>
+                  <div className={styles.cardMeta}>
+                    <span className={`badge badge-${resto.badge}`}>
+                      {resto.badgeLabel}
+                    </span>
+                  </div>
+                  <div className={styles.cardMeta}>
+                    <span className={styles.cardRating}>
+                      <span className="star">⭐</span> {resto.rating}
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({resto.reviews})</span>
+                    </span>
+                    <span className={styles.cardDistance}>📍 {resto.distance}</span>
+                  </div>
+                  <span className={styles.cardCategory}>{resto.category}</span>
                 </div>
-                <span className={styles.cardCategory}>{resto.category}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Travel Guide */}
-      <section className={styles.travelSection}>
-        <div className="section-header">
-          <h2 className="section-title">🧳 Travel Guide</h2>
-          <Link href="/travel" className="section-link">Semua →</Link>
-        </div>
-
-        <div className={styles.travelGrid}>
-          {travelSpots.map((spot) => (
-            <Link
-              key={spot.id}
-              href={`/travel/${spot.id}`}
-              className={styles.travelCard}
-            >
-              <div className={styles.travelBg} style={{ background: spot.bg }}>
-                {spot.emoji}
-              </div>
-              <div className={styles.travelInfo}>
-                <div className={styles.travelTitle}>{spot.name}</div>
-                <div className={styles.travelCount}>{spot.count} tempat halal</div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

@@ -108,6 +108,301 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* ═══════════════════════════════════════════ */
+/* 🏷️ Kategori Kuliner                        */
+/* ═══════════════════════════════════════════ */
+.categorySection {
+  padding: var(--space-xl) 0 var(--space-md);
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--charcoal);
+  transition: transform 0.2s ease;
+}
+
+.categoryItem:hover {
+  transform: translateY(-4px);
+}
+
+.categoryIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: var(--halalqu-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(46, 155, 90, 0.1);
+}
+
+.categoryItem:hover .categoryIcon {
+  background: var(--halalqu-green);
+  box-shadow: 0 4px 16px rgba(46, 155, 90, 0.3);
+}
+
+.categoryLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+/* ═══════════════════════════════════════════ */
+/* 🔥 Promo & Diskon                          */
+/* ═══════════════════════════════════════════ */
+.promoSection {
+  padding-bottom: var(--space-md);
+}
+
+.promoScroll {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.promoScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.promoCard {
+  min-width: 200px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #FF6B35 0%, #F7941D 100%);
+  padding: var(--space-md);
+  color: white;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.promoCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+}
+
+.promoCard::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.promoEmoji {
+  font-size: 36px;
+  margin-bottom: var(--space-sm);
+}
+
+.promoBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  backdrop-filter: blur(4px);
+}
+
+.promoInfo h3 {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.promoInfo p {
+  font-size: 11px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.promoEmptyBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: linear-gradient(135deg, #FFF8E7 0%, #FFECD2 100%);
+  border-radius: var(--radius-lg);
+  border: 1px dashed #F7941D;
+}
+
+.promoEmptyIcon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.promoEmptyBanner h3 {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: #B45309;
+  margin-bottom: 4px;
+}
+
+.promoEmptyBanner p {
+  font-size: 12px;
+  color: #D4920A;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ⭐ Rekomendasi Pilihan (Sponsored)         */
+/* ═══════════════════════════════════════════ */
+.sponsoredSection {
+  padding-bottom: var(--space-md);
+}
+
+.sponsoredScroll {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.sponsoredScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sponsoredCard {
+  min-width: 180px;
+  max-width: 200px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  padding: var(--space-md);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid #FFD700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sponsoredCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.2);
+}
+
+.sponsoredCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+}
+
+.sponsoredBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #FFF8DC 0%, #FFFACD 100%);
+  font-size: 10px;
+  font-weight: 700;
+  color: #B8860B;
+  margin-bottom: var(--space-sm);
+}
+
+.sponsoredEmoji {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.sponsoredName {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sponsoredMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.sponsoredCategory {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sponsoredEmptyBanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) var(--space-lg);
+  background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%);
+  border-radius: var(--radius-lg);
+  border: 1px dashed #FFD700;
+}
+
+.sponsoredEmptyBanner h3 {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: #B8860B;
+  margin-bottom: 4px;
+}
+
+.sponsoredEmptyBanner p {
+  font-size: 13px;
+  color: #D4920A;
+  margin: 0;
+  max-width: 280px;
+}
+
+.sponsoredCta {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  background: var(--halalqu-green);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sponsoredCta:hover {
+  background: var(--halalqu-green-dark);
+  transform: translateY(-2px);
+}
+
 /* Chips Section */
 .chipsSection {
   padding: var(--space-lg) 0 var(--space-sm);
@@ -131,77 +426,158 @@
   position: relative;
 }
 
-.mapPlaceholder {
-  height: 200px;
-  background: linear-gradient(135deg, #E9F7EF 0%, #d4efe0 100%);
+/* ═══════════════════════════════════════════ */
+/* 🆕 Baru Dibuka                             */
+/* ═══════════════════════════════════════════ */
+.newSection {
+  padding: var(--space-lg) 0 var(--space-md);
+}
+
+.newScroll {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  color: var(--halalqu-green);
-  font-weight: 600;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.newScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.newCard {
+  min-width: 150px;
+  max-width: 170px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  padding: var(--space-md);
+  text-decoration: none;
+  color: inherit;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mapPlaceholder::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 40%, rgba(46, 155, 90, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 70% 60%, rgba(46, 155, 90, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(46, 155, 90, 0.08) 0%, transparent 30%);
+.newCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
-.mapIcon {
-  font-size: 40px;
-  position: relative;
+.newBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--halalqu-green);
+  margin-bottom: 8px;
 }
 
-.mapLabel {
+.newEmoji {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.newName {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.newMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════ */
+/* 🏆 Top Rated                               */
+/* ═══════════════════════════════════════════ */
+.topRatedSection {
+  padding: var(--space-md) 0 var(--space-lg);
+}
+
+.topRatedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.topRatedCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.topRatedCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.topRatedRank {
+  font-size: 22px;
+  width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.topRatedEmoji {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--halalqu-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.topRatedInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.topRatedInfo h3 {
+  font-family: var(--font-heading);
   font-size: 14px;
-  position: relative;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mapPins {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.topRatedMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.pin {
-  position: absolute;
-  font-size: 20px;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.pin:nth-child(1) {
-  top: 25%;
-  left: 20%;
-  animation-delay: 0s;
-}
-
-.pin:nth-child(2) {
-  top: 45%;
-  left: 55%;
-  animation-delay: 0.4s;
-}
-
-.pin:nth-child(3) {
-  top: 30%;
-  left: 75%;
-  animation-delay: 0.8s;
-}
-
-.pin:nth-child(4) {
-  top: 65%;
-  left: 35%;
-  animation-delay: 1.2s;
-}
-
-/* Restaurant List */
+/* ═══════════════════════════════════════════ */
+/* Restaurant List (Di Sekitarmu)             */
+/* ═══════════════════════════════════════════ */
 .restaurantSection {
   padding-top: var(--space-lg);
 }
@@ -310,71 +686,4 @@
   color: var(--text-muted);
   font-size: 18px;
   cursor: pointer;
-}
-
-/* Travel Guide Section */
-.travelSection {
-  padding: var(--space-xl) 0;
-}
-
-.travelGrid {
-  display: flex;
-  gap: var(--space-md);
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 4px;
-}
-
-.travelGrid::-webkit-scrollbar {
-  display: none;
-}
-
-.travelCard {
-  min-width: 240px;
-  height: 160px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-  text-decoration: none;
-  color: var(--white);
-}
-
-.travelBg {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 56px;
-  position: relative;
-}
-
-.travelBg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.1) 100%);
-}
-
-.travelInfo {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: var(--space-md);
-  z-index: 1;
-}
-
-.travelTitle {
-  font-family: var(--font-heading);
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-.travelCount {
-  font-size: 12px;
-  opacity: 0.8;
 }
