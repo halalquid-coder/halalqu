@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useUser } from './context/UserContext';
+import { requestNotificationPermission } from './lib/firebase';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -71,17 +72,131 @@ const travelSpots = [
 export default function HomePage() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [fcmToken, setFcmToken] = useState(null);
+  const notifRef = useRef(null);
+
   const { user } = useUser();
   const firstName = user.isLoggedIn && user.name ? user.name.split(' ')[0] : '';
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Mock notifications
+  const notifications = [
+    { id: 1, title: 'Promo Spesial!', desc: 'Diskon 20% di resto favoritmu', time: '1 jam lalu', unread: true },
+    { id: 2, title: 'Review disetujui', desc: 'Review kamu untuk Kebab Istanbul telah tayang', time: '5 jam lalu', unread: true },
+    { id: 3, title: 'Tempat baru', desc: 'Ada 3 resto halal baru di dekatmu', time: '1 hari lalu', unread: false },
+  ];
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const handlePushPermission = async () => {
+    const token = await requestNotificationPermission();
+    if (token) {
+      setFcmToken(token);
+      alert('Push notifications diaktifkan! 🎉');
+      // TODO: Save token to user profile in Firestore
+    } else {
+      alert('Gagal mengaktifkan notifikasi. Pastikan browser mengizinkan.');
+    }
+  };
 
   return (
     <div className="page container">
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <p className={styles.greeting}>
-            Assalamualaikum{firstName ? `, ${firstName}` : ''} 👋
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+            <p className={styles.greeting}>
+              Assalamualaikum{firstName ? `, ${firstName}` : ''} 👋
+            </p>
+
+            {/* Notification Bell */}
+            <div ref={notifRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)', border: 'none',
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', position: 'relative', backdropFilter: 'blur(8px)',
+                  color: 'white', fontSize: '18px'
+                }}
+              >
+                🔔
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-2px', right: '-2px',
+                    background: 'var(--danger)', color: 'white',
+                    fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '2px solid var(--halalqu-green)'
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {showNotifications && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+                  background: 'white', borderRadius: 'var(--radius-md)', width: '280px',
+                  boxShadow: 'var(--shadow-lg)', zIndex: 100, overflow: 'hidden',
+                  animation: 'fadeIn 0.2s ease'
+                }}>
+                  <div style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '14px', margin: 0, color: 'var(--charcoal)' }}>Notifikasi</h3>
+                    <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', cursor: 'pointer' }}>Tandai dibaca</span>
+                  </div>
+
+                  {/* Push Notification Promo */}
+                  {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && (
+                    <div style={{ padding: '12px var(--space-md)', background: '#FFF8E7', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ fontSize: '20px' }}>🔔</span>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '12px', margin: '0 0 2px', color: '#B45309' }}>Aktifkan Notifikasi</h4>
+                        <p style={{ fontSize: '11px', color: '#B45309', margin: 0, opacity: 0.8 }}>Dapatkan info promo & status review</p>
+                      </div>
+                      <button onClick={handlePushPermission} style={{
+                        padding: '6px 10px', background: '#D4920A', color: 'white',
+                        border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer'
+                      }}>Aktifkan</button>
+                    </div>
+                  )}
+
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {notifications.map(n => (
+                      <div key={n.id} style={{
+                        padding: '12px var(--space-md)',
+                        borderBottom: '1px solid var(--border)',
+                        background: n.unread ? 'var(--halalqu-green-light)' : 'white',
+                        cursor: 'pointer', display: 'flex', gap: '12px'
+                      }}>
+                        <div style={{ fontSize: '16px', marginTop: '2px' }}>{n.id === 1 ? '🎉' : n.id === 2 ? '✅' : '📍'}</div>
+                        <div>
+                          <h4 style={{ fontSize: '13px', margin: '0 0 4px', color: 'var(--charcoal)' }}>{n.title}</h4>
+                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{n.desc}</p>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{n.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding: '8px', textAlign: 'center', background: '#f9f9f9', borderTop: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <h1 className={styles.heroTitle}>
             Mau makan apa hari ini?
             <span>Temukan makanan halal terdekat yang terpercaya</span>

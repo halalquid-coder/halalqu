@@ -1,0 +1,23 @@
+{
+    "name": "Halalqu",
+    "short_name": "Halalqu",
+    "description": "Cari Halal, Tanpa Ragu - Temukan restoran halal, tempat ibadah, dan review.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FAFBFC",
+    "theme_color": "#2E9B5A",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

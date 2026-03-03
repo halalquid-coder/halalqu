@@ -1,5 +1,6 @@
 'use client';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import './globals.css';
 import BottomNav from './components/BottomNav';
 import { UserProvider, useUser } from './context/UserContext';
@@ -12,16 +13,36 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#2E9B5A" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="manifest" href="/manifest.json" />
         <title>Halalqu — Cari Halal, Tanpa Ragu</title>
         <meta name="description" content="Temukan restoran dan makanan halal terdekat yang terverifikasi. Halalqu adalah kompas digital bagi umat Muslim untuk menemukan hidangan halal di mana pun." />
       </head>
       <body>
         <UserProvider>
+          <ServiceWorkerRegister />
           <AppShell>{children}</AppShell>
         </UserProvider>
       </body>
     </html>
   );
+}
+
+function ServiceWorkerRegister() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(
+          function (registration) {
+            console.log('Service Worker registration successful with scope: ', registration.scope);
+          },
+          function (err) {
+            console.log('Service Worker registration failed: ', err);
+          }
+        );
+      });
+    }
+  }, []);
+  return null;
 }
 
 function AppShell({ children }) {

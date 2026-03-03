@@ -2,6 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,12 +13,55 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase (prevent duplicate on HMR)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+let app, auth, db, storage, messaging;
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    // Initialize Messaging if supported (only works in browser context)
+    if (typeof window !== 'undefined') {
+        isSupported().then((supported) => {
+            if (supported) messaging = getMessaging(app);
+        });
+    }
+} else {
+    app = getApps()[0];
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    if (typeof window !== 'undefined') {
+        isSupported().then((supported) => {
+            if (supported) messaging = getMessaging(app);
+        });
+    }
+}
+
+export const requestNotificationPermission = async () => {
+    try {
+        const supported = await isSupported();
+        if (!supported || !messaging) return null;
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await getToken(messaging, {
+                // vapidKey is optional if provided in Firebase Console but standard best practice
+                // vapidKey: 'YOUR_VAPID_KEY_HERE'
+            });
+            console.log("FCM Token Generated:", token);
+            return token;
+        } else {
+            console.log("Notification permission not granted.");
+            return null;
+        }
+    } catch (error) {
+        console.error("An error occurred while retrieving token. ", error);
+        return null;
+    }
+};
+
+export { auth, db, storage, messaging };
 export const googleProvider = new GoogleAuthProvider();
 
 export default app;
