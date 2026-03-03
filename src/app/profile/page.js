@@ -10,7 +10,7 @@ export default function ProfilePage() {
 
     const handleLogout = () => {
         logout();
-        router.push('/login');
+        router.push('/');
     };
 
     const userMenuItems = [
