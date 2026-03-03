@@ -20,6 +20,7 @@ export default function AdminPage() {
     const [reviews, setReviews] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     // Simple admin check — for MVP, allow any logged-in user
     // In production, use ADMIN_EMAILS list or Firestore role
@@ -32,19 +33,31 @@ export default function AdminPage() {
 
     const loadData = async () => {
         setLoading(true);
+        setError('');
+        const errors = [];
+
         try {
-            const [m, p, r, u] = await Promise.all([
-                getAllMerchantApplications(),
-                getAllPlaces(),
-                getAllReviews(),
-                getAllUsers(),
-            ]);
+            const m = await getAllMerchantApplications();
             setMerchants(m);
+        } catch (e) { errors.push('Merchant: ' + e.message); }
+
+        try {
+            const p = await getAllPlaces();
             setPlaces(p);
+        } catch (e) { errors.push('Places: ' + e.message); }
+
+        try {
+            const r = await getAllReviews();
             setReviews(r);
+        } catch (e) { errors.push('Reviews: ' + e.message); }
+
+        try {
+            const u = await getAllUsers();
             setUsers(u);
-        } catch (err) {
-            console.warn('Admin data load error:', err.message);
+        } catch (e) { errors.push('Users: ' + e.message); }
+
+        if (errors.length > 0) {
+            setError(errors.join(' | '));
         }
         setLoading(false);
     };
@@ -128,6 +141,17 @@ export default function AdminPage() {
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Kelola aplikasi Halalqu</p>
                 </div>
             </div>
+
+            {/* Error Banner */}
+            {error && (
+                <div style={{
+                    padding: 'var(--space-md)', borderRadius: 'var(--radius-md)',
+                    background: '#FDE8E8', color: '#991B1B', fontSize: '12px',
+                    marginBottom: 'var(--space-lg)', lineHeight: 1.6, wordBreak: 'break-all',
+                }}>
+                    ⚠️ <strong>Error:</strong> {error}
+                </div>
+            )}
 
             {/* Stats Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
