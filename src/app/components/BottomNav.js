@@ -6,7 +6,7 @@ import styles from './BottomNav.module.css';
 const navItems = [
     { href: '/', label: 'Home', icon: '🏠' },
     { href: '/search', label: 'Search', icon: '🔍' },
-    { href: '/scan', label: 'Scan', icon: '', isScan: true, useIcon: true },
+    { href: '/scan', label: 'Scan', icon: '', isScan: true },
     { href: '/travel', label: 'Travel', icon: '🧳' },
     { href: '/profile', label: 'Profile', icon: '👤' },
 ];
@@ -29,7 +29,7 @@ export default function BottomNav() {
                             className={`${styles.scanBtn} ${isActive ? styles.active : ''}`}
                         >
                             <div className={styles.scanBtnCircle}>
-                                <img src="/icon.svg" alt="Scan" style={{ width: '28px', height: '28px' }} />
+                                <span style={{ fontSize: '24px' }}>📷</span>
                             </div>
                             <span className={styles.navLabel}>{item.label}</span>
                         </Link>

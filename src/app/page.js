@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useUser } from './context/UserContext';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -70,13 +71,17 @@ const travelSpots = [
 export default function HomePage() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(0);
+  const { user } = useUser();
+  const firstName = user.isLoggedIn && user.name ? user.name.split(' ')[0] : '';
 
   return (
     <div className="page container">
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <p className={styles.greeting}>Assalamualaikum 👋</p>
+          <p className={styles.greeting}>
+            Assalamualaikum{firstName ? `, ${firstName}` : ''} 👋
+          </p>
           <h1 className={styles.heroTitle}>
             Mau makan apa hari ini?
             <span>Temukan makanan halal terdekat yang terpercaya</span>
