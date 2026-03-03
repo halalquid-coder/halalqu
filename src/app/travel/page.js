@@ -1,12 +1,27 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
-
-const destinations = [];
-const featured = [];
+import { useState, useEffect } from 'react';
+import { getAllTravelDestinations } from '../lib/firestore';
 
 export default function TravelPage() {
     const [search, setSearch] = useState('');
+    const [destinations, setDestinations] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadDestinations() {
+            try {
+                const data = await getAllTravelDestinations();
+                setDestinations(data);
+            } catch (e) {
+                console.error('Failed to load travel destinations:', e);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadDestinations();
+    }, []);
+
     const filtered = destinations.filter(d =>
         d.name.toLowerCase().includes(search.toLowerCase())
     );
@@ -33,41 +48,15 @@ export default function TravelPage() {
                 />
             </div>
 
-            {/* Featured Guides */}
-            {featured.length > 0 && (
-                <>
-                    <div className="section-header">
-                        <h2 className="section-title">⭐ Kurasi Pilihan</h2>
-                    </div>
-                    <div className="scroll-row" style={{ marginBottom: 'var(--space-xl)' }}>
-                        {featured.map((item, i) => (
-                            <div key={i} style={{
-                                minWidth: '280px', padding: 'var(--space-lg)',
-                                background: 'var(--halalqu-green-gradient)', borderRadius: 'var(--radius-lg)',
-                                color: 'var(--white)', position: 'relative', overflow: 'hidden',
-                            }}>
-                                <div style={{ position: 'absolute', top: '-20px', right: '-10px', fontSize: '80px', opacity: 0.15 }}>
-                                    {item.emoji}
-                                </div>
-                                <div style={{ position: 'relative', zIndex: 1 }}>
-                                    <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>📍 {item.city}</div>
-                                    <h3 style={{ fontSize: '16px', color: 'var(--white)', marginBottom: 'var(--space-sm)' }}>
-                                        {item.title}
-                                    </h3>
-                                    <span style={{ fontSize: '13px', opacity: 0.8 }}>{item.count} tempat halal →</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </>
-            )}
-
             {/* All Destinations */}
             <div className="section-header">
                 <h2 className="section-title">🌍 Semua Destinasi</h2>
                 <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{filtered.length} kota</span>
             </div>
-            {filtered.length === 0 ? (
+
+            {loading ? (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-xl)' }}>⏳ Memuat destinasi...</p>
+            ) : filtered.length === 0 ? (
                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-xl)' }}>Data travel belum tersedia saat ini.</p>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-md)' }}>
@@ -79,7 +68,7 @@ export default function TravelPage() {
                         }}>
                             <div style={{
                                 width: '56px', height: '56px', borderRadius: '50%',
-                                background: `${dest.color}15`, display: 'flex',
+                                background: `${dest.color || '#2E9B5A'}15`, display: 'flex',
                                 alignItems: 'center', justifyContent: 'center', fontSize: '28px',
                             }}>
                                 {dest.emoji}
@@ -89,7 +78,7 @@ export default function TravelPage() {
                                     {dest.name}
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                    {dest.count} tempat halal
+                                    {dest.desc || 'Destinasi wisata halal'}
                                 </div>
                             </div>
                         </Link>

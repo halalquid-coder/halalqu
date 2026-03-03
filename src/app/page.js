@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { useUser } from './context/UserContext';
 import { requestNotificationPermission, db } from './lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
+import { getUserNotifications } from './lib/firestore';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [fcmToken, setFcmToken] = useState(null);
   const [places, setPlaces] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
   const { user } = useUser();
@@ -89,12 +91,36 @@ export default function HomePage() {
     return db2 - da;
   }).slice(0, 5);
 
-  // Mock notifications
-  const notifications = [
-    { id: 1, title: 'Promo Spesial!', desc: 'Diskon 20% di resto favoritmu', time: '1 jam lalu', unread: true },
-    { id: 2, title: 'Review disetujui', desc: 'Review kamu untuk Kebab Istanbul telah tayang', time: '5 jam lalu', unread: true },
-    { id: 3, title: 'Tempat baru', desc: 'Ada 3 resto halal baru di dekatmu', time: '1 hari lalu', unread: false },
-  ];
+  // Fetch real notifications from Firestore
+  useEffect(() => {
+    async function loadNotifications() {
+      try {
+        const data = await getUserNotifications(user.uid || 'guest');
+        setNotifications(data.map(n => ({
+          id: n.id,
+          title: n.title,
+          desc: n.message,
+          time: n.createdAt ? formatTimeAgo(n.createdAt) : 'Baru saja',
+          unread: !n.read,
+        })));
+      } catch (e) {
+        console.error('Failed to load notifications:', e);
+      }
+    }
+    loadNotifications();
+  }, [user.uid]);
+
+  const formatTimeAgo = (ts) => {
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} menit lalu`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+    const days = Math.floor(hours / 24);
+    return `${days} hari lalu`;
+  };
+
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const handlePushPermission = async () => {
@@ -172,21 +198,28 @@ export default function HomePage() {
                   )}
 
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {notifications.map(n => (
-                      <div key={n.id} style={{
-                        padding: '12px var(--space-md)',
-                        borderBottom: '1px solid var(--border)',
-                        background: n.unread ? 'var(--halalqu-green-light)' : 'white',
-                        cursor: 'pointer', display: 'flex', gap: '12px'
-                      }}>
-                        <div style={{ fontSize: '16px', marginTop: '2px' }}>{n.id === 1 ? '🎉' : n.id === 2 ? '✅' : '📍'}</div>
-                        <div>
-                          <h4 style={{ fontSize: '13px', margin: '0 0 4px', color: 'var(--charcoal)' }}>{n.title}</h4>
-                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{n.desc}</p>
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{n.time}</span>
-                        </div>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                        <p style={{ fontSize: '13px' }}>Belum ada notifikasi</p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} style={{
+                          padding: '12px var(--space-md)',
+                          borderBottom: '1px solid var(--border)',
+                          background: n.unread ? 'var(--halalqu-green-light)' : 'white',
+                          cursor: 'pointer', display: 'flex', gap: '12px'
+                        }}>
+                          <div style={{ fontSize: '16px', marginTop: '2px' }}>📬</div>
+                          <div>
+                            <h4 style={{ fontSize: '13px', margin: '0 0 4px', color: 'var(--charcoal)' }}>{n.title}</h4>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{n.desc}</p>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{n.time}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <div style={{ padding: '8px', textAlign: 'center', background: '#f9f9f9', borderTop: '1px solid var(--border)' }}>
                     <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua</span>

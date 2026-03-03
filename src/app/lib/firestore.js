@@ -209,3 +209,73 @@ export async function getAllUsers() {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
+
+// ============================================
+// 🧳 Travel Destinations
+// ============================================
+
+export async function addTravelDestination(data) {
+    const docRef = await addDoc(collection(db, 'travel_destinations'), {
+        ...data,
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
+export async function getAllTravelDestinations() {
+    const q = query(collection(db, 'travel_destinations'));
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
+
+export async function updateTravelDestination(id, data) {
+    await updateDoc(doc(db, 'travel_destinations', id), {
+        ...data,
+        updatedAt: serverTimestamp(),
+    });
+}
+
+export async function deleteTravelDestination(id) {
+    await deleteDoc(doc(db, 'travel_destinations', id));
+}
+
+// ============================================
+// ✏️ Review Moderation
+// ============================================
+
+export async function updateReviewStatus(reviewId, status) {
+    await updateDoc(doc(db, 'reviews', reviewId), {
+        status, reviewedAt: serverTimestamp(),
+    });
+}
+
+// ============================================
+// 📢 Notifications
+// ============================================
+
+export async function sendNotification(data) {
+    const docRef = await addDoc(collection(db, 'notifications'), {
+        ...data,
+        createdAt: serverTimestamp(),
+        read: false,
+    });
+    return docRef.id;
+}
+
+export async function getAllNotifications() {
+    const q = query(collection(db, 'notifications'));
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
+
+export async function getUserNotifications(uid) {
+    const q = query(
+        collection(db, 'notifications'),
+        where('target', 'in', ['all', uid])
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
