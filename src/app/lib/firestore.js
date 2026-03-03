@@ -1,9 +1,11 @@
 import { db } from './firebase';
+import { storage } from './firebase';
 import {
     doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
     collection, query, where, orderBy, getDocs, serverTimestamp,
     arrayUnion, arrayRemove,
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // ============================================
 // 👤 Users
@@ -89,14 +91,14 @@ export async function submitReview(data) {
     return docRef.id;
 }
 
-export async function getRestaurantReviews(restaurantId) {
+export async function getRestaurantReviews(placeId) {
     const q = query(
         collection(db, 'reviews'),
-        where('restaurantId', '==', restaurantId),
-        orderBy('createdAt', 'desc')
+        where('placeId', '==', placeId)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 export async function getUserReviews(uid) {
@@ -278,4 +280,16 @@ export async function getUserNotifications(uid) {
     const snap = await getDocs(q);
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
+
+
+// ============================================
+// 📸 Image Upload (Firebase Storage)
+// ============================================
+
+export async function uploadImage(file, path) {
+    const storageRef = ref(storage, path);
+    const snapshot = await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    return url;
 }

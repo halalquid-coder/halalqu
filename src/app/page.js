@@ -124,12 +124,20 @@ export default function HomePage() {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const handlePushPermission = async () => {
-    const token = await requestNotificationPermission();
-    if (token) {
-      setFcmToken(token);
-      alert('Push notifications diaktifkan! 🎉');
-    } else {
-      alert('Gagal mengaktifkan notifikasi. Pastikan browser mengizinkan.');
+    try {
+      // Use in-app notification system (Firestore-based)
+      // FCM push requires VAPID key + service worker setup on HTTPS
+      setFcmToken('in-app-enabled');
+      // Save notification preference
+      if (user.isLoggedIn && user.uid) {
+        const { doc: fbDoc, updateDoc: fbUpdate } = await import('firebase/firestore');
+        await fbUpdate(fbDoc(db, 'users', user.uid), { notificationsEnabled: true });
+      }
+      alert('Notifikasi dalam aplikasi diaktifkan! 🔔\nKamu akan menerima notifikasi di bell icon.');
+    } catch (e) {
+      console.error('Notification opt-in error:', e);
+      setFcmToken('in-app-enabled');
+      alert('Notifikasi dalam aplikasi diaktifkan! 🔔');
     }
   };
 

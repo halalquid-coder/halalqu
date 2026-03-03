@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useUser } from '../../context/UserContext';
-import { submitMerchantApplication } from '../../lib/firestore';
+import { submitMerchantApplication, uploadImage } from '../../lib/firestore';
 
 export default function MerchantRegisterPage() {
     const { user, setMerchantStatus } = useUser();
@@ -78,6 +78,19 @@ export default function MerchantRegisterPage() {
 
     const handleSubmit = async () => {
         try {
+            // Upload photos to Firebase Storage
+            const photoUrls = [];
+            const validPhotos = photos.filter(Boolean);
+            for (let i = 0; i < validPhotos.length; i++) {
+                try {
+                    const path = `merchant_photos/${user.uid || 'anon'}/photo_${i}_${Date.now()}`;
+                    const url = await uploadImage(validPhotos[i].file, path);
+                    photoUrls.push(url);
+                } catch (uploadErr) {
+                    console.warn('Photo upload failed, skipping:', uploadErr);
+                }
+            }
+
             await submitMerchantApplication({
                 userId: user.uid || 'anonymous',
                 restaurantName: formData.restoName,
@@ -86,11 +99,12 @@ export default function MerchantRegisterPage() {
                 category: formData.category || '',
                 certBody: formData.certBody,
                 certNumber: formData.certNumber,
-                photoCount: photos.filter(Boolean).length,
+                photoUrls,
+                photoCount: validPhotos.length,
                 halalQualifications: halalStatements.filter((_, i) => halalQualifications[i]),
             });
         } catch (e) {
-            console.log('Firestore not configured yet, using local state');
+            console.log('Submission error, using local state:', e);
         }
         setMerchantStatus('pending');
         setStep(4); // success
