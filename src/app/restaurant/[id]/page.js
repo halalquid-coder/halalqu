@@ -5,12 +5,15 @@ import styles from './detail.module.css';
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { getRestaurantReviews } from '../../lib/firestore';
+
 export default function RestaurantDetailPage() {
     const params = useParams();
     const router = useRouter();
     const [resto, setResto] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
         async function fetchPlace() {
@@ -30,6 +33,9 @@ export default function RestaurantDetailPage() {
                         badgeLabel: data.certBody ? '✅ Certified Halal' : '🕌 Muslim Owned',
                         category: data.category || 'Restoran',
                         address: data.address || 'Alamat tidak tersedia',
+                        phone: data.phone || '',
+                        lat: data.lat || null,
+                        lng: data.lng || null,
                         hours: data.operatingHours || 'Informasi jam buka tidak tersedia',
                         isOpen: true,
                         lastChecked: data.certDate ? new Date(data.certDate).toLocaleDateString() : 'Baru saja',
@@ -37,8 +43,12 @@ export default function RestaurantDetailPage() {
                         certBody: data.certBody || 'Klaim Mandiri',
                         certExpiry: data.certExpiry || '-',
                         menu: [],
-                        reviewsList: []
                     });
+                    // Load reviews
+                    try {
+                        const revs = await getRestaurantReviews(params.id);
+                        setReviews(revs.filter(r => r.status === 'approved'));
+                    } catch (e) { console.error('Reviews fetch error:', e); }
                 }
             } catch (error) {
                 console.error("Error fetching document:", error);
@@ -48,6 +58,40 @@ export default function RestaurantDetailPage() {
         }
         fetchPlace();
     }, [params?.id]);
+
+    const handleShare = async () => {
+        const shareData = {
+            title: resto.name,
+            text: `${resto.name} - ${resto.badgeLabel}\n📍 ${resto.address}`,
+            url: window.location.href,
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Link telah disalin! 📋');
+            }
+        } catch (e) { /* user cancelled */ }
+    };
+
+    const handleDirections = () => {
+        if (resto.lat && resto.lng) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${resto.lat},${resto.lng}`, '_blank');
+        } else if (resto.address) {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(resto.address)}`, '_blank');
+        } else {
+            alert('Alamat tidak tersedia');
+        }
+    };
+
+    const handleCall = () => {
+        if (resto.phone) {
+            window.open(`tel:${resto.phone}`, '_self');
+        } else {
+            alert('Nomor telepon tidak tersedia');
+        }
+    };
 
     if (loading) {
         return <div className="page container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', color: 'var(--white)' }}>Memuat data...</div>;
@@ -76,7 +120,7 @@ export default function RestaurantDetailPage() {
                         >
                             {isBookmarked ? '❤️' : '🤍'}
                         </button>
-                        <button className={styles.heroBtn}>📤</button>
+                        <button className={styles.heroBtn} onClick={handleShare}>📤</button>
                     </div>
                 </div>
                 {resto.emoji}
@@ -94,6 +138,11 @@ export default function RestaurantDetailPage() {
                 <div className={styles.metaRow}>
                     <span>📍 {resto.address}</span>
                 </div>
+                {resto.phone && (
+                    <div className={styles.metaRow}>
+                        <span>📞 {resto.phone}</span>
+                    </div>
+                )}
                 <div className={styles.metaRow}>
                     <span className={resto.isOpen ? styles.statusOpen : styles.statusClosed}>
                         🕐 {resto.hours}
@@ -107,10 +156,10 @@ export default function RestaurantDetailPage() {
 
             {/* Action Buttons */}
             <div className={styles.actionRow}>
-                <button className={`${styles.actionBtn} ${styles.actionPrimary}`}>
+                <button className={`${styles.actionBtn} ${styles.actionPrimary}`} onClick={handleDirections}>
                     🗺 Get Directions
                 </button>
-                <button className={`${styles.actionBtn} ${styles.actionSecondary}`}>
+                <button className={`${styles.actionBtn} ${styles.actionSecondary}`} onClick={handleCall}>
                     📞 Telepon
                 </button>
             </div>
@@ -121,67 +170,42 @@ export default function RestaurantDetailPage() {
                 <p className={styles.description}>{resto.description}</p>
             </section>
 
-            {/* Menu */}
+            {/* Certification */}
             <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>🍽 Menu Andalan</h2>
-                <div className={styles.menuScroll}>
-                    {resto.menu.map((item, i) => (
-                        <div key={i} className={styles.menuCard}>
-                            <div className={styles.menuImage}>{item.emoji}</div>
-                            <div className={styles.menuInfo}>
-                                <div className={styles.menuName}>{item.name}</div>
-                                <div className={styles.menuPrice}>{item.price}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* Certificate */}
-            <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>📄 Sertifikat Halal</h2>
-                <div className={styles.certCard}>
-                    <span className={styles.certIcon}>🏅</span>
-                    <div className={styles.certInfo}>
-                        <h4>Sertifikat Halal Resmi</h4>
-                        <p>Dikeluarkan oleh: {resto.certBody}</p>
-                        <p>Berlaku s/d: {resto.certExpiry}</p>
+                <h2 className={styles.sectionTitle}>📋 Sertifikasi</h2>
+                <div className={styles.certGrid}>
+                    <div className={styles.certItem}>
+                        <span className={styles.certLabel}>Lembaga</span>
+                        <span className={styles.certValue}>{resto.certBody}</span>
+                    </div>
+                    <div className={styles.certItem}>
+                        <span className={styles.certLabel}>Berlaku</span>
+                        <span className={styles.certValue}>{resto.certExpiry}</span>
                     </div>
                 </div>
             </section>
 
             {/* Reviews */}
             <section className={styles.section}>
-                <div className="section-header">
-                    <h2 className={styles.sectionTitle}>💬 Review Komunitas</h2>
-                    <span className="section-link">{resto.reviews} review</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                    <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>💬 Review ({reviews.length})</h2>
+                    <Link href={`/restaurant/${params.id}/review`} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '12px', textDecoration: 'none' }}>
+                        ✏️ Tulis Review
+                    </Link>
                 </div>
-
-                {resto.reviewsList.map((review, i) => (
-                    <div key={i} className={styles.reviewCard}>
-                        <div className={styles.reviewHeader}>
-                            <div className={styles.reviewAvatar}>{review.avatar}</div>
-                            <div>
-                                <div className={styles.reviewName}>{review.name}</div>
-                                <div className={styles.reviewDate}>{review.date}</div>
+                {reviews.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 'var(--space-lg)' }}>Belum ada review. Jadilah yang pertama!</p>
+                ) : (
+                    reviews.map(r => (
+                        <div key={r.id} style={{ background: 'var(--white)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', marginBottom: 'var(--space-sm)', boxShadow: 'var(--shadow-sm)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span style={{ fontWeight: 600, fontSize: '13px' }}>{r.userName || 'Anonymous'}</span>
+                                <span style={{ fontSize: '12px' }}>{'⭐'.repeat(r.tasteRating || 0)}</span>
                             </div>
-                            <div className={styles.reviewStars}>
-                                {'⭐'.repeat(review.rating)}
-                            </div>
+                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>{r.comment || ''}</p>
                         </div>
-                        <p className={styles.reviewText}>{review.text}</p>
-                        <div className={styles.reviewTags}>
-                            <span className={`${styles.reviewTag} ${styles.tagHalal}`}>{review.halalTag}</span>
-                            <span className={`${styles.reviewTag} ${styles.tagRasa}`}>
-                                Rasa: {'⭐'.repeat(review.ratingRasa)}
-                            </span>
-                        </div>
-                    </div>
-                ))}
-
-                <Link href={`/restaurant/${params.id}/review`} className="btn btn-outline btn-full">
-                    ✏️ Tulis Review
-                </Link>
+                    ))
+                )}
             </section>
         </div>
     );

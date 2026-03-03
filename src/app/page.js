@@ -73,7 +73,7 @@ export default function HomePage() {
             ...val
           };
         });
-        setPlaces(data);
+        setPlaces(data.filter(p => p.status === 'approved'));
       } catch (e) {
         console.error("Failed to load places for map:", e);
       }

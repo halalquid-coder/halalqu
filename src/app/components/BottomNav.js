@@ -14,6 +14,9 @@ const navItems = [
 export default function BottomNav() {
     const pathname = usePathname();
 
+    // Hide bottom nav on admin pages
+    if (pathname.startsWith('/admin')) return null;
+
     return (
         <nav className={styles.bottomNav}>
             {navItems.map((item) => {
