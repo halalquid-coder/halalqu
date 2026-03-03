@@ -1,0 +1,380 @@
+.hero {
+  background: var(--halalqu-green-gradient);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding: var(--space-xl) var(--space-md) var(--space-2xl);
+  margin: 0 calc(-1 * var(--space-md));
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -30%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -20%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+}
+
+.greeting {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.heroTitle {
+  font-size: 24px;
+  color: var(--white);
+  margin-bottom: var(--space-lg);
+  line-height: 1.3;
+}
+
+.heroTitle span {
+  display: block;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: var(--font-body);
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 14px var(--space-md);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  color: var(--text-muted);
+}
+
+.searchBox:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.searchIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.searchText {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.nearbyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 14px;
+  margin-top: var(--space-md);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nearbyBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Chips Section */
+.chipsSection {
+  padding: var(--space-lg) 0 var(--space-sm);
+}
+
+.chipsRow {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.chipsRow::-webkit-scrollbar {
+  display: none;
+}
+
+/* Map Section */
+.mapSection {
+  margin: var(--space-md) calc(-1 * var(--space-md));
+  position: relative;
+}
+
+.mapPlaceholder {
+  height: 200px;
+  background: linear-gradient(135deg, #E9F7EF 0%, #d4efe0 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  color: var(--halalqu-green);
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.mapPlaceholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 40%, rgba(46, 155, 90, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(46, 155, 90, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(46, 155, 90, 0.08) 0%, transparent 30%);
+}
+
+.mapIcon {
+  font-size: 40px;
+  position: relative;
+}
+
+.mapLabel {
+  font-size: 14px;
+  position: relative;
+}
+
+.mapPins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pin {
+  position: absolute;
+  font-size: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.pin:nth-child(1) {
+  top: 25%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.pin:nth-child(2) {
+  top: 45%;
+  left: 55%;
+  animation-delay: 0.4s;
+}
+
+.pin:nth-child(3) {
+  top: 30%;
+  left: 75%;
+  animation-delay: 0.8s;
+}
+
+.pin:nth-child(4) {
+  top: 65%;
+  left: 35%;
+  animation-delay: 1.2s;
+}
+
+/* Restaurant List */
+.restaurantSection {
+  padding-top: var(--space-lg);
+}
+
+.restaurantList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.restaurantCard {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  color: inherit;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.restaurantCard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.cardImage {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  background: var(--halalqu-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardName {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--charcoal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.cardRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.cardRating .star {
+  color: var(--warning);
+}
+
+.cardDistance {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardCategory {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: auto;
+}
+
+.cardBookmark {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Travel Guide Section */
+.travelSection {
+  padding: var(--space-xl) 0;
+}
+
+.travelGrid {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.travelGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.travelCard {
+  min-width: 240px;
+  height: 160px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.travelBg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  position: relative;
+}
+
+.travelBg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+.travelInfo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md);
+  z-index: 1;
+}
+
+.travelTitle {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.travelCount {
+  font-size: 12px;
+  opacity: 0.8;
+}

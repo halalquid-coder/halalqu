@@ -1,0 +1,533 @@
+/* ========================================
+   HALALQU — Design System & Global Styles
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  /* Primary */
+  --halalqu-green: #2E9B5A;
+  --halalqu-green-dark: #237A45;
+  --halalqu-green-light: #E9F7EF;
+  --halalqu-green-gradient: linear-gradient(135deg, #2E9B5A 0%, #3DBF6E 100%);
+
+  /* Secondary */
+  --soft-green: #7FD4A6;
+  --charcoal: #3D444B;
+  --light-gray: #C8C8CE;
+  --white: #FFFFFF;
+
+  /* Functional */
+  --success: #2E9B5A;
+  --warning: #F5A623;
+  --danger: #E74C3C;
+
+  /* Extended neutrals */
+  --bg-primary: #FAFBFC;
+  --bg-card: #FFFFFF;
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+  --text-primary: #3D444B;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --border: #E5E7EB;
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-green: 0 4px 14px rgba(46, 155, 90, 0.3);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s ease;
+
+  /* Layout */
+  --bottom-nav-height: 72px;
+  --header-height: 56px;
+  --max-width: 480px;
+}
+
+/* ========================================
+   Dark Mode
+   ======================================== */
+
+[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-card: #1F2937;
+  --white: #1F2937;
+  --charcoal: #F3F4F6;
+  --text-primary: #F3F4F6;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --border: #374151;
+  --light-gray: #4B5563;
+
+  --halalqu-green-light: rgba(46, 155, 90, 0.15);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+}
+
+/* ========================================
+   Reset & Base
+   ======================================== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--charcoal);
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+  font-size: 15px;
+  border: none;
+  outline: none;
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.page {
+  padding-top: var(--space-md);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--space-lg));
+  min-height: 100dvh;
+}
+
+.page-with-header {
+  padding-top: calc(var(--header-height) + var(--space-md));
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--halalqu-green);
+  color: var(--white);
+  box-shadow: var(--shadow-green);
+}
+
+.btn-primary:hover {
+  background: var(--halalqu-green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(46, 155, 90, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--halalqu-green-light);
+  color: var(--halalqu-green);
+}
+
+.btn-secondary:hover {
+  background: #d4efe0;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--halalqu-green);
+  border: 1.5px solid var(--halalqu-green);
+}
+
+.btn-outline:hover {
+  background: var(--halalqu-green-light);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-certified {
+  background: var(--halalqu-green-light);
+  color: var(--halalqu-green);
+}
+
+.badge-muslim-owned {
+  background: #FFF8E7;
+  color: #D4920A;
+}
+
+.badge-halal-ingredients {
+  background: #E8F4FD;
+  color: #2980B9;
+}
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Section headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.section-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--halalqu-green);
+}
+
+/* Stars */
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--warning);
+  font-size: 14px;
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.chip:hover {
+  border-color: var(--halalqu-green);
+  color: var(--halalqu-green);
+}
+
+.chip.active {
+  background: var(--halalqu-green);
+  border-color: var(--halalqu-green);
+  color: var(--white);
+}
+
+/* Scroll container */
+.scroll-row {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-row>* {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+
+  15% {
+    transform: scale(1.3);
+  }
+
+  30% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.2);
+  }
+
+  60% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+/* Stagger children */
+.stagger>*:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger>*:nth-child(2) {
+  animation-delay: 0.10s;
+}
+
+.stagger>*:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger>*:nth-child(4) {
+  animation-delay: 0.20s;
+}
+
+.stagger>*:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger>*:nth-child(6) {
+  animation-delay: 0.30s;
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Trust banner */
+.trust-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 12px;
+  background: var(--halalqu-green-light);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--halalqu-green);
+  font-weight: 500;
+}
+
+/* Shimmer animation for loading screen */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}
