@@ -5,7 +5,8 @@ import styles from './page.module.css';
 import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useUser } from './context/UserContext';
-import { requestNotificationPermission } from './lib/firebase';
+import { requestNotificationPermission, db } from './lib/firebase';
+import { collection, query, getDocs } from 'firebase/firestore';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -74,6 +75,7 @@ export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [fcmToken, setFcmToken] = useState(null);
+  const [places, setPlaces] = useState([]);
   const notifRef = useRef(null);
 
   const { user } = useUser();
@@ -88,6 +90,33 @@ export default function HomePage() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch real places for the map
+  useEffect(() => {
+    async function loadPlaces() {
+      try {
+        const q = query(collection(db, 'places'));
+        const snap = await getDocs(q);
+        const data = snap.docs.map(doc => {
+          const val = doc.data();
+          return {
+            id: doc.id,
+            name: val.name,
+            // generate random coordinates around Jakarta for MVP testing if missing
+            lat: val.lat || (-6.2088 + (Math.random() - 0.5) * 0.1),
+            lng: val.lng || (106.8456 + (Math.random() - 0.5) * 0.1),
+            badge: val.certBody ? '✅ Certified' : '🕌 Muslim Owned',
+            emoji: '🍽️',
+            ...val
+          };
+        });
+        setPlaces(data);
+      } catch (e) {
+        console.error("Failed to load places for map:", e);
+      }
+    }
+    loadPlaces();
   }, []);
 
   // Mock notifications
@@ -231,7 +260,7 @@ export default function HomePage() {
 
       {/* Interactive Map */}
       <section className={styles.mapSection}>
-        <HalalMap />
+        <HalalMap restaurants={places} />
       </section>
 
       {/* Restaurant List */}

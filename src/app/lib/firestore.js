@@ -125,13 +125,15 @@ export async function submitMerchantApplication(data) {
 export async function getMerchantApplication(uid) {
     const q = query(
         collection(db, 'merchant_applications'),
-        where('userId', '==', uid),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', uid)
+        // No orderBy to avoid index requirement for MVP
     );
     const snap = await getDocs(q);
-    return snap.docs.length > 0
-        ? { id: snap.docs[0].id, ...snap.docs[0].data() }
-        : null;
+    // Sort manually by createdAt (simplistic)
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    return docs.length > 0 ? docs[0] : null;
 }
 
 // ============================================
@@ -139,9 +141,11 @@ export async function getMerchantApplication(uid) {
 // ============================================
 
 export async function getAllMerchantApplications() {
-    const q = query(collection(db, 'merchant_applications'), orderBy('createdAt', 'desc'));
+    // Removed orderBy to prevent index errors. Sort in memory.
+    const q = query(collection(db, 'merchant_applications'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 export async function updateApplicationStatus(docId, status, merchantData = null) {
@@ -180,9 +184,10 @@ export async function updateApplicationStatus(docId, status, merchantData = null
 }
 
 export async function getAllPlaces() {
-    const q = query(collection(db, 'places'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'places'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 export async function updatePlaceStatus(docId, status) {
@@ -192,12 +197,15 @@ export async function updatePlaceStatus(docId, status) {
 }
 
 export async function getAllReviews() {
-    const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'reviews'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 export async function getAllUsers() {
-    const snap = await getDocs(collection(db, 'users'));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const q = query(collection(db, 'users'));
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
