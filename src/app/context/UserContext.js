@@ -233,6 +233,25 @@ export function UserProvider({ children }) {
         }));
     };
 
+    const refreshUser = async () => {
+        if (!user.uid) return;
+        try {
+            const profile = await getUserProfile(user.uid);
+            if (profile) {
+                setUser(prev => ({
+                    ...prev,
+                    stats: profile.stats || prev.stats,
+                    role: profile.role || prev.role,
+                    merchantStatus: profile.merchantStatus || prev.merchantStatus,
+                    merchantInfo: profile.merchantInfo || prev.merchantInfo,
+                    bookmarks: profile.bookmarks || prev.bookmarks,
+                }));
+            }
+        } catch (e) {
+            console.warn('refreshUser error:', e);
+        }
+    };
+
     const logout = async () => {
         try {
             await signOut(auth);
@@ -244,7 +263,7 @@ export function UserProvider({ children }) {
 
     return (
         <UserContext.Provider value={{
-            user, setUser, upgradeTo, setMerchantStatus, logout,
+            user, setUser, upgradeTo, setMerchantStatus, logout, refreshUser,
             darkMode, toggleDarkMode, language, setLanguage: changeLanguage, t,
             authLoading,
         }}>

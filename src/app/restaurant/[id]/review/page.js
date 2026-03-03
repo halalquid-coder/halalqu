@@ -8,7 +8,7 @@ import { submitReview } from '../../../lib/firestore';
 export default function WriteReviewPage() {
     const params = useParams();
     const router = useRouter();
-    const { user } = useUser();
+    const { user, refreshUser } = useUser();
     const [halalRating, setHalalRating] = useState(null);
     const [tasteRating, setTasteRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -180,15 +180,17 @@ export default function WriteReviewPage() {
                         await submitReview({
                             userId: user.uid || 'anonymous',
                             userName: user.name || 'User',
-                            restaurantId: params.id,
+                            placeId: params.id,
                             halalRating,
                             tasteRating,
                             comment,
                             photoCount: photos.filter(Boolean).length,
                         });
                     } catch (e) {
-                        console.log('Firestore not configured yet, using local state');
+                        console.log('Review submission error:', e);
                     }
+                    // Refresh user stats to update badge counts
+                    await refreshUser();
                     setSubmitted(true);
                     setSubmitting(false);
                 }}

@@ -84,10 +84,30 @@ export async function getUserPlaces(uid) {
 // ============================================
 
 export async function submitReview(data) {
-    const docRef = await addDoc(collection(db, 'reviews'), {
+    // Ensure placeId is set (for backward compatibility, accept restaurantId too)
+    const reviewData = {
         ...data,
+        placeId: data.placeId || data.restaurantId,
+        status: 'pending',
         createdAt: serverTimestamp(),
-    });
+    };
+    const docRef = await addDoc(collection(db, 'reviews'), reviewData);
+
+    // Increment user's review count in their profile stats
+    if (data.userId && data.userId !== 'anonymous') {
+        try {
+            const userRef = doc(db, 'users', data.userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const currentStats = userSnap.data().stats || { reviews: 0, places: 0, bookmarks: 0 };
+                await updateDoc(userRef, {
+                    'stats.reviews': (currentStats.reviews || 0) + 1,
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to update user stats:', e);
+        }
+    }
     return docRef.id;
 }
 
@@ -116,6 +136,19 @@ export async function getUserReviews(uid) {
 // ============================================
 
 export async function submitMerchantApplication(data) {
+    // Check 2-store limit (free tier)
+    if (data.userId && data.userId !== 'anonymous') {
+        const existingQ = query(
+            collection(db, 'merchant_applications'),
+            where('userId', '==', data.userId)
+        );
+        const existingSnap = await getDocs(existingQ);
+        const approvedCount = existingSnap.docs.filter(d => d.data().status === 'approved').length;
+        if (approvedCount >= 2) {
+            throw new Error('STORE_LIMIT_REACHED');
+        }
+    }
+
     const docRef = await addDoc(collection(db, 'merchant_applications'), {
         ...data,
         status: 'pending',

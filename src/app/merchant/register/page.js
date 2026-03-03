@@ -104,6 +104,10 @@ export default function MerchantRegisterPage() {
                 halalQualifications: halalStatements.filter((_, i) => halalQualifications[i]),
             });
         } catch (e) {
+            if (e.message === 'STORE_LIMIT_REACHED') {
+                alert('⚠️ Batas Gratis Tercapai!\n\nAnda sudah memiliki 2 toko/cabang (batas gratis).\nUntuk menambahkan lebih banyak cabang, silakan upgrade ke paket premium.\n\nHubungi: admin@halalqu.online');
+                return;
+            }
             console.log('Submission error, using local state:', e);
         }
         setMerchantStatus('pending');
