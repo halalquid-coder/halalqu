@@ -8,11 +8,13 @@ export default function MerchantRegisterPage() {
     const { user, setMerchantStatus } = useUser();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
-        restoName: '', address: '', phone: '', category: null,
+        restoName: '', address: '', phone: '', category: '',
         certBody: '', certNumber: '',
     });
     const [photos, setPhotos] = useState([null, null, null]);
     const [agreed, setAgreed] = useState(false);
+    const [halalQualifications, setHalalQualifications] = useState([false, false, false, false, false]);
+    const [detectingAddress, setDetectingAddress] = useState(false);
     const fileRefs = [useRef(null), useRef(null), useRef(null)];
 
     const handlePhotoSelect = (index, e) => {
@@ -38,7 +40,41 @@ export default function MerchantRegisterPage() {
         if (fileRefs[index].current) fileRefs[index].current.value = '';
     };
 
-    const categories = ['🍽 Restaurant', '☕ Cafe', '🍛 Street Food', '🥘 Fine Dining', '🍰 Bakery'];
+    const categories = ['🍽 Restaurant', '☕ Cafe', '🍛 Street Food', '🥘 Fine Dining', '🍰 Bakery', '🥤 Minuman', '🧁 Dessert'];
+
+    const halalStatements = [
+        'Semua bahan baku yang digunakan bersumber halal',
+        'Tidak menggunakan alkohol dalam proses memasak',
+        'Peralatan masak tidak digunakan bersama makanan non-halal',
+        'Proses penyembelihan sesuai syariat Islam',
+        'Karyawan memahami prinsip kehalalan produk',
+    ];
+
+    const toggleQualification = (index) => {
+        setHalalQualifications(prev => {
+            const next = [...prev];
+            next[index] = !next[index];
+            return next;
+        });
+    };
+
+    const detectAddress = async () => {
+        setDetectingAddress(true);
+        try {
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+            });
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=id`);
+            const data = await res.json();
+            if (data.display_name) {
+                setFormData(prev => ({ ...prev, address: data.display_name }));
+            }
+        } catch (e) {
+            alert('Gagal mendeteksi lokasi. Pastikan GPS aktif.');
+        }
+        setDetectingAddress(false);
+    };
 
     const handleSubmit = async () => {
         try {
@@ -47,10 +83,11 @@ export default function MerchantRegisterPage() {
                 restaurantName: formData.restoName,
                 address: formData.address,
                 phone: formData.phone,
-                category: formData.category !== null ? categories[formData.category] : '',
+                category: formData.category || '',
                 certBody: formData.certBody,
                 certNumber: formData.certNumber,
                 photoCount: photos.filter(Boolean).length,
+                halalQualifications: halalStatements.filter((_, i) => halalQualifications[i]),
             });
         } catch (e) {
             console.log('Firestore not configured yet, using local state');
@@ -152,6 +189,14 @@ export default function MerchantRegisterPage() {
                                 border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)',
                             }}
                         />
+                        <button type="button" onClick={detectAddress} disabled={detectingAddress} style={{
+                            marginTop: '8px', padding: '8px 16px', borderRadius: 'var(--radius-md)',
+                            background: 'var(--halalqu-green-light)', border: '1px solid var(--halalqu-green)',
+                            color: 'var(--halalqu-green)', fontSize: '12px', fontWeight: 600,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                        }}>
+                            {detectingAddress ? '⏳ Mendeteksi...' : '📍 Deteksi Lokasi Otomatis'}
+                        </button>
                     </div>
 
                     <div style={{ marginBottom: 'var(--space-lg)' }}>
@@ -167,18 +212,55 @@ export default function MerchantRegisterPage() {
                         />
                     </div>
 
-                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                    <div style={{ marginBottom: 'var(--space-lg)' }}>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>
                             Kategori <span style={{ color: 'var(--danger)' }}>*</span>
                         </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                        <select value={formData.category}
+                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                            style={{
+                                width: '100%', padding: '14px var(--space-md)', borderRadius: 'var(--radius-md)',
+                                border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)',
+                                cursor: 'pointer',
+                            }}>
+                            <option value="">Pilih kategori...</option>
                             {categories.map((cat, i) => (
-                                <button key={i} className={`chip ${formData.category === i ? 'active' : ''}`}
-                                    onClick={() => setFormData({ ...formData, category: i })}>
-                                    {cat}
-                                </button>
+                                <option key={i} value={cat}>{cat}</option>
                             ))}
-                        </div>
+                        </select>
+                    </div>
+
+                    {/* Halal Qualifications */}
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>
+                            Kualifikasi Kehalalan <span style={{ color: 'var(--danger)' }}>*</span>
+                        </label>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>
+                            Centang pernyataan yang sesuai dengan restoran Anda
+                        </p>
+                        {halalStatements.map((stmt, i) => (
+                            <label key={i} onClick={() => toggleQualification(i)} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)',
+                                padding: '12px var(--space-md)', marginBottom: '8px',
+                                background: halalQualifications[i] ? 'var(--halalqu-green-light)' : 'var(--white)',
+                                borderRadius: 'var(--radius-md)',
+                                border: `1.5px solid ${halalQualifications[i] ? 'var(--halalqu-green)' : 'var(--border)'}`,
+                                cursor: 'pointer', transition: 'all 0.2s ease',
+                            }}>
+                                <div style={{
+                                    width: '20px', height: '20px', borderRadius: '4px',
+                                    border: `2px solid ${halalQualifications[i] ? 'var(--halalqu-green)' : 'var(--light-gray)'}`,
+                                    background: halalQualifications[i] ? 'var(--halalqu-green)' : 'var(--white)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexShrink: 0, transition: 'all 0.2s ease', marginTop: '1px',
+                                }}>
+                                    {halalQualifications[i] && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
+                                </div>
+                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                    {stmt}
+                                </span>
+                            </label>
+                        ))}
                     </div>
 
                     <button className="btn btn-primary btn-full" onClick={() => setStep(2)}
@@ -322,8 +404,9 @@ export default function MerchantRegisterPage() {
                             { label: 'Nama Restoran', value: formData.restoName || '-' },
                             { label: 'Alamat', value: formData.address || '-' },
                             { label: 'Telepon', value: formData.phone || '-' },
-                            { label: 'Kategori', value: formData.category !== null ? categories[formData.category] : '-' },
+                            { label: 'Kategori', value: formData.category || '-' },
                             { label: 'Sertifikasi', value: formData.certBody === 'none' ? 'Muslim Owned' : formData.certBody?.toUpperCase() || '-' },
+                            { label: 'Kualifikasi Halal', value: `${halalQualifications.filter(Boolean).length}/5 terpenuhi` },
                         ].map((item, i) => (
                             <div key={i} style={{
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',

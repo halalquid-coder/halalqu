@@ -94,7 +94,7 @@ export default function ProfilePage() {
                             background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
                             fontSize: '12px', fontWeight: 600, color: 'var(--white)',
                             border: '1px solid rgba(255,255,255,0.25)',
-                            textDecoration: 'none', marginTop: 'var(--space-md)',
+                            textDecoration: 'none', marginTop: 'var(--space-lg)',
                             transition: 'all 0.2s ease',
                         }}>
                             ✏️ Edit Profil
