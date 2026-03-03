@@ -90,12 +90,14 @@ export default function OnboardingPage() {
                 alignItems: 'center', justifyContent: 'center',
                 position: 'relative', zIndex: 1,
             }}>
-                <div style={{
-                    fontSize: '120px', marginBottom: 'var(--space-xl)',
-                    animation: 'scaleIn 0.5s ease', filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.2))',
-                }} key={current}>
-                    {slide.illustration}
-                </div>
+                {slide.illustration && ( // Only render if illustration exists
+                    <div style={{
+                        fontSize: '120px', marginBottom: 'var(--space-xl)',
+                        animation: 'scaleIn 0.5s ease', filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.2))',
+                    }} key={current}>
+                        {slide.illustration}
+                    </div>
+                )}
 
                 <h1 style={{
                     color: 'var(--white)', fontSize: '28px', textAlign: 'center',

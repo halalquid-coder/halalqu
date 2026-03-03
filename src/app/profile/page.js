@@ -73,32 +73,39 @@ export default function ProfilePage() {
                         <p style={{ opacity: 0.8, fontSize: '14px', marginBottom: 'var(--space-sm)' }}>
                             {user.email}
                         </p>
-                        {/* Role Badge */}
-                        <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '4px 14px', borderRadius: 'var(--radius-pill)',
-                            background: isMerchant ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)',
-                            backdropFilter: 'blur(8px)', fontSize: '12px', fontWeight: 600,
-                            border: '1px solid rgba(255,255,255,0.2)',
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            gap: 'var(--space-sm)', marginTop: 'var(--space-md)'
                         }}>
-                            {isMerchant ? '🏪 Merchant' : '👤 User'}
-                        </span>
+                            {/* Role Badge */}
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '6px 16px', borderRadius: 'var(--radius-pill)',
+                                background: isMerchant ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)',
+                                backdropFilter: 'blur(8px)', fontSize: '13px', fontWeight: 600,
+                                border: '1px solid rgba(255,255,255,0.2)',
+                            }}>
+                                {isMerchant ? '🏪 Merchant' : '👤 User'}
+                            </span>
+
+                            {/* Edit Profil Badge Button */}
+                            <Link href="/profile/edit" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '6px 16px', borderRadius: 'var(--radius-pill)',
+                                background: 'transparent', backdropFilter: 'blur(8px)',
+                                fontSize: '13px', fontWeight: 600, color: 'var(--white)',
+                                border: '1px solid rgba(255,255,255,0.4)',
+                                textDecoration: 'none', transition: 'all 0.2s ease',
+                            }}>
+                                ✏️ Edit Profil
+                            </Link>
+                        </div>
+
                         {isMerchant && user.merchantInfo && (
-                            <p style={{ opacity: 0.7, fontSize: '12px', marginTop: '6px' }}>
-                                {user.merchantInfo.restoName}
+                            <p style={{ opacity: 0.8, fontSize: '12px', marginTop: 'var(--space-sm)', fontWeight: 500 }}>
+                                🏪 {user.merchantInfo.restoName}
                             </p>
                         )}
-                        <Link href="/profile/edit" style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '6px 16px', borderRadius: 'var(--radius-pill)',
-                            background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
-                            fontSize: '12px', fontWeight: 600, color: 'var(--white)',
-                            border: '1px solid rgba(255,255,255,0.25)',
-                            textDecoration: 'none', marginTop: 'var(--space-lg)',
-                            transition: 'all 0.2s ease',
-                        }}>
-                            ✏️ Edit Profil
-                        </Link>
                     </>
                 ) : (
                     <>
