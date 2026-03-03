@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function HalalMap({ restaurants = [] }) {
@@ -7,6 +7,8 @@ export default function HalalMap({ restaurants = [] }) {
     const [mapReady, setMapReady] = useState(false);
     const [MapComponents, setMapComponents] = useState(null);
     const [userPos, setUserPos] = useState(null);
+    const [locating, setLocating] = useState(false);
+    const mapRef = useRef(null);
 
     // Default center: Jakarta
     const defaultCenter = [-6.2088, 106.8456];
@@ -32,16 +34,30 @@ export default function HalalMap({ restaurants = [] }) {
         link.rel = 'stylesheet';
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
         document.head.appendChild(link);
-
-        // Try to get user location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-                () => { /* silently fail */ },
-                { timeout: 5000 }
-            );
-        }
     }, []);
+
+    const handleLocateUser = () => {
+        if (!navigator.geolocation) {
+            alert('Browser tidak mendukung lokasi');
+            return;
+        }
+        setLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const newPos = [pos.coords.latitude, pos.coords.longitude];
+                setUserPos(newPos);
+                if (mapRef.current) {
+                    mapRef.current.flyTo(newPos, 15);
+                }
+                setLocating(false);
+            },
+            () => {
+                alert('Gagal mendapatkan lokasi. Pastikan GPS aktif.');
+                setLocating(false);
+            },
+            { timeout: 10000 }
+        );
+    };
 
     if (!mapReady || !MapComponents) {
         return (
@@ -81,7 +97,8 @@ export default function HalalMap({ restaurants = [] }) {
             zIndex: 1, isolation: 'isolate',
         }}>
             <MapContainer
-                center={center}
+                ref={mapRef}
+                center={defaultCenter}
                 zoom={15}
                 scrollWheelZoom={false}
                 style={{ width: '100%', height: '100%' }}
@@ -137,13 +154,28 @@ export default function HalalMap({ restaurants = [] }) {
             {/* Overlay label */}
             <div style={{
                 position: 'absolute', bottom: '12px', left: '12px', zIndex: 1000,
-                background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)',
-                padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-                fontSize: '12px', fontWeight: 600, color: '#2E9B5A',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                display: 'flex', alignItems: 'center', gap: '4px',
+                display: 'flex', gap: '8px'
             }}>
-                📍 {locations.length} Restoran Halal
+                <div style={{
+                    background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)',
+                    padding: '8px 14px', borderRadius: 'var(--radius-pill)',
+                    fontSize: '12px', fontWeight: 600, color: '#2E9B5A',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                }}>
+                    📍 {locations.length} Restoran Halal
+                </div>
+                <button onClick={handleLocateUser} disabled={locating} style={{
+                    background: locating ? '#E9F7EF' : '#2E9B5A',
+                    color: locating ? '#2E9B5A' : 'white',
+                    border: 'none', padding: '8px 14px', borderRadius: 'var(--radius-pill)',
+                    fontSize: '12px', fontWeight: 600, cursor: locating ? 'wait' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    transition: 'all 0.2s ease'
+                }}>
+                    {locating ? '⏳ Mencari...' : '🎯 Temukan Saya'}
+                </button>
             </div>
         </div>
     );

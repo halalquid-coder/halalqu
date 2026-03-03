@@ -62,10 +62,11 @@ export default function AdminPage() {
         setLoading(false);
     };
 
-    const handleMerchantAction = async (docId, status) => {
+    const handleMerchantAction = async (m, status) => {
         try {
-            await updateApplicationStatus(docId, status);
-            setMerchants(prev => prev.map(m => m.id === docId ? { ...m, status } : m));
+            await updateApplicationStatus(m.id, status, m);
+            setMerchants(prev => prev.map(item => item.id === m.id ? { ...item, status } : item));
+            if (status === 'approved') loadData(); // Reload places list & merchants
         } catch (e) { alert('Error: ' + e.message); }
     };
 
@@ -225,12 +226,12 @@ export default function AdminPage() {
                             </div>
                             {m.status === 'pending' && (
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
-                                    <button onClick={() => handleMerchantAction(m.id, 'approved')} style={{
+                                    <button onClick={() => handleMerchantAction(m, 'approved')} style={{
                                         flex: 1, padding: '10px', borderRadius: 'var(--radius-md)',
                                         background: '#065F46', color: 'white', border: 'none',
                                         fontWeight: 600, fontSize: '13px', cursor: 'pointer',
                                     }}>✅ Approve</button>
-                                    <button onClick={() => handleMerchantAction(m.id, 'rejected')} style={{
+                                    <button onClick={() => handleMerchantAction(m, 'rejected')} style={{
                                         flex: 1, padding: '10px', borderRadius: 'var(--radius-md)',
                                         background: '#991B1B', color: 'white', border: 'none',
                                         fontWeight: 600, fontSize: '13px', cursor: 'pointer',

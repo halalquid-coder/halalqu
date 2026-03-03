@@ -144,10 +144,39 @@ export async function getAllMerchantApplications() {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export async function updateApplicationStatus(docId, status) {
+export async function updateApplicationStatus(docId, status, merchantData = null) {
     await updateDoc(doc(db, 'merchant_applications', docId), {
         status, reviewedAt: serverTimestamp(),
     });
+
+    if (status === 'approved' && merchantData && merchantData.userId) {
+        // 1. Create Place Record
+        const placeRef = await addDoc(collection(db, 'places'), {
+            name: merchantData.restaurantName || merchantData.restoName || 'Unnamed Merchant',
+            address: merchantData.address || '',
+            phone: merchantData.phone || '',
+            category: merchantData.category || '',
+            certBody: merchantData.certBody || '',
+            certNumber: merchantData.certNumber || '',
+            halalQualifications: merchantData.halalQualifications || [],
+            status: 'approved',
+            source: 'merchant_registration',
+            ownerId: merchantData.userId,
+            createdAt: serverTimestamp(),
+            rating: 0,
+            reviewCount: 0
+        });
+
+        // 2. Update User Role
+        await updateDoc(doc(db, 'users', merchantData.userId), {
+            role: 'merchant',
+            merchantStatus: 'approved',
+            merchantInfo: {
+                placeId: placeRef.id,
+                restoName: merchantData.restaurantName || merchantData.restoName || 'Unnamed Merchant'
+            }
+        }).catch(err => console.error("Error updating user role:", err));
+    }
 }
 
 export async function getAllPlaces() {
