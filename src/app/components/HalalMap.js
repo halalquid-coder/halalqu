@@ -78,6 +78,7 @@ export default function HalalMap({ restaurants = [] }) {
             width: '100%', height: '220px', borderRadius: 'var(--radius-xl)',
             overflow: 'hidden', position: 'relative',
             boxShadow: 'var(--shadow-md)',
+            zIndex: 1, isolation: 'isolate',
         }}>
             <MapContainer
                 center={center}
