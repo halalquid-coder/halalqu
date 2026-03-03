@@ -185,7 +185,6 @@ select {
 }
 
 .page {
-  padding-top: var(--space-md);
   padding-bottom: calc(var(--bottom-nav-height) + var(--space-lg));
   min-height: 100dvh;
 }
