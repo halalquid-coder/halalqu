@@ -63,9 +63,26 @@ export async function toggleBookmark(uid, restaurantId) {
 export async function submitPlace(data) {
     const docRef = await addDoc(collection(db, 'places'), {
         ...data,
+        submittedBy: data.userId,
         status: 'pending',
         createdAt: serverTimestamp(),
     });
+
+    // Increment user's place count
+    if (data.userId && data.userId !== 'anonymous') {
+        try {
+            const userRef = doc(db, 'users', data.userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const currentStats = userSnap.data().stats || { reviews: 0, places: 0, bookmarks: 0 };
+                await updateDoc(userRef, {
+                    'stats.places': (currentStats.places || 0) + 1,
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to update user stats:', e);
+        }
+    }
     return docRef.id;
 }
 

@@ -14,7 +14,7 @@ const halalTypes = [
 
 export default function AddPlacePage() {
     const router = useRouter();
-    const { user } = useUser();
+    const { user, refreshUser } = useUser();
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [category, setCategory] = useState(null);
@@ -289,8 +289,9 @@ export default function AddPlacePage() {
                             photoCount: photos.filter(Boolean).length,
                         });
                     } catch (e) {
-                        console.log('Firestore not configured yet, using local state');
+                        console.log('Place submission error:', e);
                     }
+                    await refreshUser();
                     setSubmitted(true);
                     setSubmitting(false);
                 }}
