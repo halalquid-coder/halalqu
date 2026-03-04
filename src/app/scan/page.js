@@ -96,7 +96,11 @@ export default function ScanPage() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
+
+        // Enhance image for OCR (Grayscale + High Contrast)
+        ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
         ctx.drawImage(video, 0, 0);
+
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         setCapturedImage(dataUrl);
         stopCamera();
@@ -109,9 +113,23 @@ export default function ScanPage() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-            setCapturedImage(ev.target.result);
-            stopCamera();
-            runOCR(ev.target.result);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+
+                // Enhance image for OCR
+                ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
+                ctx.drawImage(img, 0, 0);
+
+                const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                setCapturedImage(enhancedDataUrl);
+                stopCamera();
+                runOCR(enhancedDataUrl);
+            };
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     };
