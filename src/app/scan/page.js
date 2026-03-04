@@ -285,12 +285,11 @@ export default function ScanPage() {
                         justifyContent: 'center', gap: 'var(--space-md)', position: 'relative',
                         overflow: 'hidden', marginBottom: 'var(--space-lg)',
                     }}>
-                        {cameraActive && (
-                            <video ref={videoRef} autoPlay playsInline muted style={{
-                                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                                objectFit: 'cover',
-                            }} />
-                        )}
+                        <video ref={videoRef} autoPlay playsInline muted style={{
+                            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                            objectFit: 'cover',
+                            display: cameraActive ? 'block' : 'none',
+                        }} />
 
                         {/* Target frame */}
                         <div style={{
