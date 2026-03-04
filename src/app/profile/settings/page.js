@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useUser } from '../../context/UserContext';
+import { getAuth, deleteUser } from 'firebase/auth';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 export default function SettingsPage() {
     const { user, darkMode, toggleDarkMode, language, setLanguage, logout, t } = useUser();
@@ -11,11 +14,39 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState(true);
     const [locationAccess, setLocationAccess] = useState(true);
     const [halalStandard, setHalalStandard] = useState('all');
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-    const handleLogout = () => {
-        logout();
-        router.push('/login');
+    const handleDeleteAccount = async () => {
+        setDeleteLoading(true);
+        try {
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            if (!currentUser) throw new Error("User not found");
+
+            // Delete user doc first (best effort)
+            try {
+                await deleteDoc(doc(db, 'users', user.uid));
+            } catch (fsErr) {
+                console.warn('Failed to delete Firestore doc:', fsErr);
+            }
+
+            // Delete auth user
+            await deleteUser(currentUser);
+            alert("Akun berhasil dihapus.");
+            logout();
+            router.push('/login');
+        } catch (e) {
+            console.error('Account deletion error:', e);
+            if (e.code === 'auth/requires-recent-login') {
+                alert("Silakan logout dan login kembali sebelum menghapus akun untuk alasan keamanan.");
+            } else {
+                alert("Gagal menghapus akun: " + e.message);
+            }
+            setShowDeleteConfirm(false);
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     const Toggle = ({ value, onChange }) => (
@@ -61,175 +92,170 @@ export default function SettingsPage() {
                 <h2 style={{ fontSize: '20px' }}>{t('settings')}</h2>
             </div>
 
-            {/* General */}
-            <div style={{
-                background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-                padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
-                marginBottom: 'var(--space-lg)',
-            }}>
+            {!user.isLoggedIn ? (
                 <div style={{
-                    padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
-                    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
-                }}>{t('general')}</div>
-
-                <SettingItem icon="🌐" label={t('language')} desc="Pilih bahasa tampilan">
-                    <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                        style={{
-                            padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border)', fontSize: '14px',
-                            background: 'var(--white)', color: 'var(--charcoal)', cursor: 'pointer',
-                        }}>
-                        <option value="id">Bahasa Indonesia</option>
-                        <option value="en">English</option>
-                        <option value="ar">العربية</option>
-                        <option value="ms">Bahasa Melayu</option>
-                    </select>
-                </SettingItem>
-
-                <SettingItem icon="🌙" label={t('darkMode')} desc={darkMode ? '✅ Aktif' : 'Tampilan lebih nyaman'}>
-                    <Toggle value={darkMode} onChange={toggleDarkMode} />
-                </SettingItem>
-
-                <SettingItem icon="🔔" label={t('notifications')} desc="Terima update review & verifikasi">
-                    <Toggle value={notifications} onChange={setNotifications} />
-                </SettingItem>
-
-                <SettingItem icon="📍" label={t('locationAccess')} desc="Untuk mencari restoran terdekat">
-                    <Toggle value={locationAccess} onChange={setLocationAccess} />
-                </SettingItem>
-            </div>
-
-            {/* Halal Preferences */}
-            <div style={{
-                background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-                padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
-                marginBottom: 'var(--space-lg)',
-            }}>
-                <div style={{
-                    padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
-                    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
-                }}>Preferensi Halal</div>
-
-                <SettingItem icon="🕌" label={t('halalDefault')} desc="Filter default saat pencarian">
-                    <select value={halalStandard} onChange={(e) => setHalalStandard(e.target.value)}
-                        style={{
-                            padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border)', fontSize: '14px',
-                            background: 'var(--white)', color: 'var(--charcoal)', cursor: 'pointer',
-                        }}>
-                        <option value="all">Semua</option>
-                        <option value="certified">Certified Only</option>
-                        <option value="muslim-owned">Muslim Owned</option>
-                    </select>
-                </SettingItem>
-            </div>
-
-            {/* Account */}
-            <div style={{
-                background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-                padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
-                marginBottom: 'var(--space-lg)',
-            }}>
-                <div style={{
-                    padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
-                    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
-                }}>{t('account')}</div>
-
-                <SettingItem icon="🔑" label={t('changePassword')}>
-                    <span style={{ color: 'var(--text-muted)' }}>→</span>
-                </SettingItem>
-
-                <SettingItem icon="📧" label={t('changeEmail')}>
-                    <span style={{ color: 'var(--text-muted)' }}>→</span>
-                </SettingItem>
-
-                {isMerchant ? (
-                    <div onClick={() => router.push('/merchant/dashboard')} style={{ cursor: 'pointer' }}>
-                        <SettingItem icon="🏪" label="Kelola Merchant" desc="Buka dashboard restoran">
-                            <span style={{
-                                padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-                                background: 'var(--halalqu-green)', color: '#FFFFFF',
-                                fontSize: '12px', fontWeight: 600,
-                            }}>
-                                Dashboard →
-                            </span>
-                        </SettingItem>
-                    </div>
-                ) : user.merchantStatus === 'pending' ? (
-                    <SettingItem icon="⏳" label="Pendaftaran Merchant" desc="Sedang dalam proses verifikasi">
-                        <span style={{
-                            padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-                            background: '#FFF8E7', color: '#D4920A',
-                            fontSize: '12px', fontWeight: 600,
-                        }}>
-                            Pending
-                        </span>
-                    </SettingItem>
-                ) : (
-                    <div onClick={() => router.push('/merchant/register')} style={{ cursor: 'pointer' }}>
-                        <SettingItem icon="🏪" label="Daftar sebagai Merchant" desc="Kelola listing restoranmu">
-                            <span style={{
-                                padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-                                background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green)',
-                                fontSize: '12px', fontWeight: 600,
-                            }}>
-                                Daftar →
-                            </span>
-                        </SettingItem>
-                    </div>
-                )}
-            </div>
-
-            {/* Danger Zone */}
-            <div style={{
-                background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-                padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)',
-                marginBottom: 'var(--space-lg)',
-            }}>
-                {!showLogoutConfirm ? (
-                    <button onClick={() => setShowLogoutConfirm(true)} style={{
-                        width: '100%', padding: 'var(--space-md)', background: '#FDE8E8',
-                        color: 'var(--danger)', borderRadius: 'var(--radius-md)',
-                        fontWeight: 600, fontSize: '15px', border: 'none', cursor: 'pointer',
-                        marginBottom: 'var(--space-sm)',
-                    }}>
-                        {t('logout')}
-                    </button>
-                ) : (
-                    <div style={{
-                        padding: 'var(--space-md)', background: '#FDE8E8',
-                        borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-sm)',
-                    }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--danger)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
-                            Yakin ingin keluar?
-                        </p>
-                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                            <button onClick={() => setShowLogoutConfirm(false)} style={{
-                                flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                                background: 'var(--white)', border: '1px solid var(--border)',
-                                fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                                color: 'var(--text-secondary)',
-                            }}>
-                                Batal
-                            </button>
-                            <button onClick={handleLogout} style={{
-                                flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                                background: 'var(--danger)', color: '#FFFFFF',
-                                fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
-                            }}>
-                                Ya, Keluar
-                            </button>
-                        </div>
-                    </div>
-                )}
-                <button style={{
-                    width: '100%', padding: 'var(--space-md)', background: 'none',
-                    color: 'var(--danger)', borderRadius: 'var(--radius-md)',
-                    fontWeight: 500, fontSize: '13px', border: 'none', cursor: 'pointer',
+                    textAlign: 'center', marginTop: 'var(--space-2xl)',
+                    padding: 'var(--space-xl)', background: 'var(--white)',
+                    borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)'
                 }}>
-                    {t('deleteAccount')}
-                </button>
-            </div>
+                    <div style={{ fontSize: '48px', marginBottom: 'var(--space-md)' }}>🔒</div>
+                    <h3 style={{ marginBottom: 'var(--space-sm)' }}>Akses Dibatasi</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: 'var(--space-xl)' }}>
+                        Silakan masuk ke akun Anda untuk mengakses halaman pengaturan.
+                    </p>
+                    <Link href="/login" style={{
+                        display: 'inline-block', padding: '12px 24px',
+                        background: 'var(--halalqu-green)', color: 'var(--white)',
+                        borderRadius: 'var(--radius-md)', textDecoration: 'none',
+                        fontWeight: 600, fontSize: '15px'
+                    }}>
+                        Masuk / Daftar
+                    </Link>
+                </div>
+            ) : (
+                <>
+                    {/* General */}
+                    <div style={{
+                        background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                        padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
+                        marginBottom: 'var(--space-lg)',
+                    }}>
+                        <div style={{
+                            padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
+                            color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>{t('general')}</div>
+
+                        <SettingItem icon="" label={t('language')} desc="Pilih bahasa tampilan">
+                            <select value={language} onChange={(e) => setLanguage(e.target.value)}
+                                style={{
+                                    padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--border)', fontSize: '14px',
+                                    background: 'var(--white)', color: 'var(--charcoal)', cursor: 'pointer',
+                                }}>
+                                <option value="id">Bahasa Indonesia</option>
+                                <option value="en">English</option>
+                                <option value="ar">العربية</option>
+                                <option value="ms">Bahasa Melayu</option>
+                            </select>
+                        </SettingItem>
+
+                        <SettingItem icon="" label={t('darkMode')} desc={darkMode ? 'Aktif' : 'Tampilan lebih nyaman'}>
+                            <Toggle value={darkMode} onChange={toggleDarkMode} />
+                        </SettingItem>
+
+                        <SettingItem icon="" label={t('notifications')} desc="Terima update review & verifikasi">
+                            <Toggle value={notifications} onChange={setNotifications} />
+                        </SettingItem>
+
+                        <SettingItem icon="" label={t('locationAccess')} desc="Untuk mencari restoran terdekat">
+                            <Toggle value={locationAccess} onChange={setLocationAccess} />
+                        </SettingItem>
+                    </div>
+
+                    {/* Halal Preferences */}
+                    <div style={{
+                        background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                        padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
+                        marginBottom: 'var(--space-lg)',
+                    }}>
+                        <div style={{
+                            padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
+                            color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>Preferensi Halal</div>
+
+                        <SettingItem icon="" label={t('halalDefault')} desc="Filter default saat pencarian">
+                            <select value={halalStandard} onChange={(e) => setHalalStandard(e.target.value)}
+                                style={{
+                                    padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--border)', fontSize: '14px',
+                                    background: 'var(--white)', color: 'var(--charcoal)', cursor: 'pointer',
+                                }}>
+                                <option value="all">Semua</option>
+                                <option value="certified">Certified Only</option>
+                                <option value="muslim-owned">Muslim Owned</option>
+                            </select>
+                        </SettingItem>
+                    </div>
+
+                    {/* Account */}
+                    <div style={{
+                        background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                        padding: '0 var(--space-md)', boxShadow: 'var(--shadow-sm)',
+                        marginBottom: 'var(--space-lg)',
+                    }}>
+                        <div style={{
+                            padding: 'var(--space-md) 0', fontSize: '13px', fontWeight: 600,
+                            color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
+                        }}>{t('account')}</div>
+
+                        <Link href="/profile/edit" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <SettingItem icon="" label="Edit Profil">
+                                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                            </SettingItem>
+                        </Link>
+
+                        <Link href="/profile/settings/password" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <SettingItem icon="" label={t('changePassword')}>
+                                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                            </SettingItem>
+                        </Link>
+
+                        <Link href="/profile/settings/email" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <SettingItem icon="" label={t('changeEmail')}>
+                                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                            </SettingItem>
+                        </Link>
+                    </div>
+
+                    {/* Danger Zone */}
+                    <div style={{
+                        background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                        padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)',
+                        marginBottom: 'var(--space-lg)',
+                    }}>
+                        {/* Tombol Logout dihapus sesuai permintaan */}
+
+                        {!showDeleteConfirm ? (
+                            <button onClick={() => setShowDeleteConfirm(true)} style={{
+                                width: '100%', padding: 'var(--space-md)', background: 'none',
+                                color: 'var(--danger)', borderRadius: 'var(--radius-md)',
+                                fontWeight: 500, fontSize: '13px', border: 'none', cursor: 'pointer',
+                            }}>
+                                {t('deleteAccount')}
+                            </button>
+                        ) : (
+                            <div style={{
+                                padding: 'var(--space-md)', background: '#FDE8E8',
+                                borderRadius: 'var(--radius-md)',
+                            }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--danger)', marginBottom: '8px', textAlign: 'center' }}>
+                                    Tindakan ini tidak dapat dibatalkan!
+                                </p>
+                                <p style={{ fontSize: '12px', color: 'var(--charcoal)', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
+                                    Semua review, bookmark, dan info profil Anda akan dihapus permanen.
+                                </p>
+                                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                    <button onClick={() => setShowDeleteConfirm(false)} disabled={deleteLoading} style={{
+                                        flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                                        background: 'var(--white)', border: '1px solid var(--border)',
+                                        fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                                        color: 'var(--text-secondary)',
+                                    }}>
+                                        Batal
+                                    </button>
+                                    <button onClick={handleDeleteAccount} disabled={deleteLoading} style={{
+                                        flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                                        background: 'var(--danger)', color: '#FFFFFF',
+                                        fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                                    }}>
+                                        {deleteLoading ? 'Menghapus...' : 'Hapus Permanen'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
 
             <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)', padding: 'var(--space-md) 0' }}>
                 {t('version')}

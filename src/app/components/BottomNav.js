@@ -2,20 +2,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './BottomNav.module.css';
-
-const navItems = [
-    { href: '/', label: 'Home', icon: '🏠' },
-    { href: '/search', label: 'Search', icon: '🔍' },
-    { href: '/scan', label: 'Scan', icon: '', isScan: true },
-    { href: '/travel', label: 'Travel', icon: '🧳' },
-    { href: '/profile', label: 'Profile', icon: '👤' },
-];
+import { useUser } from '../context/UserContext';
 
 export default function BottomNav() {
     const pathname = usePathname();
+    const { user } = useUser();
 
     // Hide bottom nav on admin pages
     if (pathname.startsWith('/admin')) return null;
+
+    const navItems = [
+        { href: '/', label: 'Home', icon: '🏠' },
+        { href: '/search', label: 'Search', icon: '🔍' },
+        { href: '/scan', label: 'Scan', icon: '', isScan: true },
+        { href: '/travel', label: 'Travel', icon: '🧳' },
+        { href: '/profile', label: user?.isLoggedIn ? 'Profile' : 'Sign In', icon: '👤' },
+    ];
 
     return (
         <nav className={styles.bottomNav}>

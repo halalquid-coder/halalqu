@@ -11,8 +11,8 @@ export default function EditProfilePage() {
     const router = useRouter();
     const { user, setUser } = useUser();
     const [name, setName] = useState(user.name || '');
-    const [phone, setPhone] = useState('');
-    const [bio, setBio] = useState('');
+    const [phone, setPhone] = useState(user.phone || '');
+    const [bio, setBio] = useState(user.bio || '');
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(user.photoURL || null);
@@ -78,7 +78,7 @@ export default function EditProfilePage() {
             }
 
             // Update local context
-            setUser(prev => ({ ...prev, name, photoURL }));
+            setUser(prev => ({ ...prev, name, phone, bio, photoURL }));
             setSaved(true);
             setTimeout(() => router.back(), 1200);
         } catch (err) {

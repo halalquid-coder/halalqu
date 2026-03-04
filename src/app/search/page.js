@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import styles from './search.module.css';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -19,7 +20,10 @@ const categories = ['Semua', 'Cafe', 'Street Food', 'Fine Dining', 'Bakery', 'We
 const priceRanges = ['$ Murah', '$$ Sedang', '$$$ Mahal'];
 
 export default function SearchPage() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const searchParams = useSearchParams();
+    const initialQuery = searchParams.get('q') || '';
+
+    const [searchQuery, setSearchQuery] = useState(initialQuery);
     const [distance, setDistance] = useState(10);
     const [activeHalal, setActiveHalal] = useState(null);
     const [activeCategory, setActiveCategory] = useState(0);
@@ -27,7 +31,7 @@ export default function SearchPage() {
     const [showFilter, setShowFilter] = useState(false);
     const [allPlaces, setAllPlaces] = useState([]);
     const [results, setResults] = useState([]);
-    const [isSearching, setIsSearching] = useState(false);
+    const [isSearching, setIsSearching] = useState(!!initialQuery);
 
     // Load all places once for client-side search
     useEffect(() => {
@@ -141,7 +145,27 @@ export default function SearchPage() {
                 <section style={{ marginBottom: 'var(--space-xl)' }}>
                     <div className={styles.filterTitle}>Hasil Pencarian ({results.length})</div>
                     {results.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-lg)' }}>Tidak ditemukan restoran untuk "{searchQuery}"</p>
+                        <div style={{
+                            textAlign: 'center', padding: 'var(--space-2xl) var(--space-md)',
+                            background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                            boxShadow: 'var(--shadow-sm)', marginTop: 'var(--space-sm)'
+                        }}>
+                            <div style={{ fontSize: '48px', marginBottom: 'var(--space-md)' }}>🧐</div>
+                            <h3 style={{ fontSize: '18px', marginBottom: 'var(--space-sm)' }}>
+                                Restoran tidak ditemukan
+                            </h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: 'var(--space-xl)' }}>
+                                Kami belum memiliki data untuk "<b>{searchQuery}</b>". Bantu komunitas dengan menambahkan tempat ini!
+                            </p>
+                            <Link href="/add-place" style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                background: 'var(--halalqu-green)', color: 'var(--white)',
+                                padding: '12px 24px', borderRadius: 'var(--radius-pill)',
+                                textDecoration: 'none', fontWeight: 600, fontSize: '15px'
+                            }}>
+                                <span>➕</span> Rekomendasikan Tempat
+                            </Link>
+                        </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                             {results.map(p => (

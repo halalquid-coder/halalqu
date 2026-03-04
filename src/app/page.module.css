@@ -112,7 +112,7 @@
 /* 🏷️ Kategori Kuliner                        */
 /* ═══════════════════════════════════════════ */
 .categorySection {
-  padding: var(--space-xl) 0 var(--space-md);
+  padding: 0 0 var(--space-md);
 }
 
 .categoryGrid {
@@ -599,8 +599,6 @@
   transition: all var(--transition-normal);
   text-decoration: none;
   color: inherit;
-  opacity: 0;
-  animation: fadeInUp 0.5s ease forwards;
 }
 
 .restaurantCard:hover {

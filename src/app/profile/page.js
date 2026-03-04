@@ -2,11 +2,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../context/UserContext';
+import { useEffect } from 'react';
 
 export default function ProfilePage() {
-    const { user, logout } = useUser();
+    const { user, logout, authLoading } = useUser();
     const router = useRouter();
     const isMerchant = user.role === 'merchant';
+
+    useEffect(() => {
+        if (!authLoading && !user.isLoggedIn) {
+            router.replace('/login');
+        }
+    }, [authLoading, user.isLoggedIn, router]);
 
     const handleLogout = () => {
         logout();
@@ -14,9 +21,9 @@ export default function ProfilePage() {
     };
 
     const userMenuItems = [
-        { icon: '', label: 'Review Saya', href: '/profile/reviews', count: user.stats.reviews },
-        { icon: '', label: 'Tempat Ditambahkan', href: '/profile/places', count: user.stats.places },
-        { icon: '', label: 'Bookmark', href: '/bookmarks', count: user.stats.bookmarks },
+        { icon: '', label: 'Review Saya', href: '/profile/reviews' },
+        { icon: '', label: 'Rekomendasi Saya', href: '/profile/places' },
+        { icon: '', label: 'Bookmark', href: '/bookmarks' },
     ];
 
     const merchantMenuItems = [
@@ -29,8 +36,11 @@ export default function ProfilePage() {
     const settingsItems = [
         { icon: '', label: 'Pengaturan', href: '/profile/settings' },
         { icon: '', label: 'Tentang Halalqu', href: '/about' },
-        { icon: '', label: 'Admin Panel', href: '/admin' },
     ];
+
+    if (authLoading || !user.isLoggedIn) {
+        return <div className="page container" style={{ paddingTop: '80px', textAlign: 'center', color: 'var(--text-muted)' }}>⏳ Memuat profil...</div>;
+    }
 
     return (
         <div className="page container" style={{ paddingTop: 'var(--space-xl)' }}>
@@ -65,86 +75,42 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                {user.isLoggedIn ? (
-                    <>
-                        <h2 style={{ color: 'var(--white)', fontSize: '20px', marginBottom: '4px' }}>
-                            {user.name}
-                        </h2>
-                        <p style={{ opacity: 0.8, fontSize: '14px', marginBottom: 'var(--space-sm)' }}>
-                            {user.email}
-                        </p>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: 'var(--space-sm)', marginTop: 'var(--space-md)'
-                        }}>
-                            {/* Role Badge */}
-                            <span style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                padding: '6px 16px', borderRadius: 'var(--radius-pill)',
-                                background: isMerchant ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)',
-                                backdropFilter: 'blur(8px)', fontSize: '13px', fontWeight: 600,
-                                border: '1px solid rgba(255,255,255,0.2)',
-                            }}>
-                                {isMerchant ? '🏪 Merchant' : '👤 User'}
-                            </span>
+                <h2 style={{ color: 'var(--white)', fontSize: '20px', marginBottom: '4px' }}>
+                    {user.name}
+                </h2>
+                <p style={{ opacity: 0.8, fontSize: '14px', marginBottom: 'var(--space-md)' }}>
+                    {user.email}
+                </p>
 
-                            {/* Edit Profil Badge Button */}
-                            <Link href="/profile/edit" style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                padding: '6px 16px', borderRadius: 'var(--radius-pill)',
-                                background: 'transparent', backdropFilter: 'blur(8px)',
-                                fontSize: '13px', fontWeight: 600, color: 'var(--white)',
-                                border: '1px solid rgba(255,255,255,0.4)',
-                                textDecoration: 'none', transition: 'all 0.2s ease',
-                            }}>
-                                Edit Profil
-                            </Link>
-                        </div>
-
-                    </>
-                ) : (
-                    <>
-                        <h2 style={{ color: 'var(--white)', fontSize: '20px', marginBottom: '4px' }}>
-                            Assalamualaikum!
-                        </h2>
-                        <p style={{ opacity: 0.8, fontSize: '14px', marginBottom: 'var(--space-md)' }}>
-                            Login untuk menyimpan bookmark & menulis review
-                        </p>
-                        <Link href="/login" className="btn" style={{
-                            background: 'rgba(255,255,255,0.2)', color: 'var(--white)',
-                            backdropFilter: 'blur(8px)', border: '1.5px solid rgba(255,255,255,0.3)',
-                            textDecoration: 'none',
-                        }}>
-                            Masuk / Daftar
-                        </Link>
-                    </>
-                )}
-            </div>
-
-            {/* Contribution Stats */}
-            <div style={{
-                display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)',
-            }}>
-                {[
-                    { num: user.stats.reviews, label: 'Review' },
-                    { num: user.stats.places, label: 'Tempat' },
-                    { num: user.stats.bookmarks, label: 'Bookmark' },
-                ].map((stat, i) => (
-                    <div key={i} style={{
-                        flex: 1, background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-                        padding: 'var(--space-md)', textAlign: 'center', boxShadow: 'var(--shadow-sm)',
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px'
+                }}>
+                    {/* Role Badge */}
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 12px', borderRadius: 'var(--radius-pill)',
+                        background: isMerchant ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)',
+                        backdropFilter: 'blur(8px)', fontSize: '12px', fontWeight: 600,
+                        border: '1px solid rgba(255,255,255,0.2)',
                     }}>
-                        <div style={{
-                            fontSize: '24px', fontWeight: 700, color: 'var(--halalqu-green)',
-                            fontFamily: 'var(--font-heading)',
-                        }}>
-                            {stat.num}
+                        {isMerchant ? '🏪 Merchant' : '👤 User'}
+                    </span>
+                </div>
+
+                {isMerchant ? (
+                    <div style={{ marginBottom: 'var(--space-md)' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--white)' }}>
+                            {user.merchantInfo?.restaurantName || user.merchantInfo?.restoName || 'Merchant Halalqu'}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
-                            {stat.label}
+                        <div style={{ fontSize: '13px', opacity: 0.9, color: 'rgba(255,255,255,0.85)' }}>
+                            {user.merchantInfo?.description || 'Deskripsi merchant belum ditambahkan.'}
                         </div>
                     </div>
-                ))}
+                ) : (
+                    <p style={{ opacity: 0.9, fontSize: '13px', marginBottom: 'var(--space-md)' }}>
+                        {user.bio || 'Pencinta kuliner halal'}
+                    </p>
+                )}
             </div>
 
             {/* Contributor Badge */}
@@ -214,22 +180,25 @@ export default function ProfilePage() {
                     </div>
                     <span style={{ fontSize: '18px', position: 'relative', zIndex: 1 }}>→</span>
                 </Link>
-            )}
+            )
+            }
 
             {/* Merchant Pending Status */}
-            {!isMerchant && user.merchantStatus === 'pending' && (
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
-                    background: '#FFF8E7', borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--space-md)', marginBottom: 'var(--space-xl)',
-                }}>
-                    <span style={{ fontSize: '28px' }}>⏳</span>
-                    <div>
-                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#D4920A' }}>Pendaftaran Merchant Sedang Direview</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Tim Halalqu akan memverifikasi dalam 1-3 hari</div>
+            {
+                !isMerchant && user.merchantStatus === 'pending' && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
+                        background: '#FFF8E7', borderRadius: 'var(--radius-lg)',
+                        padding: 'var(--space-md)', marginBottom: 'var(--space-xl)',
+                    }}>
+                        <span style={{ fontSize: '28px' }}>⏳</span>
+                        <div>
+                            <div style={{ fontWeight: 600, fontSize: '14px', color: '#D4920A' }}>Pendaftaran Merchant Sedang Direview</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Tim Halalqu akan memverifikasi dalam 1-3 hari</div>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Menu Items */}
             <div style={{
@@ -284,15 +253,17 @@ export default function ProfilePage() {
             </div>
 
             {/* Logout */}
-            {user.isLoggedIn && (
-                <button onClick={handleLogout} style={{
-                    width: '100%', padding: 'var(--space-md)', marginTop: 'var(--space-lg)',
-                    background: '#FDE8E8', color: 'var(--danger)', borderRadius: 'var(--radius-lg)',
-                    fontWeight: 600, fontSize: '15px', border: 'none', cursor: 'pointer',
-                }}>
-                    Keluar
-                </button>
-            )}
-        </div>
+            {
+                user.isLoggedIn && (
+                    <button onClick={handleLogout} style={{
+                        width: '100%', padding: 'var(--space-md)', marginTop: 'var(--space-lg)',
+                        background: '#FDE8E8', color: 'var(--danger)', borderRadius: 'var(--radius-lg)',
+                        fontWeight: 600, fontSize: '15px', border: 'none', cursor: 'pointer',
+                    }}>
+                        Keluar
+                    </button>
+                )
+            }
+        </div >
     );
 }

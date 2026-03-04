@@ -11,17 +11,11 @@ import { getUserNotifications } from './lib/firestore';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
-const filters = ['Semua', 'Certified', 'Muslim Owned', 'Halal Ingredients'];
-
 const categories = [
-  { emoji: '', label: 'Street Food' },
-  { emoji: '', label: 'Cafe' },
-  { emoji: '', label: 'Fine Dining' },
-  { emoji: '', label: 'Bakery' },
-  { emoji: '', label: 'Seafood' },
-  { emoji: '', label: 'Western' },
-  { emoji: '', label: 'Asian' },
-  { emoji: '', label: 'Dessert' },
+  { emoji: '🍽️', label: 'Semua' },
+  { emoji: '🛡️', label: 'Certified' },
+  { emoji: '🕌', label: 'Muslim Owned' },
+  { emoji: '🌿', label: 'Halal Ingredients' },
 ];
 
 export default function HomePage() {
@@ -241,12 +235,16 @@ export default function HomePage() {
             <span>Temukan makanan halal terdekat yang terpercaya</span>
           </h1>
 
-          <form className={styles.searchBox} onSubmit={(e) => { e.preventDefault(); const q = e.target.q.value.trim(); if (q) router.push(`/search?q=${encodeURIComponent(q)}`); else router.push('/search'); }}>
+          <form className={styles.searchBox} onSubmit={(e) => { e.preventDefault(); const q = e.target.q.value.trim(); if (q) router.push(`/search?q=${encodeURIComponent(q)}`); }}>
             <span className={styles.searchIcon}>🔍</span>
-            <input name="q" placeholder="Cari restoran, menu, atau kota..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, fontSize: '15px' }} />
+            <input id="home-search-input" name="q" placeholder="Cari restoran, menu, atau kota..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, fontSize: '15px' }} />
           </form>
 
-          <button className={styles.nearbyBtn} onClick={() => router.push('/search')}>
+          <button className={styles.nearbyBtn} onClick={() => {
+            const input = document.getElementById('home-search-input');
+            const q = input ? input.value.trim() : '';
+            if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
+          }}>
             Cari di Sekitarku
           </button>
         </div>
@@ -256,7 +254,6 @@ export default function HomePage() {
       {/* 🏷️ SECTION 1: Kategori Kuliner */}
       {/* ═══════════════════════════════════════════ */}
       <section className={styles.categorySection}>
-        <h2 className="section-title">Kategori Kuliner</h2>
         <div className={styles.categoryGrid}>
           {categories.map((cat, i) => (
             <Link
@@ -312,20 +309,7 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Filter Chips */}
-      <section className={styles.chipsSection}>
-        <div className={styles.chipsRow}>
-          {filters.map((filter, i) => (
-            <button
-              key={i}
-              className={`chip ${i === activeFilter ? 'active' : ''}`}
-              onClick={() => setActiveFilter(i)}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-      </section>
+
 
       {/* Interactive Map */}
       <section className={styles.mapSection}>

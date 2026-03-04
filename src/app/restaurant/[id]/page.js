@@ -38,7 +38,7 @@ export default function RestaurantDetailPage() {
                         lng: data.lng || null,
                         hours: data.operatingHours || 'Informasi jam buka tidak tersedia',
                         isOpen: true,
-                        lastChecked: data.certDate ? new Date(data.certDate).toLocaleDateString() : 'Baru saja',
+                        lastChecked: data.certDate ? (data.certDate.toDate ? data.certDate.toDate().toLocaleDateString('id-ID') : new Date(data.certDate).toLocaleDateString('id-ID')) : 'Baru saja',
                         description: data.description || 'Restoran halal pilihan.',
                         certBody: data.certBody || 'Klaim Mandiri',
                         certExpiry: data.certExpiry || '-',
