@@ -37,12 +37,28 @@ export default function ScanPage() {
     const canvasRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    // Load scan history from localStorage
+    // Load scan history from localStorage and set up reset listener
     useEffect(() => {
         try {
             const saved = localStorage.getItem('halalqu-scan-history');
             if (saved) setScanHistory(JSON.parse(saved));
         } catch (e) { /* SSR safety */ }
+
+        // Listen for reset events from BottomNav
+        const handleReset = () => {
+            setStep('capture');
+            setCapturedImage(null);
+            setOcrText('');
+            setResults(null);
+            setOverallVerdict(null);
+            setConfidence(0);
+            setSummary('');
+            setAnalysisMethod('');
+            setCameraError(null);
+            setOcrProgress(0);
+        };
+        window.addEventListener('halalqu-reset-scan', handleReset);
+        return () => window.removeEventListener('halalqu-reset-scan', handleReset);
     }, []);
 
     // Camera controls
@@ -115,14 +131,24 @@ export default function ScanPage() {
         reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
+                // Scale down large images for faster and more accurate OCR
+                const MAX_DIM = 1280;
+                let finalWidth = img.width;
+                let finalHeight = img.height;
+                if (finalWidth > MAX_DIM || finalHeight > MAX_DIM) {
+                    const ratio = Math.min(MAX_DIM / finalWidth, MAX_DIM / finalHeight);
+                    finalWidth *= ratio;
+                    finalHeight *= ratio;
+                }
+
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                canvas.width = finalWidth;
+                canvas.height = finalHeight;
                 const ctx = canvas.getContext('2d');
 
                 // Enhance image for OCR
                 ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
-                ctx.drawImage(img, 0, 0);
+                ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
 
                 const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
                 setCapturedImage(enhancedDataUrl);
@@ -275,7 +301,7 @@ export default function ScanPage() {
         <div className="page container" style={{ paddingTop: 'var(--space-xl)', paddingBottom: '100px' }}>
             {/* Header */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
-                <h1 style={{ marginBottom: '4px', fontSize: '22px' }}>📷 AI Ingredient Scanner</h1>
+                <h1 style={{ marginBottom: '4px', fontSize: '22px' }}>AI Ingredient Scanner</h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                     Pindai komposisi produk untuk deteksi bahan kritis halal/haram
                 </p>
@@ -350,15 +376,15 @@ export default function ScanPage() {
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
                         {!cameraActive ? (
                             <button className="btn btn-primary" onClick={startCamera} style={{ flex: 1, padding: '14px' }}>
-                                🎥 Buka Kamera
+                                Buka Kamera
                             </button>
                         ) : (
                             <button className="btn btn-secondary" onClick={stopCamera} style={{ flex: 1, padding: '14px' }}>
-                                ⏹️ Tutup Kamera
+                                Tutup Kamera
                             </button>
                         )}
                         <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} style={{ flex: 1, padding: '14px' }}>
-                            📁 Upload Foto
+                            Upload Foto
                         </button>
                     </div>
 
@@ -371,7 +397,7 @@ export default function ScanPage() {
                         border: '1px solid var(--border)',
                     }}>
                         <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>
-                            ✏️ Atau ketik manual
+                            Atau ketik manual
                         </div>
                         <textarea
                             placeholder="Paste atau ketik daftar komposisi di sini..."
@@ -394,7 +420,7 @@ export default function ScanPage() {
                         />
                         {ocrText.trim().length > 0 && (
                             <button className="btn btn-primary btn-full" onClick={() => setStep('review')} style={{ marginTop: 'var(--space-sm)', padding: '12px' }}>
-                                🔍 Analisis Teks Ini
+                                Analisis Teks Ini
                             </button>
                         )}
                     </div>
@@ -485,7 +511,7 @@ export default function ScanPage() {
                             </div>
                         )}
                         <div>
-                            <h2 style={{ fontSize: '18px', marginBottom: '2px' }}>📝 Review Teks</h2>
+                            <h2 style={{ fontSize: '18px', marginBottom: '2px' }}>Review Teks</h2>
                             <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
                                 Edit teks di bawah jika ada kesalahan OCR
                             </p>
@@ -506,7 +532,7 @@ export default function ScanPage() {
 
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-lg)' }}>
                         <button className="btn btn-secondary" onClick={resetScan} style={{ flex: 1, padding: '14px' }}>
-                            ← Ulang
+                            Ulang
                         </button>
                         <button
                             className="btn btn-primary"
@@ -514,7 +540,7 @@ export default function ScanPage() {
                             disabled={!ocrText.trim()}
                             style={{ flex: 2, padding: '14px', opacity: ocrText.trim() ? 1 : 0.5 }}
                         >
-                            🤖 Analisis Bahan
+                            Analisis Bahan
                         </button>
                     </div>
                 </div>
@@ -636,7 +662,7 @@ export default function ScanPage() {
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xl)' }}>
                         <button className="btn btn-primary btn-full" onClick={resetScan} style={{ padding: '14px' }}>
-                            📷 Scan Lagi
+                            Scan Lagi
                         </button>
                     </div>
                 </div>

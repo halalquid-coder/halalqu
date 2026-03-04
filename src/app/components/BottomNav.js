@@ -30,6 +30,12 @@ export default function BottomNav() {
                             key={item.href}
                             href={item.href}
                             className={`${styles.scanBtn} ${isActive ? styles.active : ''}`}
+                            onClick={(e) => {
+                                if (pathname === '/scan') {
+                                    e.preventDefault();
+                                    window.dispatchEvent(new Event('halalqu-reset-scan'));
+                                }
+                            }}
                         >
                             <div className={styles.scanBtnCircle}>
                                 <span style={{ fontSize: '24px' }}>📷</span>
