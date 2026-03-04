@@ -11,17 +11,17 @@ import { getUserNotifications } from './lib/firestore';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
-const filters = ['Semua', '✅ Certified', '🕌 Muslim Owned', '🥗 Halal Ingredients'];
+const filters = ['Semua', 'Certified', 'Muslim Owned', 'Halal Ingredients'];
 
 const categories = [
-  { emoji: '🍛', label: 'Street Food' },
-  { emoji: '☕', label: 'Cafe' },
-  { emoji: '🥘', label: 'Fine Dining' },
-  { emoji: '🍰', label: 'Bakery' },
-  { emoji: '🦐', label: 'Seafood' },
-  { emoji: '🍕', label: 'Western' },
-  { emoji: '🍜', label: 'Asian' },
-  { emoji: '🧁', label: 'Dessert' },
+  { emoji: '', label: 'Street Food' },
+  { emoji: '', label: 'Cafe' },
+  { emoji: '', label: 'Fine Dining' },
+  { emoji: '', label: 'Bakery' },
+  { emoji: '', label: 'Seafood' },
+  { emoji: '', label: 'Western' },
+  { emoji: '', label: 'Asian' },
+  { emoji: '', label: 'Dessert' },
 ];
 
 export default function HomePage() {
@@ -61,7 +61,7 @@ export default function HomePage() {
             lat: val.lat || (-6.2088 + (Math.random() - 0.5) * 0.1),
             lng: val.lng || (106.8456 + (Math.random() - 0.5) * 0.1),
             badge: val.certBody ? 'certified' : 'muslim-owned',
-            badgeLabel: val.certBody ? '✅ Certified' : '🕌 Muslim Owned',
+            badgeLabel: val.certBody ? 'Certified' : 'Muslim Owned',
             emoji: '🍽️',
             rating: val.rating || 0,
             reviews: val.reviewCount || 0,
@@ -241,13 +241,12 @@ export default function HomePage() {
             <span>Temukan makanan halal terdekat yang terpercaya</span>
           </h1>
 
-          <Link href="/search" className={styles.searchBox}>
+          <form className={styles.searchBox} onSubmit={(e) => { e.preventDefault(); const q = e.target.q.value.trim(); if (q) router.push(`/search?q=${encodeURIComponent(q)}`); else router.push('/search'); }}>
             <span className={styles.searchIcon}>🔍</span>
-            <span className={styles.searchText}>Cari restoran, menu, atau kota...</span>
-          </Link>
+            <input name="q" placeholder="Cari restoran, menu, atau kota..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, fontSize: '15px' }} />
+          </form>
 
           <button className={styles.nearbyBtn} onClick={() => router.push('/search')}>
-            <span>📍</span>
             Cari di Sekitarku
           </button>
         </div>
@@ -257,7 +256,7 @@ export default function HomePage() {
       {/* 🏷️ SECTION 1: Kategori Kuliner */}
       {/* ═══════════════════════════════════════════ */}
       <section className={styles.categorySection}>
-        <h2 className="section-title">🏷️ Kategori Kuliner</h2>
+        <h2 className="section-title">Kategori Kuliner</h2>
         <div className={styles.categoryGrid}>
           {categories.map((cat, i) => (
             <Link
@@ -266,7 +265,7 @@ export default function HomePage() {
               className={styles.categoryItem}
               style={{ animationDelay: `${i * 0.05}s` }}
             >
-              <div className={styles.categoryIcon}>{cat.emoji}</div>
+              {cat.emoji && <div className={styles.categoryIcon}>{cat.emoji}</div>}
               <span className={styles.categoryLabel}>{cat.label}</span>
             </Link>
           ))}
@@ -274,44 +273,15 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* 🔥 SECTION 2: Promo & Diskon (Sponsored) */}
+      {/* ❌ SECTION 2: Promo & Diskon (Hidden for now) */}
       {/* ═══════════════════════════════════════════ */}
-      <section className={styles.promoSection}>
-        <div className="section-header">
-          <h2 className="section-title">🔥 Promo & Diskon</h2>
-          <Link href="/search?promo=true" className="section-link">Semua Promo →</Link>
-        </div>
-
-        {promoPlaces.length > 0 ? (
-          <div className={styles.promoScroll}>
-            {promoPlaces.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.promoCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={styles.promoEmoji}>{place.emoji || '🍽️'}</div>
-                <div className={styles.promoBadge}>🔥 {place.promoDiscount}% OFF</div>
-                <div className={styles.promoInfo}>
-                  <h3>{place.name}</h3>
-                  <p>⭐ {place.rating} · {place.category}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.promoEmptyBanner}>
-            <div className={styles.promoEmptyIcon}>🎁</div>
-            <div>
-              <h3>Promo Segera Hadir!</h3>
-              <p>Dapatkan diskon eksklusif dari restoran halal pilihan</p>
-            </div>
-          </div>
-        )}
-      </section>
 
       {/* ═══════════════════════════════════════════ */}
       {/* ⭐ SECTION 3: Rekomendasi Pilihan (Premium) */}
       {/* ═══════════════════════════════════════════ */}
       <section className={styles.sponsoredSection}>
         <div className="section-header">
-          <h2 className="section-title">⭐ Rekomendasi Pilihan</h2>
+          <h2 className="section-title">Rekomendasi Pilihan</h2>
           <Link href="/search?featured=true" className="section-link">Lihat Semua →</Link>
         </div>
 
@@ -319,7 +289,7 @@ export default function HomePage() {
           <div className={styles.sponsoredScroll}>
             {premiumPlaces.map((place, i) => (
               <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={styles.sponsoredBadge}>⭐ Pilihan Halalqu</div>
+                <div className={styles.sponsoredBadge}>Pilihan Halalqu</div>
                 <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
                 <h3 className={styles.sponsoredName}>{place.name}</h3>
                 <div className={styles.sponsoredMeta}>
@@ -363,59 +333,8 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* 🆕 SECTION 4: Baru Dibuka */}
+      {/* ❌ SECTIONS: Baru Dibuka & Top Rated (Hidden for now) */}
       {/* ═══════════════════════════════════════════ */}
-      {newPlaces.length > 0 && (
-        <section className={styles.newSection}>
-          <div className="section-header">
-            <h2 className="section-title">🆕 Baru Dibuka</h2>
-            <Link href="/search?sort=newest" className="section-link">Lihat Semua →</Link>
-          </div>
-          <div className={styles.newScroll}>
-            {newPlaces.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.newCard} style={{ animationDelay: `${i * 0.08}s` }}>
-                <div className={styles.newBadge}>🆕 Baru</div>
-                <div className={styles.newEmoji}>{place.emoji || '🍽️'}</div>
-                <h3 className={styles.newName}>{place.name}</h3>
-                <span className={styles.newMeta}>
-                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ═══════════════════════════════════════════ */}
-      {/* 🏆 SECTION 5: Top Rated */}
-      {/* ═══════════════════════════════════════════ */}
-      {topRated.length > 0 && (
-        <section className={styles.topRatedSection}>
-          <div className="section-header">
-            <h2 className="section-title">🏆 Top Rated</h2>
-            <Link href="/search?sort=rating" className="section-link">Lihat Semua →</Link>
-          </div>
-          <div className={styles.topRatedList}>
-            {topRated.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.topRatedCard} style={{ animationDelay: `${i * 0.08}s` }}>
-                <div className={styles.topRatedRank}>
-                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                </div>
-                <div className={styles.topRatedEmoji}>{place.emoji || '🍽️'}</div>
-                <div className={styles.topRatedInfo}>
-                  <h3>{place.name}</h3>
-                  <div className={styles.topRatedMeta}>
-                    <span>⭐ {place.rating}</span>
-                    <span>·</span>
-                    <span>{place.category}</span>
-                  </div>
-                </div>
-                <span style={{ color: 'var(--text-muted)', alignSelf: 'center' }}>→</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Restaurant List — Di Sekitarmu */}
       <section className={styles.restaurantSection}>

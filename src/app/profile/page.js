@@ -290,7 +290,7 @@ export default function ProfilePage() {
                     background: '#FDE8E8', color: 'var(--danger)', borderRadius: 'var(--radius-lg)',
                     fontWeight: 600, fontSize: '15px', border: 'none', cursor: 'pointer',
                 }}>
-                    🚪 Keluar
+                    Keluar
                 </button>
             )}
         </div>

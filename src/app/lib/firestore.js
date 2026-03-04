@@ -141,11 +141,11 @@ export async function getRestaurantReviews(placeId) {
 export async function getUserReviews(uid) {
     const q = query(
         collection(db, 'reviews'),
-        where('userId', '==', uid),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', uid)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 // ============================================

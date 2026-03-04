@@ -48,7 +48,7 @@ function ServiceWorkerRegister() {
 function AppShell({ children }) {
   const pathname = usePathname();
   const { authLoading } = useUser();
-  const hideNavOn = ['/onboarding', '/login'];
+  const hideNavOn = ['/onboarding'];
   const showNav = !hideNavOn.includes(pathname);
 
   // Show loading screen while Firebase auth initializes
