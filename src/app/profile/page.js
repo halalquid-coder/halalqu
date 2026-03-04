@@ -101,11 +101,6 @@ export default function ProfilePage() {
                             </Link>
                         </div>
 
-                        {isMerchant && user.merchantInfo && (
-                            <p style={{ opacity: 0.8, fontSize: '12px', marginTop: 'var(--space-sm)', fontWeight: 500 }}>
-                                🏪 {user.merchantInfo.restoName}
-                            </p>
-                        )}
                     </>
                 ) : (
                     <>
