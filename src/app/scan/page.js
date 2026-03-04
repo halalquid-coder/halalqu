@@ -49,16 +49,29 @@ export default function ScanPage() {
     const startCamera = async () => {
         try {
             setCameraError(null);
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-            });
+
+            // Start with ideal resolution
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+                });
+            } catch (err) {
+                // Fallback for devices that don't support the exact constraint or face mode
+                console.warn('Ideal camera constraints failed, trying basic video...', err);
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' } // Just ask for rear camera, any size
+                });
+            }
+
             streamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
             }
             setCameraActive(true);
         } catch (err) {
-            setCameraError('Tidak bisa mengakses kamera. Gunakan tombol upload di bawah.');
+            console.error('Camera totally failed:', err);
+            setCameraError(`Kamera gagal dibuka: ${err.message || 'Izin ditolak atau tidak ada kamera'}.`);
             setCameraActive(false);
         }
     };
