@@ -14,8 +14,8 @@ const popularCities = [
     { emoji: '🇦🇪', name: 'Dubai' },
 ];
 
-const halalTypes = ['✅ Certified Halal', '🕌 Muslim Owned', '🥗 Halal Ingredients'];
-const categories = ['🍽 Semua', '☕ Cafe', '🍛 Street Food', '🥘 Fine Dining', '🍰 Bakery', '🍕 Western'];
+const halalTypes = ['Certified Halal', 'Muslim Owned', 'Halal Ingredients'];
+const categories = ['Semua', 'Cafe', 'Street Food', 'Fine Dining', 'Bakery', 'Western'];
 const priceRanges = ['$ Murah', '$$ Sedang', '$$$ Mahal'];
 
 export default function SearchPage() {

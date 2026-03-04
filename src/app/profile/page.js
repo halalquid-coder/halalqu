@@ -14,22 +14,22 @@ export default function ProfilePage() {
     };
 
     const userMenuItems = [
-        { icon: '📝', label: 'Review Saya', href: '/profile/reviews', count: user.stats.reviews },
-        { icon: '📍', label: 'Tempat Ditambahkan', href: '/profile/places', count: user.stats.places },
-        { icon: '❤️', label: 'Bookmark', href: '/bookmarks', count: user.stats.bookmarks },
+        { icon: '', label: 'Review Saya', href: '/profile/reviews', count: user.stats.reviews },
+        { icon: '', label: 'Tempat Ditambahkan', href: '/profile/places', count: user.stats.places },
+        { icon: '', label: 'Bookmark', href: '/bookmarks', count: user.stats.bookmarks },
     ];
 
     const merchantMenuItems = [
-        { icon: '📊', label: 'Merchant Dashboard', href: '/merchant/dashboard', accent: true },
+        { icon: '', label: 'Merchant Dashboard', href: '/merchant/dashboard', accent: true },
         ...userMenuItems,
     ];
 
     const menuItems = isMerchant ? merchantMenuItems : userMenuItems;
 
     const settingsItems = [
-        { icon: '⚙️', label: 'Pengaturan', href: '/profile/settings' },
-        { icon: 'ℹ️', label: 'Tentang Halalqu', href: '/about' },
-        { icon: '🛡️', label: 'Admin Panel', href: '/admin' },
+        { icon: '', label: 'Pengaturan', href: '/profile/settings' },
+        { icon: '', label: 'Tentang Halalqu', href: '/about' },
+        { icon: '', label: 'Admin Panel', href: '/admin' },
     ];
 
     return (
@@ -97,7 +97,7 @@ export default function ProfilePage() {
                                 border: '1px solid rgba(255,255,255,0.4)',
                                 textDecoration: 'none', transition: 'all 0.2s ease',
                             }}>
-                                ✏️ Edit Profil
+                                Edit Profil
                             </Link>
                         </div>
 
@@ -120,7 +120,7 @@ export default function ProfilePage() {
                             backdropFilter: 'blur(8px)', border: '1.5px solid rgba(255,255,255,0.3)',
                             textDecoration: 'none',
                         }}>
-                            🔑 Masuk / Daftar
+                            Masuk / Daftar
                         </Link>
                     </>
                 )}

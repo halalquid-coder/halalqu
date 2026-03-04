@@ -235,7 +235,7 @@ export default function LoginPage() {
                         padding: '16px', fontSize: '16px', marginBottom: 'var(--space-lg)',
                         opacity: loading ? 0.7 : 1,
                     }}>
-                        {loading ? '⏳ Memproses...' : isRegister ? '🚀 Daftar Sekarang' : '🔑 Masuk'}
+                        {loading ? 'Memproses...' : isRegister ? 'Daftar Sekarang' : 'Masuk'}
                     </button>
                 </form>
 
