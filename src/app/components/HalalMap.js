@@ -59,6 +59,25 @@ export default function HalalMap({ restaurants = [] }) {
         );
     };
 
+    // Auto-locate user once map is ready
+    useEffect(() => {
+        if (mapReady && MapComponents && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const newPos = [pos.coords.latitude, pos.coords.longitude];
+                    setUserPos(newPos);
+                    if (mapRef.current) {
+                        mapRef.current.flyTo(newPos, 15);
+                    }
+                },
+                () => {
+                    // silently fail on auto-locate if permission denied
+                },
+                { timeout: 5000 }
+            );
+        }
+    }, [mapReady, MapComponents]);
+
     if (!mapReady || !MapComponents) {
         return (
             <div style={{
@@ -87,7 +106,7 @@ export default function HalalMap({ restaurants = [] }) {
         { id: '5', name: 'Bakso Solo Pak Min', lat: -6.2020, lng: 106.8440, badge: '✅ Certified', emoji: '🍜' },
     ];
 
-    const locations = restaurants.length > 0 ? restaurants : sampleLocations;
+    const locations = restaurants;
 
     return (
         <div style={{
@@ -98,7 +117,7 @@ export default function HalalMap({ restaurants = [] }) {
         }}>
             <MapContainer
                 ref={mapRef}
-                center={defaultCenter}
+                center={center}
                 zoom={15}
                 scrollWheelZoom={false}
                 style={{ width: '100%', height: '100%' }}
