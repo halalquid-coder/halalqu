@@ -45,6 +45,20 @@ function ServiceWorkerRegister() {
   return null;
 }
 
+function GeolocationPrompt() {
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      // Prompt for location on mount, reuse if already granted
+      navigator.geolocation.getCurrentPosition(
+        (pos) => console.log('Location permission granted/reused on load'),
+        (err) => console.warn('Location permission denied or error on load:', err),
+        { maximumAge: 60000, timeout: 5000, enableHighAccuracy: true }
+      );
+    }
+  }, []);
+  return null;
+}
+
 function AppShell({ children }) {
   const pathname = usePathname();
   const { authLoading } = useUser();
@@ -59,10 +73,6 @@ function AppShell({ children }) {
         alignItems: 'center', justifyContent: 'center', gap: 'var(--space-md)',
         background: 'var(--halalqu-green-gradient)',
       }}>
-        <img src="/icon.svg" alt="Halalqu" style={{
-          width: '80px', height: '80px',
-          animation: 'scaleIn 0.5s ease',
-        }} />
         <img src="/logo-white.svg" alt="Halalqu" style={{
           height: '32px', opacity: 0.9,
         }} />
@@ -83,6 +93,7 @@ function AppShell({ children }) {
 
   return (
     <>
+      <GeolocationPrompt />
       <main>{children}</main>
       {showNav && <BottomNav />}
     </>

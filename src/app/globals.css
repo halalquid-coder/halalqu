@@ -530,3 +530,9 @@ select {
     transform: translateX(300%);
   }
 }
+
+/* Hide Next.js dev overlays */
+nextjs-portal,
+#next-route-announcer {
+  display: none !important;
+}

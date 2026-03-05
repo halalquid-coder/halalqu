@@ -52,22 +52,59 @@ export default function HomePage() {
           return {
             id: doc.id,
             name: val.name,
-            lat: val.lat || (-6.2088 + (Math.random() - 0.5) * 0.1),
-            lng: val.lng || (106.8456 + (Math.random() - 0.5) * 0.1),
+            lat: val.lat || null,
+            lng: val.lng || null,
             badge: val.certBody ? 'certified' : 'muslim-owned',
             badgeLabel: val.certBody ? 'Certified' : 'Muslim Owned',
             emoji: '🍽️',
             rating: val.rating || 0,
             reviews: val.reviewCount || 0,
-            distance: '~ km',
             category: val.category || 'Restoran',
             isPremium: val.isPremium || false,
+            photo: val.imageUrl || ((val.photos && val.photos.length > 0) ? val.photos[0] : ((val.images && val.images.length > 0) ? val.images[0] : null)),
             promoDiscount: val.promoDiscount || null,
             createdAt: val.createdAt || null,
             ...val
           };
         });
-        setPlaces(data.filter(p => p.status === 'approved'));
+
+        // Get user location and filter places by distance (< 3km) if available
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((pos) => {
+            const userLat = pos.coords.latitude;
+            const userLng = pos.coords.longitude;
+
+            const withDistance = data.map(p => {
+              const R = 6371; // Earth radius in km
+              const dLat = (p.lat - userLat) * Math.PI / 180;
+              const dLng = (p.lng - userLng) * Math.PI / 180;
+              const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(userLat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              const dist = R * c;
+
+              return {
+                ...p,
+                distNum: dist,
+                distance: dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`
+              };
+            });
+
+            const nearbyApproved = withDistance
+              .filter(p => p.status === 'approved' && p.distNum <= 3)
+              .sort((a, b) => a.distNum - b.distNum);
+
+            setPlaces(nearbyApproved);
+          }, () => {
+            // Fallback if no location
+            setPlaces(data.filter(p => p.status === 'approved').map(p => ({ ...p, distance: '~ km' })));
+          });
+        } else {
+          setPlaces(data.filter(p => p.status === 'approved').map(p => ({ ...p, distance: '~ km' })));
+        }
+
       } catch (e) {
         console.error("Failed to load places for map:", e);
       }
@@ -287,7 +324,16 @@ export default function HomePage() {
             {premiumPlaces.map((place, i) => (
               <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.sponsoredBadge}>Pilihan Halalqu</div>
-                <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
+                {place.photo ? (
+                  <div style={{
+                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
+                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
+                )}
                 <h3 className={styles.sponsoredName}>{place.name}</h3>
                 <div className={styles.sponsoredMeta}>
                   <span>⭐ {place.rating}</span>
@@ -339,7 +385,11 @@ export default function HomePage() {
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <div className={styles.cardImage}>
-                  {resto.emoji}
+                  {resto.photo ? (
+                    <img src={resto.photo} alt={resto.name} />
+                  ) : (
+                    resto.emoji
+                  )}
                 </div>
                 <div className={styles.cardContent}>
                   <h3 className={styles.cardName}>{resto.name}</h3>

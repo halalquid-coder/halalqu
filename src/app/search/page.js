@@ -45,12 +45,15 @@ export default function SearchPage() {
                         id: d.id,
                         name: val.name || '',
                         address: val.address || '',
+                        lat: val.lat || null,
+                        lng: val.lng || null,
                         category: val.category || 'Restoran',
                         badge: val.certBody ? 'certified' : 'muslim-owned',
                         badgeLabel: val.certBody ? '✅ Certified' : '🕌 Muslim Owned',
                         rating: val.rating || 0,
                         reviewCount: val.reviewCount || 0,
                         status: val.status || 'pending',
+                        photo: val.imageUrl || ((val.photos && val.photos.length > 0) ? val.photos[0] : ((val.images && val.images.length > 0) ? val.images[0] : null)),
                     };
                 });
                 setAllPlaces(data.filter(p => p.status === 'approved'));
@@ -63,20 +66,45 @@ export default function SearchPage() {
 
     // Search when query changes
     useEffect(() => {
-        if (!searchQuery.trim()) {
+        if (!searchQuery.trim() && distance === 10) {
             setResults([]);
             setIsSearching(false);
             return;
         }
         setIsSearching(true);
         const q = searchQuery.toLowerCase();
-        const filtered = allPlaces.filter(p =>
+        let filtered = allPlaces.filter(p =>
             p.name.toLowerCase().includes(q) ||
             p.address.toLowerCase().includes(q) ||
             p.category.toLowerCase().includes(q)
         );
-        setResults(filtered);
-    }, [searchQuery, allPlaces]);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const userLat = pos.coords.latitude;
+                const userLng = pos.coords.longitude;
+
+                const withDistance = filtered.map(p => {
+                    if (!p.lat || !p.lng) return { ...p, distNum: 999 };
+                    const R = 6371;
+                    const dLat = (p.lat - userLat) * Math.PI / 180;
+                    const dLng = (p.lng - userLng) * Math.PI / 180;
+                    const a =
+                        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                        Math.cos(userLat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    return { ...p, distNum: R * c };
+                });
+
+                setResults(withDistance.filter(p => p.distNum <= distance).sort((a, b) => a.distNum - b.distNum));
+            }, () => {
+                setResults(filtered);
+            });
+        } else {
+            setResults(filtered);
+        }
+    }, [searchQuery, allPlaces, distance]);
 
     return (
         <div className={`page container ${styles.searchPage}`}>
@@ -175,7 +203,13 @@ export default function SearchPage() {
                                     padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)',
                                     textDecoration: 'none', color: 'inherit',
                                 }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🍽️</div>
+                                    {p.photo ? (
+                                        <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                                            <img src={p.photo} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    ) : (
+                                        <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🍽️</div>
+                                    )}
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '2px' }}>{p.name}</div>
                                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
