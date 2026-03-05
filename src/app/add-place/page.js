@@ -21,6 +21,8 @@ export default function AddPlacePage() {
     const [halalType, setHalalType] = useState(null);
     const [notes, setNotes] = useState('');
     const [phone, setPhone] = useState('');
+    const [lat, setLat] = useState(null);
+    const [lng, setLng] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [photos, setPhotos] = useState([null, null, null, null, null]);
@@ -129,17 +131,41 @@ export default function AddPlacePage() {
                             border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)',
                         }}
                     />
-                    <button type="button" onClick={() => alert('Fitur peta akan segera hadir!')} style={{
-                        padding: '14px', borderRadius: 'var(--radius-md)',
-                        background: 'var(--halalqu-green-light)', border: 'none',
-                        fontSize: '18px', cursor: 'pointer',
-                    }}>
+                    <button type="button"
+                        onClick={() => {
+                            if (!navigator.geolocation) {
+                                alert('Browser tidak mendukung lokasi');
+                                return;
+                            }
+                            navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                    setLat(pos.coords.latitude);
+                                    setLng(pos.coords.longitude);
+                                    alert('Titik koordinat berhasil diambil ✅');
+                                },
+                                () => alert('Gagal mendapatkan lokasi. Pastikan GPS aktif.'),
+                                { timeout: 10000, enableHighAccuracy: true }
+                            );
+                        }}
+                        style={{
+                            padding: '14px', borderRadius: 'var(--radius-md)',
+                            background: lat && lng ? 'var(--halalqu-green)' : 'var(--halalqu-green-light)',
+                            color: lat && lng ? 'white' : 'var(--charcoal)',
+                            border: 'none', fontSize: '18px', cursor: 'pointer',
+                        }}
+                    >
                         📍
                     </button>
                 </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Tap 📍 untuk pilih dari peta
-                </p>
+                {lat && lng ? (
+                    <p style={{ fontSize: '12px', color: 'var(--halalqu-green)', marginTop: '4px', fontWeight: 600 }}>
+                        ✓ Koordinat tersimpan: {lat.toFixed(5)}, {lng.toFixed(5)}
+                    </p>
+                ) : (
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Tap 📍 untuk ambil koordinat saat ini
+                    </p>
+                )}
             </div>
 
             {/* Phone */}
@@ -287,6 +313,7 @@ export default function AddPlacePage() {
                             halalType: halalType || '',
                             notes,
                             photoCount: photos.filter(Boolean).length,
+                            lat, lng
                         });
                     } catch (e) {
                         console.log('Place submission error:', e);

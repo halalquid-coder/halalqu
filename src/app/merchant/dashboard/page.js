@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useUser } from '../../context/UserContext';
-import { doc, getDoc, updateDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
+import { addDoc, doc, getDoc, updateDoc, serverTimestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getRestaurantReviews, getMerchantApplication } from '../../lib/firestore';
 
@@ -16,6 +16,9 @@ export default function MerchantDashboard() {
     const [editing, setEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
     const [uploading, setUploading] = useState(false);
+    const [images, setImages] = useState([]);
+    const [places, setPlaces] = useState([]);
+    const [isAddingNew, setIsAddingNew] = useState(false);
 
     useEffect(() => {
         if (!user.isLoggedIn || authLoading) return;
@@ -33,39 +36,49 @@ export default function MerchantDashboard() {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             let placeId = userDoc.exists() ? userDoc.data().merchantInfo?.placeId : null;
 
-            // 2. If not in user document, try finding a place owned by this user
-            if (!placeId) {
-                const q = query(collection(db, 'places'), where('ownerId', '==', user.uid));
-                const snap = await getDocs(q);
-                if (!snap.empty) {
-                    placeId = snap.docs[0].id;
+            // 2. Try finding all places owned by this user
+            let userPlaces = [];
+            const q = query(collection(db, 'places'), where('ownerId', '==', user.uid));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                userPlaces = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            }
+            // Sort to ensure consistent order (e.g. oldest first)
+            userPlaces.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+            setPlaces(userPlaces);
+
+            let activePlace = null;
+            if (userPlaces.length > 0) {
+                activePlace = userPlaces.find(p => p.id === placeId) || userPlaces[0];
+            } else if (placeId) {
+                const placeDoc = await getDoc(doc(db, 'places', placeId));
+                if (placeDoc.exists()) {
+                    activePlace = { id: placeDoc.id, ...placeDoc.data() };
+                    setPlaces([activePlace]);
                 }
             }
 
-            if (placeId) {
-                const placeDoc = await getDoc(doc(db, 'places', placeId));
-                if (placeDoc.exists()) {
-                    const pdata = { id: placeDoc.id, ...placeDoc.data() };
-                    setPlace(pdata);
-                    setEditForm({
-                        name: pdata.name || '',
-                        address: pdata.address || '',
-                        phone: pdata.phone || '',
-                        operatingHours: pdata.operatingHours || '', // Legacy
-                        openTime: pdata.openTime || '',
-                        closeTime: pdata.closeTime || '',
-                        operatingDays: pdata.operatingDays || ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                        isTemporarilyClosed: pdata.isTemporarilyClosed || false,
-                        category: pdata.category || '',
-                        description: pdata.description || '',
-                        imageUrl: pdata.imageUrl || '',
-                    });
-                    // Load reviews for this place
-                    try {
-                        const revs = await getRestaurantReviews(placeId);
-                        setReviews(revs);
-                    } catch (e) { console.error(e); }
-                }
+            if (activePlace) {
+                setPlace(activePlace);
+                setEditForm({
+                    name: activePlace.name || '',
+                    address: activePlace.address || '',
+                    phone: activePlace.phone || '',
+                    operatingHours: activePlace.operatingHours || '', // Legacy
+                    openTime: activePlace.openTime || '',
+                    closeTime: activePlace.closeTime || '',
+                    operatingDays: activePlace.operatingDays || ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                    isTemporarilyClosed: activePlace.isTemporarilyClosed || false,
+                    category: activePlace.category || '',
+                    description: activePlace.description || '',
+                    imageUrl: activePlace.imageUrl || '',
+                });
+                setImages(activePlace.images || (activePlace.imageUrl ? [activePlace.imageUrl] : []));
+                // Load reviews for this place
+                try {
+                    const revs = await getRestaurantReviews(activePlace.id);
+                    setReviews(revs.filter(r => r.status === 'approved'));
+                } catch (e) { console.error(e); }
             }
         } catch (e) {
             console.error('Error loading merchant data:', e);
@@ -75,47 +88,107 @@ export default function MerchantDashboard() {
     };
 
     const handleSaveEdit = async () => {
-        if (!place?.id) return;
         try {
-            await updateDoc(doc(db, 'places', place.id), {
-                ...editForm,
-                updatedAt: serverTimestamp(),
-            });
+            if (isAddingNew) {
+                const newPlaceData = {
+                    ...editForm,
+                    images: images,
+                    imageUrl: images.length > 0 ? images[0] : '',
+                    ownerId: user.uid,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    certBody: application?.certBody || 'Klaim Mandiri',
+                    rating: 0,
+                    reviewCount: 0,
+                };
+                const docRef = await addDoc(collection(db, 'places'), newPlaceData);
+                const newPlace = { id: docRef.id, ...newPlaceData };
+                setPlaces(prev => [...prev, newPlace]);
+                setPlace(newPlace);
+                setIsAddingNew(false);
+                setEditing(false);
+                alert('Listing baru berhasil ditambahkan! ✅');
+            } else {
+                if (!place?.id) return;
+                await updateDoc(doc(db, 'places', place.id), {
+                    ...editForm,
+                    images: images,
+                    imageUrl: images.length > 0 ? images[0] : '',
+                    updatedAt: serverTimestamp(),
+                });
 
-            // Sync with user's merchantInfo for Profile display
-            await updateDoc(doc(db, 'users', user.uid), {
-                'merchantInfo.restaurantName': editForm.name,
-                'merchantInfo.description': editForm.description,
-            });
+                // Sync with user's merchantInfo for Profile display if it's the primary (legacy)
+                await updateDoc(doc(db, 'users', user.uid), {
+                    'merchantInfo.restaurantName': editForm.name,
+                    'merchantInfo.description': editForm.description,
+                });
 
-            setPlace({ ...place, ...editForm });
-            setEditing(false);
-            if (refreshUser) await refreshUser();
-            alert('Informasi berhasil diperbarui! ✅');
+                const updatedPlace = { ...place, ...editForm, images, imageUrl: images.length > 0 ? images[0] : '' };
+                setPlace(updatedPlace);
+                setPlaces(prev => prev.map(p => p.id === updatedPlace.id ? updatedPlace : p));
+                setEditing(false);
+                if (refreshUser) await refreshUser();
+                alert('Informasi berhasil diperbarui! ✅');
+            }
         } catch (e) {
             alert('Error: ' + e.message);
         }
     };
 
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleDeleteListing = async () => {
+        if (!place?.id) return;
+        if (confirm('Apakah Anda yakin ingin menghapus listing ini? Tindakan ini tidak dapat dibatalkan.')) {
+            try {
+                const { deleteDoc } = await import('firebase/firestore');
+                await deleteDoc(doc(db, 'places', place.id));
+                const remaining = places.filter(p => p.id !== place.id);
+                setPlaces(remaining);
+                if (remaining.length > 0) {
+                    setPlace(remaining[0]);
+                } else {
+                    setPlace(null);
+                }
+                alert('Listing berhasil dihapus.');
+            } catch (e) {
+                alert('Gagal menghapus listing: ' + e.message);
+            }
+        }
+    };
 
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran foto maksimal 2MB');
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        if (images.length + files.length > 5) {
+            alert('Maksimal 5 foto per listing.');
             return;
         }
+
+        const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+        if (validFiles.length < files.length) {
+            alert('Beberapa foto ditolak karena ukuran melebihi 5MB.');
+        }
+        if (!validFiles.length) return;
 
         setUploading(true);
         try {
             const { uploadImage } = await import('../../lib/firestore');
-            const url = await uploadImage(file, `merchants/${user.uid}/${Date.now()}_${file.name}`);
-            setEditForm(prev => ({ ...prev, imageUrl: url }));
+            const newUrls = await Promise.all(
+                validFiles.map(file => uploadImage(file, `merchants/${user.uid}/${Date.now()}_${file.name}`))
+            );
+            setImages(prev => [...prev, ...newUrls]);
+            if (!editForm.imageUrl && newUrls.length > 0) {
+                setEditForm(prev => ({ ...prev, imageUrl: newUrls[0] }));
+            }
         } catch (err) {
             alert('Gagal mengupload foto: ' + err.message);
         } finally {
             setUploading(false);
         }
+    };
+
+    const removeImage = (index) => {
+        setImages(images.filter((_, i) => i !== index));
     };
 
     const checkIsOpen = (placeData) => {
@@ -266,38 +339,146 @@ export default function MerchantDashboard() {
                         <div style={{ animation: 'fadeIn 0.3s ease' }}>
                             <div style={{ background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-lg)', boxShadow: 'var(--shadow-sm)' }}>
                                 <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
-                                    <div style={{ width: '100px', height: '100px', borderRadius: 'var(--radius-lg)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', margin: '0 auto var(--space-md)', overflow: 'hidden' }}>
-                                        {editForm.imageUrl || place?.imageUrl ? (
-                                            <img src={editing ? editForm.imageUrl || place?.imageUrl : place?.imageUrl} alt="Restoran" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                            '🍽️'
+                                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', justifyContent: 'center' }}>
+                                        {images.length > 0 ? images.map((img, i) => (
+                                            <div key={i} style={{ width: '100px', height: '100px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border)' }}>
+                                                <img src={img} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </div>
+                                        )) : (
+                                            <div style={{ width: '100px', height: '100px', borderRadius: 'var(--radius-lg)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', margin: '0 auto', overflow: 'hidden' }}>
+                                                🍽️
+                                            </div>
                                         )}
                                     </div>
-                                    <h3>{place?.name || 'Merchant'}</h3>
+                                    <h3 style={{ marginTop: 'var(--space-md)' }}>{place?.name || 'Merchant'}</h3>
                                     <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{place?.category || ''}</p>
 
-                                    {!editing && (
-                                        <div style={{ display: 'inline-block', marginTop: 'var(--space-sm)', padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '12px', fontWeight: 600, background: checkIsOpen(place) ? '#D1FAE5' : '#FEE2E2', color: checkIsOpen(place) ? '#065F46' : '#991B1B' }}>
-                                            {checkIsOpen(place) ? 'Buka Sekarang' : 'Tutup Sekarang'}
-                                        </div>
+                                    {!editing && !isAddingNew && (
+                                        <>
+                                            <div style={{ display: 'inline-block', marginTop: 'var(--space-sm)', padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '12px', fontWeight: 600, background: checkIsOpen(place) ? '#D1FAE5' : '#FEE2E2', color: checkIsOpen(place) ? '#065F46' : '#991B1B' }}>
+                                                {checkIsOpen(place) ? 'Buka Sekarang' : 'Tutup Sekarang'}
+                                            </div>
+
+                                            {places.length > 1 && (
+                                                <div style={{ marginTop: 'var(--space-md)' }}>
+                                                    <select
+                                                        value={place?.id || ''}
+                                                        onChange={(e) => {
+                                                            const selected = places.find(p => p.id === e.target.value);
+                                                            if (selected) {
+                                                                setPlace(selected);
+                                                                setImages(selected.images || (selected.imageUrl ? [selected.imageUrl] : []));
+                                                                getRestaurantReviews(selected.id).then(setReviews).catch(console.error);
+                                                            }
+                                                        }}
+                                                        style={{ ...inputStyle, background: 'var(--white)', fontWeight: 600 }}
+                                                    >
+                                                        {places.map(p => (
+                                                            <option key={p.id} value={p.id}>{p.name || 'Cabang Tanpa Nama'}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-lg)' }}>
+                                                {place && (
+                                                    <button onClick={() => {
+                                                        setEditForm({
+                                                            name: place.name || '', address: place.address || '', phone: place.phone || '', openTime: place.openTime || '', closeTime: place.closeTime || '', operatingDays: place.operatingDays || ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: place.isTemporarilyClosed || false, category: place.category || '', description: place.description || '', imageUrl: place.imageUrl || ''
+                                                        });
+                                                        setImages(place.images || (place.imageUrl ? [place.imageUrl] : []));
+                                                        setEditing(true);
+                                                    }} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--white)', color: 'var(--charcoal)', border: '1px solid var(--border)', fontWeight: 600, fontSize: '13px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                                                        ✏️ Edit Listing
+                                                    </button>
+                                                )}
+                                                <button onClick={() => {
+                                                    if (places.length >= 3) {
+                                                        alert('Anda telah mencapai batas maksimal 3 listing gratis. Untuk menambah lebih banyak, silakan berlangganan akun premium.');
+                                                        return;
+                                                    }
+                                                    setIsAddingNew(true);
+                                                    setEditForm({
+                                                        name: '', address: '', phone: '', openTime: '', closeTime: '', operatingDays: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: false, category: '', description: '', imageUrl: ''
+                                                    });
+                                                    setImages([]);
+                                                }} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green)', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                                                    + Tambah Listing
+                                                </button>
+                                                {place && places.length > 0 && (
+                                                    <button onClick={handleDeleteListing} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: '#FEE2E2', color: '#991B1B', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer', marginTop: 'var(--space-md)' }}>
+                                                        🗑️ Hapus Listing
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </>
                                     )}
                                 </div>
 
-                                {editing ? (
+                                {(editing || isAddingNew) ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-                                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Foto Restoran</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                                            <label style={{ padding: '8px 16px', background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green)', borderRadius: 'var(--radius-sm)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                                                {uploading ? '⏳ Mengupload...' : 'Pilih Foto'}
-                                                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploading} />
-                                            </label>
-                                            {editForm.imageUrl && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Foto tersimpan ✅</span>}
+                                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Foto Restoran (Maksimal 5 Foto, Max 5MB/Foto)</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                                            {images.length < 5 && (
+                                                <label style={{ display: 'inline-block', width: 'fit-content', padding: '8px 16px', background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green)', borderRadius: 'var(--radius-sm)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                                    {uploading ? '⏳ Mengupload...' : 'Pilih Foto'}
+                                                    <input type="file" multiple accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} style={{ display: 'none' }} disabled={uploading} />
+                                                </label>
+                                            )}
+
+                                            {images.length > 0 && (
+                                                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+                                                    {images.map((img, i) => (
+                                                        <div key={i} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                                                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            <button onClick={(e) => { e.preventDefault(); removeImage(i); }} style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Nama</label>
                                         <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={inputStyle} />
-                                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Alamat</label>
-                                        <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} style={inputStyle} />
+                                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                            <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (!navigator.geolocation) {
+                                                        alert('Browser tidak mendukung lokasi');
+                                                        return;
+                                                    }
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (pos) => {
+                                                            setEditForm({
+                                                                ...editForm,
+                                                                lat: pos.coords.latitude,
+                                                                lng: pos.coords.longitude
+                                                            });
+                                                            alert('Titik kordinat berhasil diperbarui sesuai lokasi Anda saat ini ✅');
+                                                        },
+                                                        (err) => alert('Gagal mendapatkan lokasi. Pastikan GPS aktif.'),
+                                                        { timeout: 10000, enableHighAccuracy: true }
+                                                    );
+                                                }}
+                                                style={{
+                                                    padding: '10px 14px', borderRadius: 'var(--radius-md)',
+                                                    background: editForm.lat && editForm.lng ? 'var(--halalqu-green)' : 'var(--halalqu-green-light)',
+                                                    color: editForm.lat && editForm.lng ? 'white' : 'var(--charcoal)',
+                                                    border: 'none', fontSize: '18px', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}
+                                                title={editForm.lat && editForm.lng ? "Kordinat tersimpan" : "Ambil kordinat saat ini"}
+                                            >
+                                                📍
+                                            </button>
+                                        </div>
+                                        {editForm.lat && editForm.lng && (
+                                            <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', marginTop: '-4px', marginBottom: '8px' }}>
+                                                ✓ Titik koordinat tersimpan: {editForm.lat.toFixed(5)}, {editForm.lng.toFixed(5)}
+                                            </div>
+                                        )}
                                         <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Telepon</label>
                                         <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} style={inputStyle} />
                                         <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Kategori</label>
@@ -362,7 +543,7 @@ export default function MerchantDashboard() {
                                             <button onClick={handleSaveEdit} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', background: '#065F46', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
                                                 Simpan
                                             </button>
-                                            <button onClick={() => setEditing(false)} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', background: '#991B1B', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                                            <button onClick={() => { setEditing(false); setIsAddingNew(false); }} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', background: '#991B1B', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
                                                 Batal
                                             </button>
                                         </div>
@@ -384,9 +565,6 @@ export default function MerchantDashboard() {
                                                 <span style={{ fontSize: '14px', fontWeight: 500, maxWidth: '60%', textAlign: 'right', color: field.label === 'Status Toko' && place?.isTemporarilyClosed ? 'var(--danger)' : 'inherit' }}>{field.value}</span>
                                             </div>
                                         ))}
-                                        <button className="btn btn-outline btn-full" style={{ marginTop: 'var(--space-lg)' }} onClick={() => setEditing(true)}>
-                                            ✏️ Edit Informasi
-                                        </button>
                                     </>
                                 )}
                             </div>
