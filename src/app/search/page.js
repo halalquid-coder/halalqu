@@ -64,20 +64,43 @@ export default function SearchPage() {
         loadPlaces();
     }, []);
 
-    // Search when query changes
+    const filterCategory = searchParams.get('category');
+
+    // Search when query or filters change
     useEffect(() => {
-        if (!searchQuery.trim() && distance === 10) {
-            setResults([]);
-            setIsSearching(false);
-            return;
-        }
-        setIsSearching(true);
+        // If there's absolutely no search query, no filter category, and we're just on the default page, we might not want to show empty or all. 
+        // But since they clicked "Muslim Owned" from the home page, it comes as '?category=Muslim%20Owned'
         const q = searchQuery.toLowerCase();
-        let filtered = allPlaces.filter(p =>
-            p.name.toLowerCase().includes(q) ||
-            p.address.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q)
-        );
+
+        let filtered = allPlaces.filter(p => {
+            let matchText = true;
+            if (q) {
+                matchText = p.name.toLowerCase().includes(q) ||
+                    p.address.toLowerCase().includes(q) ||
+                    p.category.toLowerCase().includes(q) ||
+                    p.badgeLabel.toLowerCase().includes(q);
+            }
+
+            let matchCatParams = true;
+            if (filterCategory) {
+                matchCatParams = p.badgeLabel.includes(filterCategory) || p.category === filterCategory;
+            }
+
+            let matchActiveCat = true;
+            if (activeCategory > 0) {
+                matchActiveCat = p.category === categories[activeCategory];
+            }
+
+            let matchActiveHalal = true;
+            if (activeHalal !== null) {
+                const halalLabel = halalTypes[activeHalal];
+                matchActiveHalal = p.badgeLabel.includes(halalLabel.split(' ')[1]) || p.badgeLabel.includes(halalLabel);
+            }
+
+            return matchText && matchCatParams && matchActiveCat && matchActiveHalal;
+        });
+
+        setIsSearching(filtered.length > 0 || q.length > 0 || filterCategory !== null);
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -104,7 +127,7 @@ export default function SearchPage() {
         } else {
             setResults(filtered);
         }
-    }, [searchQuery, allPlaces, distance]);
+    }, [searchQuery, allPlaces, distance, activeHalal, activeCategory, searchParams]);
 
     return (
         <div className={`page container ${styles.searchPage}`}>
