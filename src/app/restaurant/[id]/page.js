@@ -5,9 +5,11 @@ import styles from './detail.module.css';
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { getRestaurantReviews } from '../../lib/firestore';
+import { getRestaurantReviews, submitReport } from '../../lib/firestore';
+import { useUser } from '../../context/UserContext';
 
 export default function RestaurantDetailPage() {
+    const { user } = useUser();
     const params = useParams();
     const router = useRouter();
     const [resto, setResto] = useState(null);
@@ -15,6 +17,11 @@ export default function RestaurantDetailPage() {
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    // Reporting state
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('Informasi Halal tidak akurat');
+    const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
     useEffect(() => {
         async function fetchPlace() {
@@ -94,6 +101,31 @@ export default function RestaurantDetailPage() {
         } else {
             alert('Nomor telepon tidak tersedia');
         }
+    };
+
+    const handleSubmitReport = async (e) => {
+        e.preventDefault();
+        if (!user.isLoggedIn) {
+            alert("Silakan login terlebih dahulu untuk melaporkan data.");
+            return;
+        }
+        setIsSubmittingReport(true);
+        try {
+            await submitReport({
+                type: 'place',
+                targetId: resto.id,
+                targetName: resto.name,
+                reason: reportReason,
+                reportedBy: user.uid,
+                reportedByName: user.name || 'Anonymous'
+            });
+            setShowReportModal(false);
+            alert("Terima kasih! Laporan Anda telah kami terima dan akan segera ditinjau oleh Admin.");
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mengirim laporan. Coba lagi nanti.");
+        }
+        setIsSubmittingReport(false);
     };
 
     if (loading) {
@@ -232,6 +264,46 @@ export default function RestaurantDetailPage() {
                     ))
                 )}
             </section>
+            {/* Reports */}
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)', marginBottom: 'var(--space-md)' }}>
+                <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '13px', textDecoration: 'underline', cursor: 'pointer' }}>
+                    🚩 Laporkan Informasi Restoran Ini
+                </button>
+            </div>
+
+            {/* Report Modal */}
+            {showReportModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+                    <div style={{ background: 'var(--white)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', width: '90%', maxWidth: '400px' }}>
+                        <h3 style={{ margin: '0 0 var(--space-sm) 0', color: 'var(--text-dark)' }}>Laporkan Data</h3>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>Pilih alasan kenapa informasi tempat ini kurang tepat:</p>
+
+                        <form onSubmit={handleSubmitReport} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-dark)' }}>
+                                <input type="radio" value="Toko sudah tutup permanen" checked={reportReason === 'Toko sudah tutup permanen'} onChange={e => setReportReason(e.target.value)} />
+                                Toko sudah tutup permanen
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-dark)' }}>
+                                <input type="radio" value="Informasi Halal tidak akurat" checked={reportReason === 'Informasi Halal tidak akurat'} onChange={e => setReportReason(e.target.value)} />
+                                Informasi Halal tidak akurat
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-dark)' }}>
+                                <input type="radio" value="Menu mengandung Babi/Khamr" checked={reportReason === 'Menu mengandung Babi/Khamr'} onChange={e => setReportReason(e.target.value)} />
+                                Menu mengandung Babi/Alkohol
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-dark)' }}>
+                                <input type="radio" value="Nama atau Alamat tidak sesuai" checked={reportReason === 'Nama atau Alamat tidak sesuai'} onChange={e => setReportReason(e.target.value)} />
+                                Nama atau Alamat tidak sesuai
+                            </label>
+
+                            <div style={{ display: 'flex', gap: '10px', marginTop: 'var(--space-md)' }}>
+                                <button type="button" onClick={() => setShowReportModal(false)} className="btn btn-secondary" style={{ flex: 1 }}>Batal</button>
+                                <button type="submit" disabled={isSubmittingReport} className="btn btn-primary" style={{ flex: 1, border: 'none' }}>{isSubmittingReport ? 'Mengirim...' : 'Kirim'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

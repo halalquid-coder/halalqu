@@ -248,6 +248,19 @@ export async function updatePlaceStatus(docId, status) {
     });
 }
 
+// ============================================
+// 🚩 Reports (Flagging)
+// ============================================
+
+export async function submitReport(data) {
+    const docRef = await addDoc(collection(db, 'reports'), {
+        ...data,
+        status: 'open',
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
 export async function getAllReviews() {
     const q = query(collection(db, 'reviews'));
     const snap = await getDocs(q);
