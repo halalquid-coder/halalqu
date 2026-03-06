@@ -88,27 +88,25 @@ export default function HalalMap({ restaurants = [] }) {
                 hasValidLocations = true;
                 const position = { lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) };
 
-                // Content for Custom Marker Pin
-                const markerContainer = document.createElement('div');
-                markerContainer.innerHTML = `
-                    <div style="
-                        background: white; 
-                        border: 2px solid var(--halalqu-green); 
-                        border-radius: 50%; width: 34px; height: 34px; 
-                        display: flex; align-items: center; justify-content: center; 
-                        font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-                        position: relative;
-                    ">
-                        ${loc.emoji || '🍽️'}
-                        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid var(--halalqu-green);"></div>
-                    </div>
+                // Custom SVG Marker Icon
+                const emoji = loc.emoji || '🍽️';
+                const svgIcon = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 50" width="40" height="50">
+                        <path d="M20 0C8.95 0 0 8.95 0 20c0 15 20 30 20 30s20-15 20-30C40 8.95 31.05 0 20 0z" fill="#ffffff" stroke="#2E9B5A" stroke-width="2"/>
+                        <text x="20" y="22" font-size="18" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+                    </svg>
                 `;
+                const iconUrl = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgIcon);
 
-                const marker = new window.google.maps.marker.AdvancedMarkerElement({
+                const marker = new window.google.maps.Marker({
                     position: position,
                     map: mapInstance.current,
                     title: loc.name,
-                    content: markerContainer
+                    icon: {
+                        url: iconUrl,
+                        scaledSize: new window.google.maps.Size(32, 40),
+                        anchor: new window.google.maps.Point(16, 40)
+                    }
                 });
 
                 // InfoWindow for Marker Click
