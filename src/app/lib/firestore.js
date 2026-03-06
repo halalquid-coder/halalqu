@@ -300,6 +300,34 @@ export async function updateReviewStatus(reviewId, status) {
     await updateDoc(doc(db, 'reviews', reviewId), {
         status, reviewedAt: serverTimestamp(),
     });
+
+    const reviewSnap = await getDoc(doc(db, 'reviews', reviewId));
+    if (reviewSnap.exists()) {
+        const placeId = reviewSnap.data().placeId || reviewSnap.data().restaurantId;
+        if (placeId) {
+            const reviewsQ = query(
+                collection(db, 'reviews'),
+                where('placeId', '==', placeId),
+                where('status', '==', 'approved')
+            );
+            const reviewsSnap = await getDocs(reviewsQ);
+
+            let totalRating = 0;
+            let reviewCount = reviewsSnap.size;
+            reviewsSnap.forEach(r => totalRating += (r.data().rating || 0));
+
+            const newRating = reviewCount > 0 ? (totalRating / reviewCount) : 0;
+
+            try {
+                await updateDoc(doc(db, 'places', placeId), {
+                    rating: newRating,
+                    reviewCount: reviewCount
+                });
+            } catch (e) {
+                console.error('Failed to update place rating:', e);
+            }
+        }
+    }
 }
 
 // ============================================
