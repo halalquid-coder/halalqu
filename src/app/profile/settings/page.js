@@ -8,10 +8,9 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 export default function SettingsPage() {
-    const { user, darkMode, toggleDarkMode, language, setLanguage, logout, t } = useUser();
+    const { user, darkMode, toggleDarkMode, language, setLanguage, logout, t, notificationsEnabled, toggleNotifications } = useUser();
     const isMerchant = user.role === 'merchant';
     const router = useRouter();
-    const [notifications, setNotifications] = useState(true);
     const [locationAccess, setLocationAccess] = useState(true);
     const [halalStandard, setHalalStandard] = useState('all');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -144,7 +143,7 @@ export default function SettingsPage() {
                         </SettingItem>
 
                         <SettingItem icon="" label={t('notifications')} desc="Terima update review & verifikasi">
-                            <Toggle value={notifications} onChange={setNotifications} />
+                            <Toggle value={notificationsEnabled} onChange={toggleNotifications} />
                         </SettingItem>
 
                         <SettingItem icon="" label={t('locationAccess')} desc="Untuk mencari restoran terdekat">

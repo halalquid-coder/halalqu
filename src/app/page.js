@@ -27,7 +27,7 @@ export default function HomePage() {
   const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
-  const { user } = useUser();
+  const { user, notificationsEnabled, setNotificationsEnabled } = useUser();
   const firstName = user.isLoggedIn && user.name ? user.name.split(' ')[0] : '';
 
   // Close dropdown when clicking outside
@@ -164,6 +164,8 @@ export default function HomePage() {
         const { doc: fbDoc, updateDoc: fbUpdate } = await import('firebase/firestore');
         await fbUpdate(fbDoc(db, 'users', user.uid), { notificationsEnabled: true });
       }
+      setNotificationsEnabled(true);
+      try { localStorage.setItem('halalqu-notifications', 'true'); } catch (e) { }
       alert('Notifikasi dalam aplikasi diaktifkan! 🔔\nKamu akan menerima notifikasi di bell icon.');
     } catch (e) {
       console.error('Notification opt-in error:', e);

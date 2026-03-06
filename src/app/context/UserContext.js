@@ -126,6 +126,7 @@ export function UserProvider({ children }) {
     const [authLoading, setAuthLoading] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
     const [language, setLanguage] = useState('id');
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
     // Listen for Firebase auth state changes
     useEffect(() => {
@@ -163,6 +164,7 @@ export function UserProvider({ children }) {
                     // Restore preferences
                     if (profile?.darkMode !== undefined) setDarkMode(profile.darkMode);
                     if (profile?.language) setLanguage(profile.language);
+                    if (profile?.notificationsEnabled !== undefined) setNotificationsEnabled(profile.notificationsEnabled);
 
                 } catch (err) {
                     console.warn('Firestore profile fetch skipped:', err.message);
@@ -191,8 +193,10 @@ export function UserProvider({ children }) {
         try {
             const savedDark = localStorage.getItem('halalqu-darkMode');
             const savedLang = localStorage.getItem('halalqu-language');
+            const savedNotif = localStorage.getItem('halalqu-notifications');
             if (savedDark !== null) setDarkMode(savedDark === 'true');
             if (savedLang) setLanguage(savedLang);
+            if (savedNotif !== null) setNotificationsEnabled(savedNotif === 'true');
         } catch (e) { /* SSR safety */ }
     }, []);
 
@@ -213,6 +217,15 @@ export function UserProvider({ children }) {
         // Persist to Firestore if logged in
         if (user.uid) {
             try { await updateUserProfile(user.uid, { darkMode: newVal }); } catch (e) { }
+        }
+    };
+
+    const toggleNotifications = async () => {
+        const newVal = !notificationsEnabled;
+        setNotificationsEnabled(newVal);
+        try { localStorage.setItem('halalqu-notifications', String(newVal)); } catch (e) { }
+        if (user.uid) {
+            try { await updateUserProfile(user.uid, { notificationsEnabled: newVal }); } catch (e) { }
         }
     };
 
@@ -269,6 +282,7 @@ export function UserProvider({ children }) {
         <UserContext.Provider value={{
             user, setUser, upgradeTo, setMerchantStatus, logout, refreshUser,
             darkMode, toggleDarkMode, language, setLanguage: changeLanguage, t,
+            notificationsEnabled, toggleNotifications, setNotificationsEnabled,
             authLoading,
         }}>
             {children}
