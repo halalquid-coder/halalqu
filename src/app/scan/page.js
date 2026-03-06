@@ -23,11 +23,13 @@ export default function ScanPage() {
     const [cameraActive, setCameraActive] = useState(false);
     const [cameraError, setCameraError] = useState(null);
     const [ocrProgress, setOcrProgress] = useState(0);
-    const [ocrText, setOcrText] = useState('');
+    const [ocrText, setOcrText] = useState(''); // Can hold manual text
     const [results, setResults] = useState(null);
     const [overallVerdict, setOverallVerdict] = useState(null);
     const [confidence, setConfidence] = useState(0);
     const [summary, setSummary] = useState('');
+    const [halalLogoDetected, setHalalLogoDetected] = useState(false);
+    const [logoDetails, setLogoDetails] = useState('');
     const [capturedImage, setCapturedImage] = useState(null);
     const [analysisMethod, setAnalysisMethod] = useState('');
     const [scanHistory, setScanHistory] = useState([]);
@@ -53,6 +55,8 @@ export default function ScanPage() {
             setOverallVerdict(null);
             setConfidence(0);
             setSummary('');
+            setHalalLogoDetected(false);
+            setLogoDetails('');
             setAnalysisMethod('');
             setCameraError(null);
             setOcrProgress(0);
@@ -120,7 +124,8 @@ export default function ScanPage() {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         setCapturedImage(dataUrl);
         stopCamera();
-        runOCR(dataUrl);
+        // Skip client-side OCR, send image directly to Gemini API
+        analyzeIngredients(dataUrl, null);
     };
 
     // Handle file upload
@@ -131,8 +136,8 @@ export default function ScanPage() {
         reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
-                // Scale down large images for faster and more accurate OCR
-                const MAX_DIM = 1280;
+                // Scale down large images to max 1024px to save payload size for Gemini
+                const MAX_DIM = 1024;
                 let finalWidth = img.width;
                 let finalHeight = img.height;
                 if (finalWidth > MAX_DIM || finalHeight > MAX_DIM) {
@@ -145,81 +150,66 @@ export default function ScanPage() {
                 canvas.width = finalWidth;
                 canvas.height = finalHeight;
                 const ctx = canvas.getContext('2d');
-
-                // Enhance image for OCR
-                ctx.filter = 'grayscale(100%) contrast(150%) brightness(110%)';
                 ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
 
-                const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                setCapturedImage(enhancedDataUrl);
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                setCapturedImage(compressedDataUrl);
                 stopCamera();
-                runOCR(enhancedDataUrl);
+                // Send directly to API
+                analyzeIngredients(compressedDataUrl, null);
             };
             img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     };
 
-    // Run Tesseract.js OCR
-    const runOCR = async (imageData) => {
-        setStep('extract');
-        setOcrProgress(0);
+    // OCR function removed. We rely on Gemini Vision now.
 
-        try {
-            // Dynamic import to avoid SSR issues
-            const Tesseract = (await import('tesseract.js')).default;
-
-            const result = await Tesseract.recognize(imageData, 'eng+ind', {
-                logger: (m) => {
-                    if (m.status === 'recognizing text') {
-                        setOcrProgress(Math.round(m.progress * 100));
-                    }
-                },
-            });
-
-            const extractedText = result.data.text.trim();
-            if (extractedText.length < 3) {
-                setOcrText('');
-                setStep('review');
-            } else {
-                setOcrText(extractedText);
-                setStep('review');
-            }
-        } catch (err) {
-            console.error('OCR Error:', err);
-            setCameraError('Gagal membaca teks dari gambar. Coba lagi dengan gambar yang lebih jelas.');
-            setStep('capture');
-        }
-    };
-
-    // Analyze ingredients
-    const analyzeIngredients = async () => {
+    // Analyze ingredients (from image or manual text)
+    const analyzeIngredients = async (imageData = null, manualText = null) => {
         setStep('analyze');
-        const textToAnalyze = ocrText.trim();
 
-        if (!textToAnalyze) {
-            setStep('review');
+        // Use provided arguments, or fallback to state
+        const inputImage = imageData || capturedImage;
+        const inputText = manualText !== null ? manualText : ocrText;
+
+        // If neither exists, error out
+        if (!inputImage && (!inputText || !inputText.trim())) {
+            setStep('capture');
             return;
         }
 
         try {
-            // Try AI analysis first
+            // Send payload to API - either base64 image (stripping prefix) or text
+            const payload = {};
+            if (inputImage) {
+                // Strip "data:image/jpeg;base64," prefix for API
+                payload.image = inputImage.includes('base64,') ? inputImage.split('base64,')[1] : inputImage;
+            } else if (inputText) {
+                payload.text = inputText.trim();
+            }
+
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textToAnalyze }),
+                body: JSON.stringify(payload),
             });
 
             const data = await response.json();
 
             if (data.error === 'NO_API_KEY' || data.error === 'AI_ERROR' || data.error === 'AI_EMPTY') {
-                // Fallback to local database
-                useLocalAnalysis(textToAnalyze);
+                if (inputText) {
+                    useLocalAnalysis(inputText);
+                } else {
+                    setCameraError('Gagal menganalisis gambar. Coba ketik manual jika AI error.');
+                    setStep('capture');
+                }
                 return;
             }
 
             if (data.error) {
-                useLocalAnalysis(textToAnalyze);
+                if (inputText) useLocalAnalysis(inputText);
+                else { setCameraError(data.error); setStep('capture'); }
                 return;
             }
 
@@ -232,15 +222,25 @@ export default function ScanPage() {
 
             setResults(aiIngredients);
             setOverallVerdict(data.overallVerdict || 'HALAL');
-            setConfidence(data.confidence || 0.8);
+            setConfidence(data.confidence || 0.85);
             setSummary(data.summary || '');
-            setAnalysisMethod('🤖 AI (Gemini)');
+            setHalalLogoDetected(data.halalLogo === true);
+            setLogoDetails(data.logoDetails || '');
+            setAnalysisMethod('🤖 AI Vision (Gemini)');
             setStep('results');
-            saveToHistory(textToAnalyze, data.overallVerdict || 'HALAL', aiIngredients.length);
+
+            // Generate a preview string for history
+            const previewStr = data.halalLogo ? `[Logo Halal] ${data.logoDetails}` : aiIngredients.slice(0, 3).map(i => i.name).join(', ') || 'Analisis Gambar';
+            saveToHistory(previewStr, data.overallVerdict || 'HALAL', aiIngredients.length);
 
         } catch (err) {
             console.error('AI Analysis error:', err);
-            useLocalAnalysis(textToAnalyze);
+            if (inputText) {
+                useLocalAnalysis(inputText);
+            } else {
+                setCameraError('Koneksi terputus. Gagal menganalisis gambar.');
+                setStep('capture');
+            }
         }
     };
 
@@ -289,6 +289,8 @@ export default function ScanPage() {
         setOverallVerdict(null);
         setConfidence(0);
         setSummary('');
+        setHalalLogoDetected(false);
+        setLogoDetails('');
         setAnalysisMethod('');
         setCameraError(null);
         setOcrProgress(0);
@@ -411,7 +413,7 @@ export default function ScanPage() {
                                     const val = e.target.value.trim();
                                     if (val) {
                                         setOcrText(val);
-                                        setStep('review');
+                                        analyzeIngredients(null, val);
                                     }
                                 }
                             }}
@@ -419,7 +421,7 @@ export default function ScanPage() {
                             value={ocrText}
                         />
                         {ocrText.trim().length > 0 && (
-                            <button className="btn btn-primary btn-full" onClick={() => setStep('review')} style={{ marginTop: 'var(--space-sm)', padding: '12px' }}>
+                            <button className="btn btn-primary btn-full" onClick={() => analyzeIngredients(null, ocrText)} style={{ marginTop: 'var(--space-sm)', padding: '12px' }}>
                                 Analisis Teks Ini
                             </button>
                         )}
@@ -576,6 +578,25 @@ export default function ScanPage() {
             {/* ==================== STEP 5: RESULTS ==================== */}
             {step === 'results' && results && (
                 <div style={{ animation: 'fadeInUp 0.4s ease' }}>
+
+                    {/* Visual Recap */}
+                    {capturedImage && (
+                        <div style={{
+                            width: '100%', height: '120px', borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                            marginBottom: 'var(--space-lg)', position: 'relative'
+                        }}>
+                            <img src={capturedImage} alt="Scanned Product" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{
+                                position: 'absolute', bottom: 0, left: 0, right: 0,
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                                padding: 'var(--space-md) var(--space-md) var(--space-sm)',
+                                color: 'white', fontSize: '13px', fontWeight: 600
+                            }}>
+                                Produk Pindaian Anda
+                            </div>
+                        </div>
+                    )}
+
                     {/* Overall Verdict Card */}
                     {overallVerdict && (
                         <div style={{
@@ -584,8 +605,21 @@ export default function ScanPage() {
                             textAlign: 'center', marginBottom: 'var(--space-lg)',
                             border: `2px solid ${verdictConfig[overallVerdict]?.color || 'var(--border)'}`,
                             boxShadow: 'var(--shadow-md)',
+                            position: 'relative', overflow: 'hidden'
                         }}>
-                            <div style={{ fontSize: '48px', marginBottom: 'var(--space-sm)' }}>
+                            {/* Halal Logo Banner */}
+                            {halalLogoDetected && (
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0,
+                                    background: 'var(--halalqu-green)', color: 'white',
+                                    padding: '6px', fontSize: '12px', fontWeight: 700,
+                                    textTransform: 'uppercase', letterSpacing: '1px'
+                                }}>
+                                    ✨ LOGO HALAL RESMI TERDETEKSI ✨
+                                </div>
+                            )}
+
+                            <div style={{ fontSize: '48px', marginBottom: 'var(--space-sm)', marginTop: halalLogoDetected ? '24px' : '0' }}>
                                 {verdictConfig[overallVerdict]?.icon}
                             </div>
                             <h2 style={{
@@ -594,11 +628,16 @@ export default function ScanPage() {
                             }}>
                                 {verdictConfig[overallVerdict]?.label}
                             </h2>
+                            {halalLogoDetected && logoDetails && (
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '4px' }}>
+                                    {logoDetails}
+                                </div>
+                            )}
                             {confidence > 0 && (
                                 <div style={{
                                     fontSize: '12px', color: 'var(--text-muted)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                    marginTop: '4px',
+                                    marginTop: '8px',
                                 }}>
                                     <span>Confidence: {Math.round(confidence * 100)}%</span>
                                     <span>·</span>

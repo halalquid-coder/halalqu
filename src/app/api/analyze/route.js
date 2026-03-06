@@ -2,41 +2,43 @@ import { NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-const SYSTEM_PROMPT = `Kamu adalah AI pakar halal yang menganalisis daftar bahan/komposisi produk makanan.
+const SYSTEM_PROMPT = `Kamu adalah AI pakar halal dengan kemampuan vision (penglihatan) super.
+Tugas kamu adalah menganalisis gambar kemasan produk, logo, dan daftar komposisinya.
 
-TUGAS:
-1. Parse setiap bahan dari teks yang diberikan
-2. Analisis status halal setiap bahan
-3. Berikan verdict: "safe" (halal), "warning" (syubhat/meragukan), "danger" (haram/non-halal)
+TUGAS UTAMA:
+1. PERIKSA LOGO HALAL: Cari logo Sertifikasi Halal resmi dari berbagai negara (seperti MUI/BPJPH Indonesia, JAKIM Malaysia, MUIS Singapura, HFA/Halal Authority Board UK, AFIC Australia, IFANCA USA, dll).
+2. BACA KOMPOSISI: Ekstrak secara teliti *semua* teks bahan/komposisi (ingredients) yang ada di gambar kemasan.
+3. ANALISIS STATUS: Tentukan status halal setiap bahan (safe/warning/danger).
+4. KESIMPULAN VERDICT: Berikan verdict akhir produk:
+   - Jika ADA Logo Halal RESMI → "HALAL" (meskipun komposisi kurang jelas).
+   - Jika tidak ada logo, dan ada SATU bahan haram → "HARAM".
+   - Jika tidak ada logo, dan ada bahan meragukan (seperti gelatin tanpa sumber) → "SYUBHAT".
+   - Jika tidak ada logo, tapi seluruh bahan alami nabati/aman → "HALAL".
 
-REFERENSI BAHAN KRITIS:
-- HARAM: Gelatin babi, lard, pepsin babi, carmine (E120), mirin, wine, rum, beer, sake, bacon, ham, E441 (gelatin), E904 (shellac)
-- SYUBHAT: Gelatin (tanpa keterangan sumber), mono/diglycerides (E471), natural flavor, vanilla extract, whey, rennet, E322 (lecithin), E631, E635
-- HALAL: Gula, garam, tepung, beras, air, minyak nabati, kedelai, jagung, vitamin, mineral, asam sitrat, natrium bikarbonat
+TOLOK UKUR BAHAN HARAM/SYUBHAT:
+- HARAM: Gelatin babi, lard, pepsin babi, carmine (E120), mirin, wine, rum, beer, sake, bacon, ham, E441, E904 (shellac)
+- SYUBHAT: Gelatin (tanpa sumber), mono/diglycerides (E471), natural flavor, vanilla extract, whey, rennet, E322 (lecithin), E631, E635
 
-OUTPUT FORMAT (selalu dalam JSON):
+FORMAT OUTPUT JSON (HARUS PERSIS SEPERTI INI):
 {
+  "halalLogo": true/false,
+  "logoDetails": "Jika ada, sebutkan nama lembaga. Cth: LPPOM MUI Indonesia / JAKIM Malaysia. Jika tidak, isi string kosong",
   "ingredients": [
-    { "name": "Nama Bahan", "status": "safe|warning|danger", "note": "Penjelasan singkat" }
+    { "name": "Gula", "status": "safe|warning|danger", "note": "Keterangan singkat" }
   ],
   "overallVerdict": "HALAL|SYUBHAT|HARAM",
   "confidence": 0.85,
-  "summary": "Ringkasan hasil analisis"
-}
-
-ATURAN:
-- Jika ada SATU bahan haram → overallVerdict = "HARAM"
-- Jika ada bahan syubhat tapi tidak ada haram → overallVerdict = "SYUBHAT"
-- Jika semua aman → overallVerdict = "HALAL"
-- Selalu berikan penjelasan dalam Bahasa Indonesia
-- confidence antara 0.0 - 1.0 berdasarkan kejelasan teks OCR`;
+  "summary": "Analisis singkat (misal: Produk halal karena terdapat logo MUI / Mengandung gelatin yang belum jelas sumbernya)"
+}`;
 
 export async function POST(request) {
     try {
-        const { text } = await request.json();
+        const payload = await request.json();
+        const hasText = payload.text && payload.text.trim().length > 0;
+        const hasImage = payload.image && payload.image.trim().length > 0;
 
-        if (!text || text.trim().length === 0) {
-            return NextResponse.json({ error: 'No ingredient text provided' }, { status: 400 });
+        if (!hasText && !hasImage) {
+            return NextResponse.json({ error: 'No image or text provided' }, { status: 400 });
         }
 
         if (!GEMINI_API_KEY) {
@@ -46,20 +48,32 @@ export async function POST(request) {
             }, { status: 200 });
         }
 
-        // Call Gemini API
+        // Build content array
+        const parts = [{ text: SYSTEM_PROMPT }];
+
+        if (hasImage) {
+            parts.push({
+                inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: payload.image // Expecting raw base64 string
+                }
+            });
+            parts.push({ text: "\n\nTolong baca seluruh kemasan, deteksi apakah ada logo Halal dari negara manapun, dan ekstrak semua komposisinya untuk dianalisis dalam format JSON." });
+        } else if (hasText) {
+            parts.push({
+                text: `\n\n---\nTEKS KOMPOSISI PRODUK (DIMASUKKAN MANUAL):\n${payload.text}\n---\n\nAnalisis teks ini sesuai instruksi dan kembalikan JSON.`
+            });
+        }
+
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `${SYSTEM_PROMPT}\n\n---\nTEKS KOMPOSISI PRODUK:\n${text}\n---\n\nAnalisis bahan-bahan di atas. Jawab HANYA dalam format JSON yang diminta.`
-                        }]
-                    }],
+                    contents: [{ parts }],
                     generationConfig: {
-                        temperature: 0.2,
+                        temperature: 0.1, // Low temp for extraction accuracy
                         maxOutputTokens: 2048,
                         responseMimeType: 'application/json',
                     },
@@ -77,8 +91,6 @@ export async function POST(request) {
         }
 
         const data = await response.json();
-
-        // Extract the text content from Gemini response
         const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!content) {
             return NextResponse.json({
@@ -87,13 +99,10 @@ export async function POST(request) {
             }, { status: 200 });
         }
 
-        // Parse JSON from response
         let analysisResult;
         try {
-            // Try direct parse first
             analysisResult = JSON.parse(content);
         } catch {
-            // Try extracting JSON from markdown code block
             const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
             if (jsonMatch) {
                 analysisResult = JSON.parse(jsonMatch[1].trim());
