@@ -245,7 +245,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Push Notification Promo */}
-                    {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && (
+                    {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && !user?.notificationsEnabled && (
                       <div style={{ padding: '12px var(--space-md)', background: '#FFF8E7', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '20px' }}>🔔</span>
                         <div style={{ flex: 1 }}>
