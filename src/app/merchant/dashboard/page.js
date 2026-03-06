@@ -139,15 +139,25 @@ export default function MerchantDashboard() {
         if (!place?.id) return;
         if (confirm('Apakah Anda yakin ingin menghapus listing ini? Tindakan ini tidak dapat dibatalkan.')) {
             try {
-                const { deleteDoc } = await import('firebase/firestore');
+                const { deleteDoc, updateDoc, doc } = await import('firebase/firestore');
                 await deleteDoc(doc(db, 'places', place.id));
                 const remaining = places.filter(p => p.id !== place.id);
                 setPlaces(remaining);
                 if (remaining.length > 0) {
                     setPlace(remaining[0]);
+                    await updateDoc(doc(db, 'users', user.uid), {
+                        'merchantInfo.restaurantName': remaining[0].name,
+                        'merchantInfo.description': remaining[0].description || '',
+                    });
                 } else {
                     setPlace(null);
+                    await updateDoc(doc(db, 'users', user.uid), {
+                        'merchantInfo.restaurantName': '',
+                        'merchantInfo.description': '',
+                    });
                 }
+
+                if (refreshUser) await refreshUser();
                 alert('Listing berhasil dihapus.');
             } catch (e) {
                 alert('Gagal menghapus listing: ' + e.message);
