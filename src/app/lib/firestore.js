@@ -350,14 +350,34 @@ export async function getAllNotifications() {
     return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
-export async function getUserNotifications(uid) {
-    const q = query(
+export async function getUserNotifications(uid, role = 'user') {
+    // 1. Fetch personal notifications
+    const pQ = query(
         collection(db, 'notifications'),
         where('target', 'in', ['all', uid])
     );
-    const snap = await getDocs(q);
-    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    const pSnap = await getDocs(pQ);
+    const personal = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // 2. Fetch global broadcast notifications
+    const globalTargets = ['all'];
+    if (role) globalTargets.push(role); // 'user' or 'merchant'
+
+    let global = [];
+    try {
+        const gQ = query(
+            collection(db, 'global_notifications'),
+            where('target', 'in', globalTargets)
+        );
+        const gSnap = await getDocs(gQ);
+        global = gSnap.docs.map(d => ({ id: d.id, ...d.data(), isGlobal: true, read: false }));
+    } catch (e) {
+        console.warn('global_notifications not found or error:', e);
+    }
+
+    // Combine and sort by date descending
+    const combined = [...personal, ...global];
+    return combined.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 }
 
 

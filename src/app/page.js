@@ -126,7 +126,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadNotifications() {
       try {
-        const data = await getUserNotifications(user.uid || 'guest');
+        const data = await getUserNotifications(user.uid || 'guest', user?.role || 'user');
         setNotifications(data.map(n => ({
           id: n.id,
           title: n.title,
