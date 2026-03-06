@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../context/UserContext';
 import { submitPlace } from '../lib/firestore';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const categories = ['🍽 Restaurant', '☕ Cafe', '🍛 Street Food', '🥘 Fine Dining', '🍰 Bakery', '🍕 Western', '🍜 Asian'];
 const halalTypes = [
@@ -124,11 +125,12 @@ export default function AddPlacePage() {
                     Alamat <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                    <input type="text" placeholder="Jl. Contoh No. 123, Kota" value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        style={{
-                            flex: 1, padding: '14px var(--space-md)', borderRadius: 'var(--radius-md)',
-                            border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)',
+                    <AddressAutocomplete
+                        value={address}
+                        onChange={setAddress}
+                        onLocationSelect={(loc) => {
+                            setLat(loc.lat);
+                            setLng(loc.lng);
                         }}
                     />
                     <button type="button"

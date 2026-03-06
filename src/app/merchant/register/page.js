@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useUser } from '../../context/UserContext';
 import { submitMerchantApplication, uploadImage } from '../../lib/firestore';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
 
 export default function MerchantRegisterPage() {
     const { user, setMerchantStatus } = useUser();
@@ -200,11 +201,11 @@ export default function MerchantRegisterPage() {
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>
                             Alamat <span style={{ color: 'var(--danger)' }}>*</span>
                         </label>
-                        <input type="text" placeholder="Jl. Contoh No. 123" value={formData.address}
-                            onChange={e => setFormData({ ...formData, address: e.target.value })}
-                            style={{
-                                width: '100%', padding: '14px var(--space-md)', borderRadius: 'var(--radius-md)',
-                                border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)',
+                        <AddressAutocomplete
+                            value={formData.address}
+                            onChange={(val) => setFormData({ ...formData, address: val })}
+                            onLocationSelect={(loc) => {
+                                // We can also save lat/lng if we want, but for now we just need the address string
                             }}
                         />
                         <button type="button" onClick={detectAddress} disabled={detectingAddress} style={{
