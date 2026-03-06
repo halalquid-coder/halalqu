@@ -16,6 +16,7 @@ export default function MerchantRegisterPage() {
     const [agreed, setAgreed] = useState(false);
     const [halalQualifications, setHalalQualifications] = useState([false, false, false, false, false]);
     const [detectingAddress, setDetectingAddress] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const fileRefs = [useRef(null), useRef(null), useRef(null)];
 
     const handlePhotoSelect = (index, e) => {
@@ -78,13 +79,14 @@ export default function MerchantRegisterPage() {
     };
 
     const handleSubmit = async () => {
+        setSubmitting(true);
         try {
             // Upload photos to Firebase Storage
             const photoUrls = [];
             const validPhotos = photos.filter(Boolean);
             for (let i = 0; i < validPhotos.length; i++) {
                 try {
-                    const path = `merchant_photos/${user.uid || 'anon'}/photo_${i}_${Date.now()}`;
+                    const path = `merchant_photos/${user?.uid || 'anon'}/photo_${i}_${Date.now()}`;
                     const url = await uploadImage(validPhotos[i].file, path);
                     photoUrls.push(url);
                 } catch (uploadErr) {
@@ -93,7 +95,7 @@ export default function MerchantRegisterPage() {
             }
 
             await submitMerchantApplication({
-                userId: user.uid || 'anonymous',
+                userId: user?.uid || 'anonymous',
                 restaurantName: formData.restoName,
                 address: formData.address,
                 phone: formData.phone,
@@ -104,15 +106,21 @@ export default function MerchantRegisterPage() {
                 photoCount: validPhotos.length,
                 halalQualifications: halalStatements.filter((_, i) => halalQualifications[i]),
             });
+
+            setMerchantStatus('pending');
+            setStep(4); // success
         } catch (e) {
             if (e.message === 'STORE_LIMIT_REACHED') {
                 alert('⚠️ Batas Gratis Tercapai!\n\nAnda sudah memiliki 2 toko/cabang (batas gratis).\nUntuk menambahkan lebih banyak cabang, silakan upgrade ke paket premium.\n\nHubungi: admin@halalqu.online');
-                return;
+            } else {
+                console.log('Submission error, using local state:', e);
+                // Fallback local state if error happens but was not store limit related
+                setMerchantStatus('pending');
+                setStep(4);
             }
-            console.log('Submission error, using local state:', e);
+        } finally {
+            setSubmitting(false);
         }
-        setMerchantStatus('pending');
-        setStep(4); // success
     };
 
     // Success
@@ -482,13 +490,13 @@ export default function MerchantRegisterPage() {
                             ← Kembali
                         </button>
                         <button className="btn btn-primary btn-full" onClick={handleSubmit}
-                            disabled={!agreed}
+                            disabled={!agreed || submitting}
                             style={{
                                 padding: '16px', fontSize: '16px',
-                                opacity: agreed ? 1 : 0.5,
-                                cursor: agreed ? 'pointer' : 'not-allowed',
+                                opacity: agreed && !submitting ? 1 : 0.5,
+                                cursor: agreed && !submitting ? 'pointer' : 'not-allowed',
                             }}>
-                            📤 Kirim Pendaftaran
+                            {submitting ? '⏳ Mengirim Data & Foto...' : '📤 Kirim Pendaftaran'}
                         </button>
                     </div>
                 </div>
