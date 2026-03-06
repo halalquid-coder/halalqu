@@ -33,6 +33,9 @@ export default function SearchPage() {
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(!!initialQuery);
 
+    // Store user location so we don't spam the Geolocation API
+    const [userLoc, setUserLoc] = useState(null);
+
     // Load all places once for client-side search
     useEffect(() => {
         async function loadPlaces() {
@@ -62,6 +65,17 @@ export default function SearchPage() {
             }
         }
         loadPlaces();
+
+        // Fetch user location exactly once on mount for distance calculations
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                },
+                (err) => console.log('Geolocation skipped/denied:', err),
+                { maximumAge: 60000, timeout: 5000 }
+            );
+        }
     }, []);
 
     const filterCategory = searchParams.get('category');
@@ -102,32 +116,32 @@ export default function SearchPage() {
 
         setIsSearching(filtered.length > 0 || q.length > 0 || filterCategory !== null);
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const userLat = pos.coords.latitude;
-                const userLng = pos.coords.longitude;
-
-                const withDistance = filtered.map(p => {
-                    if (!p.lat || !p.lng) return { ...p, distNum: 999 };
-                    const R = 6371;
-                    const dLat = (p.lat - userLat) * Math.PI / 180;
-                    const dLng = (p.lng - userLng) * Math.PI / 180;
-                    const a =
-                        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                        Math.cos(userLat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
-                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                    return { ...p, distNum: R * c };
-                });
-
-                setResults(withDistance.filter(p => p.distNum <= distance).sort((a, b) => a.distNum - b.distNum));
-            }, () => {
-                setResults(filtered);
+        // Calculate distance synchronously if user location is known
+        if (userLoc) {
+            const withDistance = filtered.map(p => {
+                if (!p.lat || !p.lng) return { ...p, distNum: 9999 };
+                const R = 6371; // Earth's radius in km
+                const dLat = (p.lat - userLoc.lat) * Math.PI / 180;
+                const dLng = (p.lng - userLoc.lng) * Math.PI / 180;
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(userLoc.lat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
+                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return { ...p, distNum: R * c };
             });
+
+            // Filter by selected max distance
+            const distanceFiltered = withDistance.filter(p => p.distNum <= distance);
+
+            // Sort by distance (closest first)
+            const sorted = distanceFiltered.sort((a, b) => a.distNum - b.distNum);
+            setResults(sorted);
         } else {
+            // No location access, just return filtered results without distance sorting
             setResults(filtered);
         }
-    }, [searchQuery, allPlaces, distance, activeHalal, activeCategory, searchParams]);
+    }, [searchQuery, allPlaces, distance, activeHalal, activeCategory, searchParams, userLoc]);
 
     return (
         <div className={`page container ${styles.searchPage}`}>
@@ -238,6 +252,7 @@ export default function SearchPage() {
                                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                             <span className={`badge badge-${p.badge}`} style={{ fontSize: '10px', marginRight: '6px' }}>{p.badgeLabel}</span>
                                             ⭐ {p.rating} · {p.category}
+                                            {p.distNum && p.distNum < 9999 ? ` · ${p.distNum.toFixed(1)} km` : ''}
                                         </div>
                                     </div>
                                     <span style={{ color: 'var(--text-muted)' }}>→</span>
