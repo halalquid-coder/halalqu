@@ -14,6 +14,7 @@ export default function RestaurantDetailPage() {
     const [loading, setLoading] = useState(true);
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [reviews, setReviews] = useState([]);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     useEffect(() => {
         async function fetchPlace() {
@@ -43,6 +44,8 @@ export default function RestaurantDetailPage() {
                         certBody: data.certBody || 'Klaim Mandiri',
                         certExpiry: data.certExpiry || '-',
                         menu: [],
+                        images: data.images || [],
+                        photo: data.imageUrl || ((data.photos && data.photos.length > 0) ? data.photos[0] : ((data.images && data.images.length > 0) ? data.images[0] : null)),
                     });
                     // Load reviews
                     try {
@@ -109,7 +112,7 @@ export default function RestaurantDetailPage() {
     return (
         <div className={`page container ${styles.detailPage}`}>
             {/* Hero */}
-            <div className={styles.heroImage}>
+            <div className={styles.heroImage} style={(resto.images && resto.images.length > 0) ? { backgroundImage: `url('${resto.images[currentImageIndex] || resto.images[0]}')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', transition: 'background-image 0.3s ease-in-out', backgroundColor: 'var(--halalqu-green)' } : (resto.photo ? { backgroundImage: `url('${resto.photo}')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--halalqu-green)' } : { backgroundColor: 'var(--halalqu-green)' })}>
                 <div className={styles.heroOverlay}>
                     <button onClick={() => router.back()} className={styles.heroBtn}>←</button>
                     <div className={styles.heroActions}>
@@ -123,7 +126,29 @@ export default function RestaurantDetailPage() {
                         <button className={styles.heroBtn} onClick={handleShare}>📤</button>
                     </div>
                 </div>
-                {resto.emoji}
+                {!resto.photo && (!resto.images || resto.images.length === 0) && resto.emoji}
+
+                {resto.images?.length > 1 && (
+                    <>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === 0 ? resto.images.length - 1 : prev - 1); }}
+                            style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+                        >
+                            &larr;
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => (prev + 1) % resto.images.length); }}
+                            style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.7)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+                        >
+                            &rarr;
+                        </button>
+                        <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 10 }}>
+                            {resto.images.map((_, idx) => (
+                                <div key={idx} style={{ width: currentImageIndex === idx ? '16px' : '6px', height: '6px', borderRadius: '3px', background: currentImageIndex === idx ? 'var(--halalqu-green)' : 'rgba(255,255,255,0.7)', transition: 'all 0.3s ease' }} />
+                            ))}
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Info */}

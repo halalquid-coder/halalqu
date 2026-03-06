@@ -31,6 +31,7 @@ export default function MyPlacesPage() {
                         category: val.category || 'Restoran',
                         status: val.status || 'pending',
                         createdAt: val.createdAt,
+                        photo: val.imageUrl || ((val.photos && val.photos.length > 0) ? val.photos[0] : ((val.images && val.images.length > 0) ? val.images[0] : null)),
                     };
                 });
                 setPlaces(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
@@ -73,7 +74,13 @@ export default function MyPlacesPage() {
                         return (
                             <div key={place.id} style={{ background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)' }}>
                                 <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-sm)' }}>
-                                    <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>{place.emoji}</div>
+                                    {place.photo ? (
+                                        <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                                            <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    ) : (
+                                        <div style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>{place.emoji}</div>
+                                    )}
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{place.name}</div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
