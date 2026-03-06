@@ -175,114 +175,135 @@ export default function HomePage() {
   return (
     <div className="page container">
       {/* Hero Section */}
+      {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-            <p className={styles.greeting}>
-              Assalamualaikum{firstName ? `, ${firstName}` : ''} 👋
-            </p>
+          {/* Header row: Logo on left, Search & Notif on right */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                background: 'var(--white)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                🥙
+              </div>
+              <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--white)', margin: 0, letterSpacing: '-0.5px' }}>
+                Halalqu
+              </h1>
+            </div>
 
-            {/* Notification Bell */}
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                style={{
-                  background: 'rgba(255,255,255,0.2)', border: 'none',
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', position: 'relative', backdropFilter: 'blur(8px)',
-                  color: 'white', fontSize: '18px'
-                }}
-              >
-                🔔
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-2px', right: '-2px',
-                    background: 'var(--danger)', color: 'white',
-                    fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
-                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '2px solid var(--halalqu-green)'
-                  }}>
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Link href="/search" style={{
+                background: 'rgba(255,255,255,0.2)', border: 'none',
+                width: '36px', height: '36px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', backdropFilter: 'blur(8px)',
+                color: 'white', fontSize: '16px', textDecoration: 'none'
+              }}>
+                🔍
+              </Link>
 
-              {/* Dropdown */}
-              {showNotifications && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: '8px',
-                  background: 'white', borderRadius: 'var(--radius-md)', width: '280px',
-                  boxShadow: 'var(--shadow-lg)', zIndex: 100, overflow: 'hidden',
-                  animation: 'fadeIn 0.2s ease'
-                }}>
-                  <div style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '14px', margin: 0, color: 'var(--charcoal)' }}>Notifikasi</h3>
-                    <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', cursor: 'pointer' }}>Tandai dibaca</span>
-                  </div>
-
-                  {/* Push Notification Promo */}
-                  {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && (
-                    <div style={{ padding: '12px var(--space-md)', background: '#FFF8E7', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '20px' }}>🔔</span>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '12px', margin: '0 0 2px', color: '#B45309' }}>Aktifkan Notifikasi</h4>
-                        <p style={{ fontSize: '11px', color: '#B45309', margin: 0, opacity: 0.8 }}>Dapatkan info promo & status review</p>
-                      </div>
-                      <button onClick={handlePushPermission} style={{
-                        padding: '6px 10px', background: '#D4920A', color: 'white',
-                        border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer'
-                      }}>Aktifkan</button>
-                    </div>
+              {/* Notification Bell */}
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)', border: 'none',
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', position: 'relative', backdropFilter: 'blur(8px)',
+                    color: 'white', fontSize: '18px'
+                  }}
+                >
+                  🔔
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: '-2px', right: '-2px',
+                      background: 'var(--danger)', color: 'white',
+                      fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: '2px solid var(--halalqu-green)'
+                    }}>
+                      {unreadCount}
+                    </span>
                   )}
+                </button>
 
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
-                        <p style={{ fontSize: '13px' }}>Belum ada notifikasi</p>
-                      </div>
-                    ) : (
-                      notifications.map(n => (
-                        <div key={n.id} style={{
-                          padding: '12px var(--space-md)',
-                          borderBottom: '1px solid var(--border)',
-                          background: n.unread ? 'var(--halalqu-green-light)' : 'white',
-                          cursor: 'pointer', display: 'flex', gap: '12px'
-                        }}>
-                          <div style={{ fontSize: '16px', marginTop: '2px' }}>📬</div>
-                          <div>
-                            <h4 style={{ fontSize: '13px', margin: '0 0 4px', color: 'var(--charcoal)' }}>{n.title}</h4>
-                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{n.desc}</p>
-                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{n.time}</span>
-                          </div>
+                {/* Dropdown */}
+                {showNotifications && (
+                  <div style={{
+                    position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+                    background: 'white', borderRadius: 'var(--radius-md)', width: '280px',
+                    boxShadow: 'var(--shadow-lg)', zIndex: 100, overflow: 'hidden',
+                    animation: 'fadeIn 0.2s ease'
+                  }}>
+                    <div style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ fontSize: '14px', margin: 0, color: 'var(--charcoal)' }}>Notifikasi</h3>
+                      <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', cursor: 'pointer' }}>Tandai dibaca</span>
+                    </div>
+
+                    {/* Push Notification Promo */}
+                    {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && (
+                      <div style={{ padding: '12px var(--space-md)', background: '#FFF8E7', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '20px' }}>🔔</span>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ fontSize: '12px', margin: '0 0 2px', color: '#B45309' }}>Aktifkan Notifikasi</h4>
+                          <p style={{ fontSize: '11px', color: '#B45309', margin: 0, opacity: 0.8 }}>Dapatkan info promo & status review</p>
                         </div>
-                      ))
+                        <button onClick={handlePushPermission} style={{
+                          padding: '6px 10px', background: '#D4920A', color: 'white',
+                          border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer'
+                        }}>Aktifkan</button>
+                      </div>
                     )}
+
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                          <p style={{ fontSize: '13px' }}>Belum ada notifikasi</p>
+                        </div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} style={{
+                            padding: '12px var(--space-md)',
+                            borderBottom: '1px solid var(--border)',
+                            background: n.unread ? 'var(--halalqu-green-light)' : 'white',
+                            cursor: 'pointer', display: 'flex', gap: '12px'
+                          }}>
+                            <div style={{ fontSize: '16px', marginTop: '2px' }}>📬</div>
+                            <div>
+                              <h4 style={{ fontSize: '13px', margin: '0 0 4px', color: 'var(--charcoal)' }}>{n.title}</h4>
+                              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{n.desc}</p>
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{n.time}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div style={{ padding: '8px', textAlign: 'center', background: '#f9f9f9', borderTop: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua</span>
+                    </div>
                   </div>
-                  <div style={{ padding: '8px', textAlign: 'center', background: '#f9f9f9', borderTop: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua</span>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
+
+          <p className={styles.greeting} style={{ marginBottom: '8px' }}>
+            Assalamualaikum{firstName ? `, ${firstName}` : ''} 👋
+          </p>
           <h1 className={styles.heroTitle}>
             Mau makan apa hari ini?
             <span>Temukan makanan halal terdekat yang terpercaya</span>
           </h1>
 
-          <form className={styles.searchBox} onSubmit={(e) => { e.preventDefault(); const q = e.target.q.value.trim(); if (q) router.push(`/search?q=${encodeURIComponent(q)}`); }}>
-            <span className={styles.searchIcon}>🔍</span>
-            <input id="home-search-input" name="q" placeholder="Cari restoran, menu, atau kota..." style={{ border: 'none', background: 'transparent', outline: 'none', flex: 1, fontSize: '15px' }} />
-          </form>
-
           <button className={styles.nearbyBtn} onClick={() => {
-            const input = document.getElementById('home-search-input');
-            const q = input ? input.value.trim() : '';
-            if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
+            router.push(`/search`);
           }}>
-            Cari di Sekitarku
+            Cari di Sekitarku 📍
           </button>
         </div>
       </section>
@@ -307,8 +328,37 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* ❌ SECTION 2: Promo & Diskon (Hidden for now) */}
+      {/* 🎉 SECTION 2: Promo & Diskon */}
       {/* ═══════════════════════════════════════════ */}
+      <section className={styles.promoSection}>
+        <div className="section-header">
+          <h2 className="section-title">Promo & Diskon</h2>
+          <Link href="/search?promo=true" className="section-link">Lihat Semua →</Link>
+        </div>
+
+        {promoPlaces.length > 0 ? (
+          <div className={styles.promoScroll}>
+            {promoPlaces.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.promoCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className={styles.promoEmoji}>{place.emoji || '🍽️'}</div>
+                <div className={styles.promoBadge}>Diskon {place.promoDiscount}%</div>
+                <div className={styles.promoInfo}>
+                  <h3>{place.name}</h3>
+                  <p>{place.category}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.promoEmptyBanner}>
+            <div className={styles.promoEmptyIcon}>🎁</div>
+            <div>
+              <h3>Belum ada promo saat ini</h3>
+              <p>Nantikan promo menarik dari merchant Makanan Halal di sekitarmu!</p>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* ═══════════════════════════════════════════ */}
       {/* ⭐ SECTION 3: Rekomendasi Pilihan (Premium) */}
@@ -363,10 +413,77 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* ❌ SECTIONS: Baru Dibuka & Top Rated (Hidden for now) */}
+      {/* 🆕 SECTIONS: Baru Dibuka & Top Rated */}
       {/* ═══════════════════════════════════════════ */}
+      <section className={styles.newSection}>
+        <div className="section-header">
+          <h2 className="section-title">Baru Buka</h2>
+          <Link href="/search?sort=new" className="section-link">Lihat Semua →</Link>
+        </div>
 
-      {/* Restaurant List — Di Sekitarmu */}
+        {newPlaces.length > 0 ? (
+          <div className={styles.newScroll}>
+            {newPlaces.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.newCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className={styles.newBadge}>Baru</div>
+                {place.photo ? (
+                  <div style={{
+                    width: '100%', height: '80px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
+                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.newEmoji}>{place.emoji || '🍽️'}</div>
+                )}
+                <h3 className={styles.newName}>{place.name}</h3>
+                <div className={styles.newMeta}>
+                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '9px' }}>{place.badgeLabel}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada restoran baru minggu ini.</p>
+        )}
+      </section>
+
+      <section className={styles.topRatedSection}>
+        <div className="section-header">
+          <h2 className="section-title">Top Rated Sekitarmu</h2>
+          <Link href="/search?sort=rating" className="section-link">Lihat Semua →</Link>
+        </div>
+
+        {topRated.length > 0 ? (
+          <div className={styles.topRatedList}>
+            {topRated.map((place, i) => (
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.topRatedCard}>
+                <div className={styles.topRatedRank}>#{i + 1}</div>
+                {place.photo ? (
+                  <div style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.topRatedEmoji}>{place.emoji || '🍽️'}</div>
+                )}
+
+                <div className={styles.topRatedInfo}>
+                  <h3>{place.name}</h3>
+                  <div className={styles.topRatedMeta}>
+                    <span style={{ color: '#F59E0B', fontWeight: 700 }}>⭐ {place.rating}</span>
+                    <span>·</span>
+                    <span>{place.category}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada peringkat untuk saat ini.</p>
+        )}
+      </section>
+
+      {/* Restaurant List — Di Sekitarmu (Horizontal Scroll) */}
       <section className={styles.restaurantSection}>
         <div className="section-header">
           <h2 className="section-title">Di Sekitarmu</h2>
@@ -376,36 +493,31 @@ export default function HomePage() {
         {places.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px' }}>Belum ada restoran terdekat.</p>
         ) : (
-          <div className={`${styles.restaurantList} stagger`}>
+          <div className={styles.sponsoredScroll}>
             {places.map((resto, i) => (
               <Link
                 key={resto.id}
                 href={`/restaurant/${resto.id}`}
-                className={styles.restaurantCard}
+                className={styles.sponsoredCard}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div className={styles.cardImage}>
-                  {resto.photo ? (
-                    <img src={resto.photo} alt={resto.name} />
-                  ) : (
-                    resto.emoji
-                  )}
+                {resto.photo ? (
+                  <div style={{
+                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
+                    <img src={resto.photo} alt={resto.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.sponsoredEmoji}>{resto.emoji || '🍽️'}</div>
+                )}
+                <h3 className={styles.sponsoredName}>{resto.name}</h3>
+                <div className={styles.sponsoredMeta}>
+                  <span>⭐ {resto.rating}</span>
+                  <span className={`badge badge-${resto.badge}`} style={{ fontSize: '10px' }}>{resto.badgeLabel}</span>
                 </div>
-                <div className={styles.cardContent}>
-                  <h3 className={styles.cardName}>{resto.name}</h3>
-                  <div className={styles.cardMeta}>
-                    <span className={`badge badge-${resto.badge}`}>
-                      {resto.badgeLabel}
-                    </span>
-                  </div>
-                  <div className={styles.cardMeta}>
-                    <span className={styles.cardRating}>
-                      <span className="star">⭐</span> {resto.rating}
-                      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({resto.reviews})</span>
-                    </span>
-                    <span className={styles.cardDistance}>📍 {resto.distance}</span>
-                  </div>
-                  <span className={styles.cardCategory}>{resto.category}</span>
+                <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>📍</span> {resto.distance || '~ km'}
                 </div>
               </Link>
             ))}

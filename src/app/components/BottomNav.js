@@ -13,7 +13,7 @@ export default function BottomNav() {
 
     const navItems = [
         { href: '/', label: 'Home', icon: '🏠' },
-        { href: '/search', label: 'Search', icon: '🔍' },
+        { href: '/product', label: 'Produk', icon: '🛍️' },
         { href: '/scan', label: 'Scan', icon: '', isScan: true },
         { href: '/travel', label: 'Travel', icon: '🧳' },
         { href: '/profile', label: user?.isLoggedIn ? 'Profile' : 'Sign In', icon: '👤' },
