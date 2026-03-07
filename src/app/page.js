@@ -358,7 +358,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════ */}
       {/* 🖼️ SECTION 0: Image Slider (Beranda Promo) */}
       {/* ═══════════════════════════════════════════ */}
-      <section className="px-4 mt-6">
+      <section style={{ padding: '0 16px', marginTop: '32px' }}>
         <ImageSlider />
       </section>
 

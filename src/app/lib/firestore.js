@@ -378,7 +378,7 @@ export async function getUserNotifications(uid, role = 'user') {
     // 1. Fetch personal notifications
     const pQ = query(
         collection(db, 'notifications'),
-        where('target', 'in', ['all', uid])
+        where('target', '==', uid)
     );
     const pSnap = await getDocs(pQ);
     const personal = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
