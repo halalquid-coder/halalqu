@@ -29,7 +29,7 @@ export default function HomePage() {
   const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
-  const { user, notificationsEnabled, setNotificationsEnabled } = useUser();
+  const { user, notificationsEnabled: contextNotif, toggleNotifications } = useUser();
   const firstName = user.isLoggedIn && user.name ? user.name.split(' ')[0] : '';
 
   // Close dropdown when clicking outside
@@ -161,15 +161,10 @@ export default function HomePage() {
   const handlePushPermission = async () => {
     try {
       // Use in-app notification system (Firestore-based)
-      // FCM push requires VAPID key + service worker setup on HTTPS
       setFcmToken('in-app-enabled');
-      // Save notification preference
-      if (user.isLoggedIn && user.uid) {
-        const { doc: fbDoc, updateDoc: fbUpdate } = await import('firebase/firestore');
-        await fbUpdate(fbDoc(db, 'users', user.uid), { notificationsEnabled: true });
+      if (!contextNotif) {
+        await toggleNotifications();
       }
-      setNotificationsEnabled(true);
-      try { localStorage.setItem('halalqu-notifications', 'true'); } catch (e) { }
       alert('Notifikasi dalam aplikasi diaktifkan! 🔔\nKamu akan menerima notifikasi di bell icon.');
     } catch (e) {
       console.error('Notification opt-in error:', e);
@@ -295,7 +290,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Push Notification Promo */}
-                    {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && !user?.notificationsEnabled && (
+                    {!fcmToken && typeof window !== 'undefined' && Notification.permission !== 'granted' && !contextNotif && (
                       <div style={{ padding: '12px var(--space-md)', background: '#FFF8E7', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '20px' }}>🔔</span>
                         <div style={{ flex: 1 }}>
