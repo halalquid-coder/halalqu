@@ -215,8 +215,13 @@ export default function HomePage() {
   return (
     <div className="page container">
       {/* Hero Section */}
-      {/* Hero Section */}
       <section className={styles.hero}>
+        {/* Background shapes securely wrapped in hidden overflow to prevent mobile horizontal scroll */}
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' }}>
+          <div className={styles.heroShape1} />
+          <div className={styles.heroShape2} />
+        </div>
+
         <div className={styles.heroContent}>
           {/* Header row: Logo on left, Search & Notif on right */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
