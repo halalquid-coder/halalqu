@@ -4,7 +4,7 @@
   padding: var(--space-xl) var(--space-md) var(--space-2xl);
   margin: 0 calc(-1 * var(--space-md));
   position: relative;
-  overflow: hidden;
+  z-index: 50;
 }
 
 .hero::before {
