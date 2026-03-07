@@ -5,6 +5,17 @@ import Link from 'next/link';
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
+function getHalalBadgeText(country) {
+    if (!country || country === 'Indonesia') return '☪️ Halal MUI';
+    if (country === 'Malaysia') return '☪️ Halal JAKIM';
+    if (country === 'Korea') return '☪️ Halal KMF';
+    if (country === 'Jepang') return '☪️ Halal JHA';
+    if (country === 'Singapura') return '☪️ Halal MUIS';
+    if (country === 'Thailand') return '☪️ Halal CICOT';
+    if (country === 'Australia') return '☪️ Halal AFIC';
+    return `☪️ Halal ${country}`;
+}
+
 function CategoryContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -85,56 +96,70 @@ function CategoryContent() {
                         <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                             Menampilkan <b>{products.length}</b> produk
                         </p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
-                            {products.map((p) => {
-                                const image = p.images && p.images.length > 0 ? p.images[0] : null;
-                                return (
-                                    <Link
-                                        key={p.id}
-                                        href={`/product/${p.id}`}
-                                        style={{
-                                            display: 'flex', flexDirection: 'column', background: 'var(--bg-card)',
-                                            borderRadius: 'var(--radius-md)', overflow: 'hidden',
-                                            boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)'
-                                        }}
-                                    >
-                                        {/* Product Image */}
-                                        <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--bg-primary)', position: 'relative' }}>
-                                            {image ? (
-                                                <img src={image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--light-gray)' }}>📦</div>
-                                            )}
 
-                                            {/* Halal Badge Overlay */}
-                                            {p.halalId && (
-                                                <div style={{
-                                                    position: 'absolute', top: '8px', left: '8px', background: '#F3E8FF',
-                                                    color: '#7E22CE', fontSize: '10px', fontWeight: 'bold',
-                                                    padding: '2px 6px', borderRadius: '4px', border: '1px solid #E9D5FF'
-                                                }}>
-                                                    ☪️ Halal
-                                                </div>
-                                            )}
-                                        </div>
+                        {/* Grouped by Sub Category */}
+                        {(() => {
+                            const grouped = {};
+                            products.forEach(p => {
+                                const sub = p.subCategory || 'Lainnya';
+                                if (!grouped[sub]) grouped[sub] = [];
+                                grouped[sub].push(p);
+                            });
 
-                                        {/* Product Info */}
-                                        <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                            <h3 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{p.title}</h3>
+                            return Object.keys(grouped).sort().map(subCat => (
+                                <div key={subCat} style={{ marginBottom: '32px' }}>
+                                    <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 16px', color: 'var(--charcoal)', borderBottom: '2px solid var(--halalqu-green-light)', paddingBottom: '8px', display: 'inline-block' }}>
+                                        {subCat}
+                                    </h2>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+                                        {grouped[subCat].map((p) => {
+                                            const image = p.images && p.images.length > 0 ? p.images[0] : null;
+                                            return (
+                                                <Link
+                                                    key={p.id}
+                                                    href={`/product/${p.id}`}
+                                                    style={{
+                                                        display: 'flex', flexDirection: 'column', background: 'var(--bg-card)',
+                                                        borderRadius: 'var(--radius-md)', overflow: 'hidden',
+                                                        boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)'
+                                                    }}
+                                                >
+                                                    {/* Product Image */}
+                                                    <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--bg-primary)', position: 'relative' }}>
+                                                        {image ? (
+                                                            <img src={image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--light-gray)' }}>📦</div>
+                                                        )}
 
-                                            {p.subCategory && (
-                                                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>{p.subCategory}</p>
-                                            )}
+                                                        {/* Halal Badge Overlay */}
+                                                        {p.halalId && (
+                                                            <div style={{
+                                                                position: 'absolute', top: '8px', left: '8px', background: '#F3E8FF',
+                                                                color: '#7E22CE', fontSize: '10px', fontWeight: 'bold',
+                                                                padding: '2px 6px', borderRadius: '4px', border: '1px solid #E9D5FF'
+                                                            }}>
+                                                                {getHalalBadgeText(p.halalCountry)}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                            <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                                {p.labels?.isLokal && <span style={{ fontSize: '10px', background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green-dark)', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Lokal</span>}
-                                                {p.labels?.isImpor && <span style={{ fontSize: '10px', background: '#EFF6FF', color: '#1D4ED8', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Impor</span>}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                )
-                            })}
-                        </div>
+                                                    {/* Product Info */}
+                                                    <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                                        <h3 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{p.title}</h3>
+
+                                                        <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                            {p.labels?.isLokal && <span style={{ fontSize: '10px', background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green-dark)', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Lokal</span>}
+                                                            {p.labels?.isImpor && <span style={{ fontSize: '10px', background: '#EFF6FF', color: '#1D4ED8', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Impor</span>}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            ));
+                        })()}
                     </>
                 )}
             </div>

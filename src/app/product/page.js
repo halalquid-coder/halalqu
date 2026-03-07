@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import { db } from '../lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
+function getHalalBadgeText(country) {
+    if (!country || country === 'Indonesia') return '☪️ Halal MUI';
+    if (country === 'Malaysia') return '☪️ Halal JAKIM';
+    if (country === 'Korea') return '☪️ Halal KMF';
+    if (country === 'Jepang') return '☪️ Halal JHA';
+    if (country === 'Singapura') return '☪️ Halal MUIS';
+    if (country === 'Thailand') return '☪️ Halal CICOT';
+    if (country === 'Australia') return '☪️ Halal AFIC';
+    return `☪️ Halal ${country}`;
+}
+
 export default function ProductShowcasePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
@@ -148,7 +159,7 @@ export default function ProductShowcasePage() {
                                                             color: '#7E22CE', fontSize: '10px', fontWeight: 'bold',
                                                             padding: '2px 6px', borderRadius: '4px', border: '1px solid #E9D5FF'
                                                         }}>
-                                                            ☪️ Halal
+                                                            {getHalalBadgeText(p.halalCountry)}
                                                         </div>
                                                     )}
                                                 </div>
