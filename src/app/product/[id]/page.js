@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -15,8 +15,9 @@ function getHalalBadgeText(country) {
     return `☪️ Halal ${country}`;
 }
 
-export default function ProductDetailPage({ params }) {
+export default function ProductDetailPage() {
     const router = useRouter();
+    const params = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
