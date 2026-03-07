@@ -77,21 +77,25 @@ export default function ProductShowcasePage() {
     });
 
     return (
-        <div className="page pb-24">
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-900 transition-colors">
+        <div className="page pb-24" style={{ paddingBottom: '96px' }}>
+            <header style={{
+                position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.8)',
+                backdropFilter: 'blur(12px)', padding: '12px 16px', borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
                         ←
                     </button>
-                    <h1 className="text-lg font-bold text-gray-900">Katalog Produk</h1>
+                    <h1 style={{ fontSize: '18px', margin: 0 }}>Katalog Produk</h1>
                 </div>
             </header>
 
-            <div className="py-4">
+            <div style={{ padding: '16px 0' }}>
                 {sortedCategories.length === 0 ? (
-                    <div className="text-center p-10 text-gray-400">
-                        <p className="text-4xl mb-4">🛍️</p>
-                        <p className="text-sm">Belum ada produk saat ini.</p>
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                        <p style={{ fontSize: '36px', margin: '0 0 16px' }}>🛍️</p>
+                        <p style={{ fontSize: '14px' }}>Belum ada produk saat ini.</p>
                     </div>
                 ) : (
                     sortedCategories.map((category) => {
@@ -101,49 +105,61 @@ export default function ProductShowcasePage() {
                         const hasMore = products.length > 6;
 
                         return (
-                            <section key={category} className="mb-8">
-                                <div className="px-4 flex items-center justify-between mb-3">
-                                    <h2 className="text-[15px] font-bold text-gray-900">{category}</h2>
+                            <section key={category} style={{ marginBottom: '32px' }}>
+                                <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <h2 style={{ fontSize: '16px', margin: 0 }}>{category}</h2>
                                     {hasMore && (
-                                        <Link href={`/product/category?name=${encodeURIComponent(category)}`} className="text-xs font-semibold text-emerald-600">
+                                        <Link href={`/product/category?name=${encodeURIComponent(category)}`} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--halalqu-green)' }}>
                                             Lihat Semua
                                         </Link>
                                     )}
                                 </div>
 
                                 {/* Horizontal Carousel */}
-                                <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x hide-scrollbar" style={{ scrollSnapType: 'x mandatory' }}>
+                                <div className="hide-scrollbar" style={{
+                                    display: 'flex', gap: '16px', overflowX: 'auto', padding: '0 16px 16px',
+                                    scrollSnapType: 'x mandatory'
+                                }}>
                                     {displayProducts.map((p) => {
                                         const image = p.images && p.images.length > 0 ? p.images[0] : null;
                                         return (
                                             <Link
                                                 key={p.id}
                                                 href={`/product/${p.id}`}
-                                                className="flex-shrink-0 w-36 snap-start flex flex-col bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                                                style={{
+                                                    flexShrink: 0, width: '140px', scrollSnapAlign: 'start',
+                                                    display: 'flex', flexDirection: 'column', background: 'var(--bg-card)',
+                                                    borderRadius: 'var(--radius-md)', overflow: 'hidden',
+                                                    boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)'
+                                                }}
                                             >
                                                 {/* Product Image */}
-                                                <div className="w-full h-36 bg-gray-50 relative">
+                                                <div style={{ width: '100%', height: '140px', background: 'var(--bg-primary)', position: 'relative' }}>
                                                     {image ? (
-                                                        <img src={image} alt={p.title} className="w-full h-full object-cover" />
+                                                        <img src={image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-300">📦</div>
+                                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--light-gray)' }}>📦</div>
                                                     )}
 
                                                     {/* Halal Badge Overlay */}
                                                     {p.halalId && (
-                                                        <div className="absolute top-2 left-2 bg-purple-100 text-purple-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm border border-purple-200">
+                                                        <div style={{
+                                                            position: 'absolute', top: '8px', left: '8px', background: '#F3E8FF',
+                                                            color: '#7E22CE', fontSize: '10px', fontWeight: 'bold',
+                                                            padding: '2px 6px', borderRadius: '4px', border: '1px solid #E9D5FF'
+                                                        }}>
                                                             ☪️ Halal
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 {/* Product Info */}
-                                                <div className="p-2.5 flex flex-col flex-1">
-                                                    <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-snug mb-1">{p.title}</h3>
+                                                <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                                    <h3 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 6px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{p.title}</h3>
 
-                                                    <div className="mt-auto flex flex-wrap gap-1">
-                                                        {p.labels?.isLokal && <span className="text-[9px] bg-emerald-50 text-emerald-700 font-medium px-1.5 py-0.5 rounded border border-emerald-100">Lokal</span>}
-                                                        {p.labels?.isImpor && <span className="text-[9px] bg-blue-50 text-blue-700 font-medium px-1.5 py-0.5 rounded border border-blue-100">Impor</span>}
+                                                    <div style={{ marginTop: 'auto', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                        {p.labels?.isLokal && <span style={{ fontSize: '10px', background: 'var(--halalqu-green-light)', color: 'var(--halalqu-green-dark)', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Lokal</span>}
+                                                        {p.labels?.isImpor && <span style={{ fontSize: '10px', background: '#EFF6FF', color: '#1D4ED8', fontWeight: 500, padding: '2px 6px', borderRadius: '4px' }}>Impor</span>}
                                                     </div>
                                                 </div>
                                             </Link>
@@ -154,11 +170,16 @@ export default function ProductShowcasePage() {
                                     {hasMore && (
                                         <Link
                                             href={`/product/category?name=${encodeURIComponent(category)}`}
-                                            className="flex-shrink-0 w-32 snap-start flex flex-col items-center justify-center bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                            style={{
+                                                flexShrink: 0, width: '130px', scrollSnapAlign: 'start',
+                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                background: 'var(--halalqu-green-light)', borderRadius: 'var(--radius-md)',
+                                                border: '1px solid #D1FAE5', color: 'var(--halalqu-green-dark)', textDecoration: 'none'
+                                            }}
                                         >
-                                            <span className="text-xl mb-1">👉</span>
-                                            <span className="text-xs font-bold">Lihat Semua</span>
-                                            <span className="text-[10px] mt-0.5 opacity-80">{products.length - 6} Lainnya</span>
+                                            <span style={{ fontSize: '24px', marginBottom: '4px' }}>👉</span>
+                                            <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Lihat Semua</span>
+                                            <span style={{ fontSize: '11px', marginTop: '2px', opacity: 0.8 }}>{products.length - 6} Lainnya</span>
                                         </Link>
                                     )}
                                 </div>
