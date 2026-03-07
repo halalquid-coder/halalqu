@@ -136,6 +136,7 @@ export default function HomePage() {
           desc: n.message,
           time: n.createdAt ? formatTimeAgo(n.createdAt) : 'Baru saja',
           unread: !n.read,
+          isGlobal: n.isGlobal || false,
         })));
       } catch (e) {
         console.error('Failed to load notifications:', e);
@@ -180,26 +181,32 @@ export default function HomePage() {
   const handleMarkAllAsRead = async () => {
     if (!user.isLoggedIn || !user.uid) return;
 
+    const unreadNotifs = notifications.filter(n => n.unread);
+    if (unreadNotifs.length === 0) return;
+
     // Optimistically update local UI immediately
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
 
     try {
-      const { collection, query, where, getDocs, writeBatch, doc: fbDoc } = await import('firebase/firestore');
-      const q = query(
-        collection(db, 'notifications'),
-        where('userId', '==', user.uid),
-        where('read', '==', false)
-      );
+      const { writeBatch, doc: fbDoc, updateDoc, arrayUnion } = await import('firebase/firestore');
 
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) return;
+      // Update global reads in user profile array
+      const globalIds = unreadNotifs.filter(n => n.isGlobal).map(n => n.id);
+      if (globalIds.length > 0) {
+        await updateDoc(fbDoc(db, 'users', user.uid), {
+          readGlobalNotifications: arrayUnion(...globalIds)
+        });
+      }
 
-      const batch = writeBatch(db);
-      snapshot.docs.forEach(d => {
-        batch.update(d.ref, { read: true });
-      });
-
-      await batch.commit();
+      // Update personal reads directly via batch update
+      const personalIds = unreadNotifs.filter(n => !n.isGlobal).map(n => n.id);
+      if (personalIds.length > 0) {
+        const batch = writeBatch(db);
+        personalIds.forEach(id => {
+          batch.update(fbDoc(db, 'notifications', id), { read: true });
+        });
+        await batch.commit();
+      }
     } catch (err) {
       console.error("Gagal menandai notifikasi telah dibaca:", err);
     }

@@ -25,9 +25,20 @@ export async function createUserProfile(uid, data) {
         darkMode: false,
         language: 'id',
         bookmarks: [],
+        readGlobalNotifications: [],
         stats: { reviews: 0, places: 0, bookmarks: 0 },
         contributorLevel: 'bronze',
         createdAt: serverTimestamp(),
+    });
+
+    // Send welcome notification
+    await addDoc(collection(db, 'notifications'), {
+        title: 'Selamat Datang di Halalqu!',
+        message: 'Temukan restoran halal terbaik di sekitarmu dan bagikan pengalamanmu. Mari membangun ekosistem kuliner halal bersama.',
+        target: uid,
+        type: 'welcome',
+        read: false,
+        createdAt: serverTimestamp()
     });
 }
 
@@ -372,6 +383,10 @@ export async function getUserNotifications(uid, role = 'user') {
     const pSnap = await getDocs(pQ);
     const personal = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+    // Fetch user profile to get read global notifications
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    const readGlobal = userDoc.exists() ? (userDoc.data().readGlobalNotifications || []) : [];
+
     // 2. Fetch global broadcast notifications
     const globalTargets = ['all'];
     if (role) globalTargets.push(role); // 'user' or 'merchant'
@@ -383,7 +398,12 @@ export async function getUserNotifications(uid, role = 'user') {
             where('target', 'in', globalTargets)
         );
         const gSnap = await getDocs(gQ);
-        global = gSnap.docs.map(d => ({ id: d.id, ...d.data(), isGlobal: true, read: false }));
+        global = gSnap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            isGlobal: true,
+            read: readGlobal.includes(d.id)
+        }));
     } catch (e) {
         console.warn('global_notifications not found or error:', e);
     }
