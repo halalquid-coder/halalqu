@@ -14,10 +14,10 @@ const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 import ImageSlider from './components/ImageSlider';
 
 const categories = [
-  { emoji: '🍽️', label: 'Semua' },
-  { emoji: '🛡️', label: 'Certified' },
-  { emoji: '🕌', label: 'Muslim Owned' },
-  { emoji: '🌿', label: 'Halal Ingredients' },
+  { emoji: '🍽️', label: 'Semua Kategori', path: '/search' },
+  { emoji: '🛍️', label: 'Katalog Produk', path: '/product' },
+  { emoji: '🛡️', label: 'Certified', path: '/search?category=Certified' },
+  { emoji: '🕌', label: 'Muslim Owned', path: '/search?category=Muslim%20Owned' },
 ];
 
 export default function HomePage() {
@@ -327,7 +327,7 @@ export default function HomePage() {
           {categories.map((cat, i) => (
             <Link
               key={i}
-              href={`/search?category=${encodeURIComponent(cat.label)}`}
+              href={cat.path || `/search?category=${encodeURIComponent(cat.label)}`}
               className={styles.categoryItem}
               style={{ animationDelay: `${i * 0.05}s` }}
             >
