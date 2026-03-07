@@ -11,6 +11,8 @@ import { getUserNotifications } from './lib/firestore';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
+import ImageSlider from './components/ImageSlider';
+
 const categories = [
   { emoji: '🍽️', label: 'Semua' },
   { emoji: '🛡️', label: 'Certified' },
@@ -308,6 +310,13 @@ export default function HomePage() {
             Cari di Sekitarku 📍
           </button>
         </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🖼️ SECTION 0: Image Slider (Beranda Promo) */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className="px-4 mt-2">
+        <ImageSlider />
       </section>
 
       {/* ═══════════════════════════════════════════ */}
