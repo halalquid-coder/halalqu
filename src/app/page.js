@@ -127,6 +127,7 @@ export default function HomePage() {
   // Fetch real notifications from Firestore
   useEffect(() => {
     async function loadNotifications() {
+      if (user?.notificationsEnabled === false) return;
       try {
         const data = await getUserNotifications(user.uid || 'guest', user?.role || 'user');
         setNotifications(data.map(n => ({
@@ -141,7 +142,7 @@ export default function HomePage() {
       }
     }
     loadNotifications();
-  }, [user.uid]);
+  }, [user.uid, user?.notificationsEnabled]);
 
   const formatTimeAgo = (ts) => {
     const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -173,6 +174,34 @@ export default function HomePage() {
       console.error('Notification opt-in error:', e);
       setFcmToken('in-app-enabled');
       alert('Notifikasi dalam aplikasi diaktifkan! 🔔');
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!user.isLoggedIn || !user.uid) return;
+
+    // Optimistically update local UI immediately
+    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+
+    try {
+      const { collection, query, where, getDocs, writeBatch, doc: fbDoc } = await import('firebase/firestore');
+      const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid),
+        where('read', '==', false)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return;
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach(d => {
+        batch.update(d.ref, { read: true });
+      });
+
+      await batch.commit();
+    } catch (err) {
+      console.error("Gagal menandai notifikasi telah dibaca:", err);
     }
   };
 
@@ -245,7 +274,12 @@ export default function HomePage() {
                   }}>
                     <div style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h3 style={{ fontSize: '14px', margin: 0, color: 'var(--charcoal)' }}>Notifikasi</h3>
-                      <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', cursor: 'pointer' }}>Tandai dibaca</span>
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        style={{ border: 'none', background: 'transparent', fontSize: '12px', color: 'var(--halalqu-green)', cursor: 'pointer', padding: 0 }}
+                      >
+                        Tandai dibaca
+                      </button>
                     </div>
 
                     {/* Push Notification Promo */}
@@ -288,7 +322,9 @@ export default function HomePage() {
                       )}
                     </div>
                     <div style={{ padding: '8px', textAlign: 'center', background: '#f9f9f9', borderTop: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, cursor: 'pointer' }}>Lihat Semua</span>
+                      <Link href="/notifications" style={{ fontSize: '12px', color: 'var(--halalqu-green)', fontWeight: 600, textDecoration: 'none' }}>
+                        Lihat Semua
+                      </Link>
                     </div>
                   </div>
                 )}
