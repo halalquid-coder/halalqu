@@ -11,6 +11,7 @@ export default function MerchantRegisterPage() {
     const [formData, setFormData] = useState({
         restoName: '', address: '', phone: '', category: '',
         certBody: '', certNumber: '',
+        latitude: '', longitude: '',
     });
     const [photos, setPhotos] = useState([null, null, null]);
     const [agreed, setAgreed] = useState(false);
@@ -64,9 +65,10 @@ export default function MerchantRegisterPage() {
         setDetectingAddress(true);
         try {
             const pos = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 15000, enableHighAccuracy: true });
             });
             const { latitude, longitude } = pos.coords;
+            setFormData(prev => ({ ...prev, latitude: latitude.toString(), longitude: longitude.toString() }));
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=id`);
             const data = await res.json();
             if (data.display_name) {
@@ -76,6 +78,21 @@ export default function MerchantRegisterPage() {
             alert('Gagal mendeteksi lokasi. Pastikan GPS aktif.');
         }
         setDetectingAddress(false);
+    };
+
+    const geocodeFromAddress = async () => {
+        if (!formData.address || formData.address.trim().length < 5) return;
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(formData.address)}&format=json&limit=1&accept-language=id`
+            );
+            const data = await res.json();
+            if (data && data.length > 0) {
+                setFormData(prev => ({ ...prev, latitude: data[0].lat, longitude: data[0].lon }));
+            }
+        } catch (e) {
+            console.warn('Forward geocode failed:', e);
+        }
     };
 
     const handleSubmit = async () => {
@@ -102,6 +119,8 @@ export default function MerchantRegisterPage() {
                 category: formData.category || '',
                 certBody: formData.certBody,
                 certNumber: formData.certNumber,
+                latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+                longitude: formData.longitude ? parseFloat(formData.longitude) : null,
                 photoUrls,
                 photoCount: validPhotos.length,
                 halalQualifications: halalStatements.filter((_, i) => halalQualifications[i]),
