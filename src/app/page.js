@@ -127,7 +127,11 @@ export default function HomePage() {
   // Fetch real notifications from Firestore
   useEffect(() => {
     async function loadNotifications() {
-      if (user?.notificationsEnabled === false) return;
+      // Don't show notifications for guests
+      if (!user.isLoggedIn || user?.notificationsEnabled === false) {
+        setNotifications([]);
+        return;
+      }
       try {
         const data = await getUserNotifications(user.uid || 'guest', user?.role || 'user');
         setNotifications(data.map(n => ({
@@ -143,7 +147,7 @@ export default function HomePage() {
       }
     }
     loadNotifications();
-  }, [user.uid, user?.notificationsEnabled]);
+  }, [user.uid, user?.notificationsEnabled, user.isLoggedIn]);
 
   const formatTimeAgo = (ts) => {
     const date = ts.toDate ? ts.toDate() : new Date(ts);
