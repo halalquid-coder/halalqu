@@ -386,38 +386,6 @@ export default function MerchantDashboard() {
                                                     </select>
                                                 </div>
                                             )}
-
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-lg)' }}>
-                                                {place && (
-                                                    <button onClick={() => {
-                                                        setEditForm({
-                                                            name: place.name || '', address: place.address || '', phone: place.phone || '', openTime: place.openTime || '', closeTime: place.closeTime || '', operatingDays: place.operatingDays || ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: place.isTemporarilyClosed || false, category: place.category || '', description: place.description || '', imageUrl: place.imageUrl || ''
-                                                        });
-                                                        setImages(place.images || (place.imageUrl ? [place.imageUrl] : []));
-                                                        setEditing(true);
-                                                    }} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--white)', color: 'var(--charcoal)', border: '1px solid var(--border)', fontWeight: 600, fontSize: '13px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                                                        ✏️ Edit Listing
-                                                    </button>
-                                                )}
-                                                <button onClick={() => {
-                                                    if (places.length >= 3) {
-                                                        alert('Anda telah mencapai batas maksimal 3 listing gratis. Untuk menambah lebih banyak, silakan berlangganan akun premium.');
-                                                        return;
-                                                    }
-                                                    setIsAddingNew(true);
-                                                    setEditForm({
-                                                        name: '', address: '', phone: '', openTime: '', closeTime: '', operatingDays: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: false, category: '', description: '', imageUrl: ''
-                                                    });
-                                                    setImages([]);
-                                                }} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green)', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
-                                                    + Tambah Listing
-                                                </button>
-                                                {place && places.length > 0 && (
-                                                    <button onClick={handleDeleteListing} style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', background: '#FEE2E2', color: '#991B1B', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer', marginTop: 'var(--space-md)' }}>
-                                                        🗑️ Hapus Listing
-                                                    </button>
-                                                )}
-                                            </div>
                                         </>
                                     )}
                                 </div>
@@ -572,6 +540,38 @@ export default function MerchantDashboard() {
                                                 <span style={{ fontSize: '14px', fontWeight: 500, maxWidth: '60%', textAlign: 'right', color: field.label === 'Status Toko' && place?.isTemporarilyClosed ? 'var(--danger)' : 'inherit' }}>{field.value}</span>
                                             </div>
                                         ))}
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-xl)' }}>
+                                            {place && (
+                                                <button onClick={() => {
+                                                    setEditForm({
+                                                        name: place.name || '', address: place.address || '', phone: place.phone || '', openTime: place.openTime || '', closeTime: place.closeTime || '', operatingDays: place.operatingDays || ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: place.isTemporarilyClosed || false, category: place.category || '', description: place.description || '', imageUrl: place.imageUrl || ''
+                                                    });
+                                                    setImages(place.images || (place.imageUrl ? [place.imageUrl] : []));
+                                                    setEditing(true);
+                                                }} style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--white)', color: 'var(--charcoal)', border: '1px solid var(--border)', fontWeight: 600, fontSize: '15px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                                                    ✏️ Edit Listing
+                                                </button>
+                                            )}
+                                            <button onClick={() => {
+                                                if (places.length >= 3) {
+                                                    alert('Anda telah mencapai batas maksimal 3 listing gratis. Untuk menambah lebih banyak, silakan berlangganan akun premium.');
+                                                    return;
+                                                }
+                                                setIsAddingNew(true);
+                                                setEditForm({
+                                                    name: '', address: '', phone: '', openTime: '', closeTime: '', operatingDays: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'], isTemporarilyClosed: false, category: '', description: '', imageUrl: ''
+                                                });
+                                                setImages([]);
+                                            }} style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green)', color: 'white', border: 'none', fontWeight: 600, fontSize: '15px', cursor: 'pointer' }}>
+                                                + Tambah Listing
+                                            </button>
+                                            {place && places.length > 0 && (
+                                                <button onClick={handleDeleteListing} style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', background: '#FCE8E8', color: '#991B1B', border: 'none', fontWeight: 600, fontSize: '15px', cursor: 'pointer', marginTop: 'var(--space-md)' }}>
+                                                    🗑️ Hapus Listing
+                                                </button>
+                                            )}
+                                        </div>
                                     </>
                                 )}
                             </div>
