@@ -1,6 +1,8 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useUser } from '../context/UserContext';
 import { analyzeWithLocalDB, parseIngredientList } from '../lib/halalDatabase';
 
 const statusConfig = {
@@ -19,6 +21,8 @@ const verdictConfig = {
 const STEPS = ['capture', 'extract', 'review', 'analyze', 'results'];
 
 export default function ScanPage() {
+    const { user } = useUser();
+    const router = useRouter();
     const [step, setStep] = useState('capture');
     const [cameraActive, setCameraActive] = useState(false);
     const [cameraError, setCameraError] = useState(null);
@@ -167,6 +171,12 @@ export default function ScanPage() {
 
     // Analyze ingredients (from image or manual text)
     const analyzeIngredients = async (imageData = null, manualText = null) => {
+        if (!user?.isLoggedIn && scanHistory.length >= 1) {
+            alert('⚠️ Batas Scan Tamu Tercapai\n\nAnda hanya dapat menggunakan fitur scan 1 kali sebagai tamu.\nSilakan daftar atau login untuk menikmati fitur scan tanpa batas!');
+            router.push('/login');
+            return;
+        }
+
         setStep('analyze');
 
         // Use provided arguments, or fallback to state
@@ -430,7 +440,7 @@ export default function ScanPage() {
                     {/* Scan History */}
                     {scanHistory.length > 0 && (
                         <div style={{ marginTop: 'var(--space-xl)' }}>
-                            <h3 style={{ fontSize: '15px', marginBottom: 'var(--space-sm)' }}>📜 Riwayat Scan</h3>
+                            <h3 style={{ fontSize: '15px', marginBottom: 'var(--space-sm)' }}>Riwayat Scan</h3>
                             {scanHistory.slice(0, 3).map((h, i) => {
                                 const vc = verdictConfig[h.verdict] || verdictConfig.HALAL;
                                 return (

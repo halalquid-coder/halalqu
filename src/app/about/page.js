@@ -25,10 +25,6 @@ export default function AboutPage() {
                     position: 'absolute', top: '-50px', right: '-30px', width: '200px', height: '200px',
                     borderRadius: '50%', background: 'rgba(255,255,255,0.08)',
                 }} />
-                <img src="/icon.svg" alt="Halalqu" style={{
-                    width: '72px', height: '72px', marginBottom: 'var(--space-md)',
-                    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
-                }} />
                 <img src="/logo-white.svg" alt="Halalqu" style={{
                     height: '36px', marginBottom: 'var(--space-sm)',
                     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))',

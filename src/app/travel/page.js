@@ -28,7 +28,7 @@ export default function TravelPage() {
 
     return (
         <div className="page container" style={{ paddingTop: 'var(--space-xl)' }}>
-            <h1 style={{ marginBottom: 'var(--space-sm)' }}>🧳 Travel Guide</h1>
+            <h1 style={{ marginBottom: 'var(--space-sm)' }}>Travel Guide</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: 'var(--space-lg)' }}>
                 Temukan tempat makan halal di destinasi wisata favoritmu
             </p>
@@ -50,7 +50,7 @@ export default function TravelPage() {
 
             {/* All Destinations */}
             <div className="section-header">
-                <h2 className="section-title">🌍 Semua Destinasi</h2>
+                <h2 className="section-title">Semua Destinasi</h2>
                 <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{filtered.length} kota</span>
             </div>
 

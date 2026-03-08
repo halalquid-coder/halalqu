@@ -350,7 +350,7 @@ export default function HomePage() {
           <button className={styles.nearbyBtn} onClick={() => {
             router.push(`/search`);
           }}>
-            Cari di Sekitarku 📍
+            Cari di Sekitarku
           </button>
         </div>
       </section>
@@ -449,7 +449,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className={styles.sponsoredEmptyBanner}>
-            <div style={{ fontSize: '36px' }}>⭐</div>
+            <div style={{ fontSize: '36px' }}>🍽️</div>
             <div>
               <h3>Ingin restoran Anda tampil di sini?</h3>
               <p>Daftarkan merchant Anda dan jadi rekomendasi pilihan Halalqu</p>
@@ -509,26 +509,26 @@ export default function HomePage() {
         </div>
 
         {topRated.length > 0 ? (
-          <div className={styles.topRatedList}>
+          <div className={styles.sponsoredScroll}>
             {topRated.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.topRatedCard}>
+              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.topRatedRank}>#{i + 1}</div>
                 {place.photo ? (
-                  <div style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-md)', overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{
+                    width: '100%', height: '80px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
                     <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ) : (
-                  <div className={styles.topRatedEmoji}>{place.emoji || '🍽️'}</div>
+                  <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
                 )}
-
-                <div className={styles.topRatedInfo}>
-                  <h3>{place.name}</h3>
-                  <div className={styles.topRatedMeta}>
-                    <span style={{ color: '#F59E0B', fontWeight: 700 }}>⭐ {place.rating}</span>
-                    <span>·</span>
-                    <span>{place.category}</span>
-                  </div>
+                <h3 className={styles.sponsoredName}>{place.name}</h3>
+                <div className={styles.sponsoredMeta}>
+                  <span style={{ color: '#F59E0B', fontWeight: 700 }}>⭐ {place.rating}</span>
+                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
                 </div>
+                <span className={styles.sponsoredCategory}>{place.category}</span>
               </Link>
             ))}
           </div>

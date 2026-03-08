@@ -5,7 +5,7 @@ import styles from './detail.module.css';
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { getRestaurantReviews, submitReport } from '../../lib/firestore';
+import { getRestaurantReviews, submitReport, toggleBookmark } from '../../lib/firestore';
 import { useUser } from '../../context/UserContext';
 
 export default function RestaurantDetailPage() {
@@ -22,6 +22,12 @@ export default function RestaurantDetailPage() {
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState('Informasi Halal tidak akurat');
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+    useEffect(() => {
+        if (user?.isLoggedIn && params?.id) {
+            setIsBookmarked(user.bookmarks?.includes(params.id) || false);
+        }
+    }, [user, params?.id]);
 
     useEffect(() => {
         async function fetchPlace() {
@@ -103,6 +109,22 @@ export default function RestaurantDetailPage() {
         }
     };
 
+    const handleToggleBookmark = async () => {
+        if (!user?.isLoggedIn) {
+            alert("Silakan login terlebih dahulu untuk menyimpan bookmark.");
+            return;
+        }
+        // Optimistic UI update
+        setIsBookmarked(!isBookmarked);
+        try {
+            const result = await toggleBookmark(user.uid, params.id);
+            setIsBookmarked(result);
+        } catch (e) {
+            console.error('Bookmark error:', e);
+            setIsBookmarked(isBookmarked); // revert on error
+        }
+    };
+
     const handleSubmitReport = async (e) => {
         e.preventDefault();
         if (!user.isLoggedIn) {
@@ -150,7 +172,7 @@ export default function RestaurantDetailPage() {
                     <div className={styles.heroActions}>
                         <button
                             className={styles.heroBtn}
-                            onClick={() => setIsBookmarked(!isBookmarked)}
+                            onClick={handleToggleBookmark}
                             style={{ color: isBookmarked ? 'var(--danger)' : 'inherit' }}
                         >
                             {isBookmarked ? '❤️' : '🤍'}
