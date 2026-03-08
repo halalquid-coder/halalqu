@@ -227,7 +227,7 @@ export default function HomePage() {
                 alignItems: 'center', justifyContent: 'center',
                 fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
               }}>
-                🥙
+                <img src="/icon.svg" alt="Halalqu Icon" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
               </div>
               <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--white)', margin: 0, letterSpacing: '-0.5px' }}>
                 Halalqu
