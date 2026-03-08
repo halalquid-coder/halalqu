@@ -88,7 +88,7 @@ export default function ProductShowcasePage() {
     });
 
     return (
-        <div className="page pb-24" style={{ paddingBottom: '96px' }}>
+        <div className="page container pb-24" style={{ paddingBottom: '96px' }}>
             <header style={{
                 position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.8)',
                 backdropFilter: 'blur(12px)', padding: '12px 16px', borderBottom: '1px solid var(--border)',

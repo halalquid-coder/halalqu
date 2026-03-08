@@ -246,7 +246,7 @@ export default function HomePage() {
               </Link>
 
               {/* Notification Bell */}
-              <div ref={notifRef} style={{ position: 'relative' }}>
+              <div ref={notifRef} style={{ position: 'relative', display: 'flex' }}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   style={{
@@ -254,13 +254,14 @@ export default function HomePage() {
                     width: '36px', height: '36px', borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', position: 'relative', backdropFilter: 'blur(8px)',
-                    color: 'white', fontSize: '18px', padding: 0
+                    color: 'white', fontSize: '18px', padding: 0,
+                    flexShrink: 0, boxSizing: 'border-box'
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</span>
+                  <div style={{ lineHeight: 1 }}>🔔</div>
                   {unreadCount > 0 && (
                     <span style={{
-                      position: 'absolute', top: '-2px', right: '-2px',
+                      position: 'absolute', top: '-4px', right: '-4px',
                       background: '#EF4444', color: 'white',
                       fontSize: '11px', fontWeight: 'bold', width: '18px', height: '18px',
                       borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
