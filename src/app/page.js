@@ -254,19 +254,19 @@ export default function HomePage() {
                     width: '36px', height: '36px', borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', position: 'relative', backdropFilter: 'blur(8px)',
-                    color: 'white', fontSize: '18px'
+                    color: 'white', fontSize: '18px', padding: 0
                   }}
                 >
-                  🔔
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔔</span>
                   {unreadCount > 0 && (
                     <span style={{
                       position: 'absolute', top: '-2px', right: '-2px',
-                      background: 'var(--danger)', color: 'white',
-                      fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                      background: '#EF4444', color: 'white',
+                      fontSize: '11px', fontWeight: 'bold', width: '18px', height: '18px',
                       borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: '2px solid var(--halalqu-green)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 10, lineHeight: 1
                     }}>
-                      {unreadCount}
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
