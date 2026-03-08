@@ -20,6 +20,7 @@ export default function AboutPage() {
                 textAlign: 'center', padding: 'var(--space-2xl) 0', marginBottom: 'var(--space-xl)',
                 background: 'var(--halalqu-green-gradient)', borderRadius: 'var(--radius-xl)',
                 position: 'relative', overflow: 'hidden',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
             }}>
                 <div style={{
                     position: 'absolute', top: '-50px', right: '-30px', width: '200px', height: '200px',

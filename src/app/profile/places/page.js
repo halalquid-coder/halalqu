@@ -56,17 +56,17 @@ export default function MyPlacesPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                     <Link href="/profile" style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', background: 'var(--white)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', textDecoration: 'none' }}>←</Link>
                     <div>
-                        <h2 style={{ fontSize: '20px' }}>📍 Tempat Saya</h2>
+                        <h2 style={{ fontSize: '20px' }}>Rekomendasi saya</h2>
                         <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{places.length} tempat ditambahkan</p>
                     </div>
                 </div>
-                <Link href="/add-place" className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '13px' }}>➕ Tambah</Link>
+                <Link href="/add-place" className="btn btn-primary" style={{ padding: '10px 16px', fontSize: '13px' }}>Tambah</Link>
             </div>
 
             {loading ? (
                 <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>⏳ Memuat tempat...</p>
             ) : places.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-xl)' }}>Belum ada tempat yang ditambahkan.</p>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-xl)' }}>Belum ada tempat yang kamu rekomendasikan</p>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     {places.map(place => {

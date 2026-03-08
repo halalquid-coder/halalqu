@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import styles from './detail.module.css';
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getRestaurantReviews, submitReport, toggleBookmark } from '../../lib/firestore';
 import { useUser } from '../../context/UserContext';
@@ -36,6 +36,9 @@ export default function RestaurantDetailPage() {
                 const docRef = doc(db, 'places', params.id);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
+                    // Update view counter in the background
+                    updateDoc(docRef, { views: increment(1) }).catch(e => console.error('Error updating views', e));
+
                     const data = docSnap.data();
                     setResto({
                         id: docSnap.id,

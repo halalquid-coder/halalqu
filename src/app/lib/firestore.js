@@ -112,11 +112,18 @@ export async function getUserPlaces(uid) {
 // ============================================
 
 export async function submitReview(data) {
+    // Simple bad words dictionary for auto-moderation
+    const badWords = ['anjing', 'babi', 'bangsat', 'tolol', 'goblok', 'kontol', 'memek', 'ngentot', 'tai', 'bajingan', 'kampret'];
+
+    // Check if the comment contains any bad words
+    const commentLower = (data.comment || '').toLowerCase();
+    const hasBadWords = badWords.some(word => commentLower.includes(word));
+
     // Ensure placeId is set (for backward compatibility, accept restaurantId too)
     const reviewData = {
         ...data,
         placeId: data.placeId || data.restaurantId,
-        status: 'pending',
+        status: hasBadWords ? 'pending' : 'approved',
         createdAt: serverTimestamp(),
     };
     const docRef = await addDoc(collection(db, 'reviews'), reviewData);

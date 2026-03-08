@@ -9,7 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function EditProfilePage() {
     const router = useRouter();
-    const { user, setUser } = useUser();
+    const { user, setUser, refreshUser } = useUser();
     const [name, setName] = useState(user.name || '');
     const [phone, setPhone] = useState(user.phone || '');
     const [bio, setBio] = useState(user.bio || '');
@@ -79,6 +79,8 @@ export default function EditProfilePage() {
 
             // Update local context
             setUser(prev => ({ ...prev, name, phone, bio, photoURL }));
+            if (refreshUser) await refreshUser();
+
             setSaved(true);
             setTimeout(() => router.back(), 1200);
         } catch (err) {

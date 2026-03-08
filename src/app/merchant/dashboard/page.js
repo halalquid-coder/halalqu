@@ -265,7 +265,7 @@ export default function MerchantDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
                 <Link href="/profile" style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', background: 'var(--white)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', textDecoration: 'none' }}>←</Link>
                 <div style={{ flex: 1 }}>
-                    <h2 style={{ fontSize: '20px' }}>🏪 Merchant Dashboard</h2>
+                    <h2 style={{ fontSize: '20px' }}>Merchant Dashboard</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{place?.name || application?.restaurantName || 'Merchant'}</p>
                 </div>
                 <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: si.bg, color: si.color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -314,30 +314,27 @@ export default function MerchantDashboard() {
                     {/* Overview Tab */}
                     {activeTab === 'overview' && (
                         <div style={{ animation: 'fadeIn 0.3s ease' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: 'var(--space-xl)' }}>
                                 {[
-                                    { label: 'Rating', value: avgRating, icon: '' },
-                                    { label: 'Review', value: reviews.length, icon: '' },
-                                    { label: 'Bookmark', value: '-', icon: '' },
-                                    { label: 'Status', value: checkIsOpen(place) ? 'Buka' : 'Tutup', icon: '' },
+                                    { label: 'Rating', value: avgRating },
+                                    { label: 'Review', value: reviews.length },
+                                    { label: 'Bookmark', value: place?.bookmarks || 0 },
+                                    { label: 'Views', value: place?.views || 0 }
                                 ].map((stat, i) => (
-                                    <div key={i} style={{ background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)' }}>
-                                        {stat.icon && <div style={{ fontSize: '24px', marginBottom: '4px' }}>{stat.icon}</div>}
-                                        <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--charcoal)' }}>{stat.value}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{stat.label}</div>
+                                    <div key={i} style={{ background: 'var(--white)', borderRadius: 'var(--radius-md)', padding: '12px 4px', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--charcoal)' }}>{stat.value}</div>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{stat.label}</div>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Certification Status */}
-                            <div style={{ background: 'var(--halalqu-green-light)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-lg)', display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                            <div style={{ background: 'var(--halalqu-green-light)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
                                 <span style={{ fontSize: '32px' }}>🏅</span>
                                 <div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Status Halal</div>
                                     <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--halalqu-green)' }}>
-                                        {place?.certBody || 'Sertifikat Halal'}
-                                    </div>
-                                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                        {place?.certNumber || 'Nomor sertifikat'} · {place?.certBody || 'Aktif'}
+                                        {place?.certBody || application?.certBody || 'Klaim Mandiri'}
                                     </div>
                                 </div>
                             </div>

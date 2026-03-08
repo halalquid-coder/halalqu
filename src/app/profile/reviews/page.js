@@ -35,7 +35,7 @@ export default function MyReviewsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xl)' }}>
                 <Link href="/profile" style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', background: 'var(--white)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', textDecoration: 'none' }}>←</Link>
                 <div>
-                    <h2 style={{ fontSize: '20px' }}>📝 Review Saya</h2>
+                    <h2 style={{ fontSize: '20px' }}>Review Saya</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{reviews.length} review ditulis</p>
                 </div>
             </div>
