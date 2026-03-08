@@ -268,9 +268,6 @@ export default function MerchantDashboard() {
                     <h2 style={{ fontSize: '20px' }}>Merchant Dashboard</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{place?.name || application?.restaurantName || 'Merchant'}</p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: si.bg, color: si.color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    {si.icon} {si.label}
-                </span>
             </div>
 
             {/* Pending notice */}
@@ -533,6 +530,7 @@ export default function MerchantDashboard() {
                                             { label: 'Hari Operasional', value: place?.operatingDays?.length ? place.operatingDays.join(', ') : 'Setiap Hari' },
                                             { label: 'Jam Operasional', value: (place?.openTime && place?.closeTime) ? `${place.openTime} - ${place.closeTime}` : (place?.operatingHours || '-') },
                                             { label: 'Status Toko', value: place?.isTemporarilyClosed ? '🔴 Tutup Sementara' : '🟢 Buka' },
+                                            { label: 'Status Aplikasi', value: <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: si.bg, color: si.color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>{si.icon} {si.label}</span> },
                                             { label: 'Deskripsi', value: place?.description || '-' },
                                         ].map((field, i) => (
                                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
