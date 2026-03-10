@@ -232,7 +232,14 @@ export default function MerchantRegisterPage() {
                             value={formData.address}
                             onChange={(val) => setFormData({ ...formData, address: val })}
                             onLocationSelect={(loc) => {
-                                // We can also save lat/lng if we want, but for now we just need the address string
+                                if (loc && loc.lat && loc.lng) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        latitude: loc.lat.toString(),
+                                        longitude: loc.lng.toString(),
+                                        address: loc.displayName || prev.address,
+                                    }));
+                                }
                             }}
                         />
                         <button type="button" onClick={detectAddress} disabled={detectingAddress} style={{

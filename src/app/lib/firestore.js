@@ -228,6 +228,8 @@ export async function updateApplicationStatus(docId, status, merchantData = null
         const placeRef = await addDoc(collection(db, 'places'), {
             name: merchantData.restaurantName || merchantData.restoName || 'Unnamed Merchant',
             address: merchantData.address || '',
+            lat: merchantData.latitude || null,
+            lng: merchantData.longitude || null,
             phone: merchantData.phone || '',
             category: merchantData.category || '',
             certBody: merchantData.certBody || '',

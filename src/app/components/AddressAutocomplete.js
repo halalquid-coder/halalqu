@@ -108,7 +108,14 @@ export default function AddressAutocomplete({ value, onChange, onLocationSelect 
 
         // FALLBACK TO NOMINATIM OPENSTREETMAP (if no Google API Key)
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=5&addressdetails=1`);
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=5&addressdetails=1&countrycodes=id&accept-language=id&email=admin@halalqu.com`
+            );
+            if (!res.ok) {
+                console.warn('Nominatim returned status:', res.status);
+                setResults([]);
+                return;
+            }
             const data = await res.json();
             const mappedResults = data.map(item => ({
                 lat: parseFloat(item.lat),
@@ -120,6 +127,7 @@ export default function AddressAutocomplete({ value, onChange, onLocationSelect 
             setResults(mappedResults);
         } catch (error) {
             console.error('OSM Autocomplete Error:', error);
+            setResults([]);
         } finally {
             setIsLoading(false);
         }

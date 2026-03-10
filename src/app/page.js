@@ -77,6 +77,9 @@ export default function HomePage() {
             const userLng = pos.coords.longitude;
 
             const withDistance = data.map(p => {
+              if (!p.lat || !p.lng) {
+                return { ...p, distNum: null, distance: '~ km' };
+              }
               const R = 6371; // Earth radius in km
               const dLat = (p.lat - userLat) * Math.PI / 180;
               const dLng = (p.lng - userLng) * Math.PI / 180;
@@ -95,8 +98,8 @@ export default function HomePage() {
             });
 
             const nearbyApproved = withDistance
-              .filter(p => p.status === 'approved' && p.distNum <= 3)
-              .sort((a, b) => a.distNum - b.distNum);
+              .filter(p => p.status === 'approved' && (p.distNum === null || p.distNum <= 3))
+              .sort((a, b) => (a.distNum ?? 9999) - (b.distNum ?? 9999));
 
             setPlaces(nearbyApproved);
           }, () => {
