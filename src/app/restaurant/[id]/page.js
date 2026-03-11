@@ -284,14 +284,14 @@ export default function RestaurantDetailPage() {
             {/* Certification */}
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>📋 Sertifikasi</h2>
-                <div className={styles.certGrid}>
-                    <div className={styles.certItem}>
-                        <span className={styles.certLabel}>Lembaga</span>
-                        <span className={styles.certValue}>{resto.certBody}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Lembaga</span>
+                        <span style={{ fontSize: '14px', fontWeight: 600 }}>{resto.certBody ? resto.certBody.toUpperCase() : '-'}</span>
                     </div>
-                    <div className={styles.certItem}>
-                        <span className={styles.certLabel}>Berlaku</span>
-                        <span className={styles.certValue}>{resto.certExpiry}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+                        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>No. Halal</span>
+                        <span style={{ fontSize: '14px', fontWeight: 600 }}>{resto.certNumber || '-'}</span>
                     </div>
                 </div>
             </section>
