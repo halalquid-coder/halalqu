@@ -58,10 +58,12 @@ export async function toggleBookmark(uid, restaurantId) {
     const bookmarks = snap.data().bookmarks || [];
     const isBookmarked = bookmarks.includes(restaurantId);
 
+    const newBookmarkCount = isBookmarked ? bookmarks.length - 1 : bookmarks.length + 1;
     await updateDoc(userRef, {
         bookmarks: isBookmarked
             ? arrayRemove(restaurantId)
             : arrayUnion(restaurantId),
+        'stats.bookmarks': newBookmarkCount,
     });
 
     return !isBookmarked;
@@ -230,6 +232,8 @@ export async function updateApplicationStatus(docId, status, merchantData = null
             address: merchantData.address || '',
             lat: merchantData.latitude || null,
             lng: merchantData.longitude || null,
+            images: merchantData.photoUrls || [],
+            imageUrl: merchantData.photoUrls?.[0] || '',
             phone: merchantData.phone || '',
             category: merchantData.category || '',
             certBody: merchantData.certBody || '',
@@ -253,6 +257,24 @@ export async function updateApplicationStatus(docId, status, merchantData = null
             }
         }).catch(err => console.error("Error updating user role:", err));
     }
+
+    // 3. Send notification to merchant
+    if (merchantData?.userId) {
+        try {
+            await sendNotification({
+                target: merchantData.userId,
+                title: status === 'approved'
+                    ? '🎉 Aplikasi Merchant Disetujui!'
+                    : '❌ Aplikasi Merchant Ditolak',
+                message: status === 'approved'
+                    ? `Selamat! Restoran "${merchantData.restaurantName || merchantData.restoName}" telah disetujui dan sudah tampil di Halalqu.`
+                    : `Maaf, aplikasi merchant Anda untuk "${merchantData.restaurantName || merchantData.restoName}" belum dapat disetujui saat ini.`,
+                type: 'merchant_status',
+            });
+        } catch (e) {
+            console.error('Failed to send merchant status notification:', e);
+        }
+    }
 }
 
 export async function getAllPlaces() {
@@ -266,6 +288,29 @@ export async function updatePlaceStatus(docId, status) {
     await updateDoc(doc(db, 'places', docId), {
         status, reviewedAt: serverTimestamp(),
     });
+
+    // Send notification to the place submitter
+    try {
+        const placeSnap = await getDoc(doc(db, 'places', docId));
+        if (placeSnap.exists()) {
+            const placeData = placeSnap.data();
+            const targetUser = placeData.submittedBy || placeData.ownerId;
+            if (targetUser) {
+                await sendNotification({
+                    target: targetUser,
+                    title: status === 'approved'
+                        ? '✅ Tempat Disetujui!'
+                        : '❌ Tempat Ditolak',
+                    message: status === 'approved'
+                        ? `"${placeData.name}" telah disetujui dan sekarang tampil di Halalqu!`
+                        : `"${placeData.name}" belum dapat disetujui saat ini.`,
+                    type: 'place_status',
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to send place status notification:', e);
+    }
 }
 
 // ============================================

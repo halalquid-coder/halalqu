@@ -8,6 +8,7 @@ import { useUser } from './context/UserContext';
 import { requestNotificationPermission, db } from './lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { getUserNotifications } from './lib/firestore';
+import { calculateDistance, formatDistance } from './lib/distance';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -80,20 +81,12 @@ export default function HomePage() {
               if (!p.lat || !p.lng) {
                 return { ...p, distNum: null, distance: '~ km' };
               }
-              const R = 6371; // Earth radius in km
-              const dLat = (p.lat - userLat) * Math.PI / 180;
-              const dLng = (p.lng - userLng) * Math.PI / 180;
-              const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(userLat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-              const dist = R * c;
+              const dist = calculateDistance(userLat, userLng, p.lat, p.lng);
 
               return {
                 ...p,
                 distNum: dist,
-                distance: dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`
+                distance: formatDistance(dist)
               };
             });
 

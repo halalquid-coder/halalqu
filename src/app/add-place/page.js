@@ -36,7 +36,7 @@ export default function AddPlacePage() {
         reader.onload = (ev) => {
             setPhotos(prev => {
                 const next = [...prev];
-                next[index] = { preview: ev.target.result, name: file.name };
+                next[index] = { preview: ev.target.result, name: file.name, file };
                 return next;
             });
         };
@@ -308,13 +308,22 @@ export default function AddPlacePage() {
                 onClick={async () => {
                     setSubmitting(true);
                     try {
+                        // Upload photos to Firebase Storage
+                        const { uploadImage } = await import('../lib/firestore');
+                        const photoUrls = [];
+                        for (const photo of photos.filter(Boolean)) {
+                            const url = await uploadImage(photo.file, `places/${user.uid || 'anonymous'}/${Date.now()}_${photo.name}`);
+                            photoUrls.push(url);
+                        }
                         await submitPlace({
                             userId: user.uid || 'anonymous',
                             name, address, phone,
                             category: categories[category] || '',
                             halalType: halalType || '',
                             notes,
-                            photoCount: photos.filter(Boolean).length,
+                            photoUrls,
+                            imageUrl: photoUrls[0] || '',
+                            images: photoUrls,
                             lat, lng
                         });
                     } catch (e) {

@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import styles from './search.module.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { calculateDistance } from '../lib/distance';
 
 const popularCities = [
     { emoji: '🇮🇩', name: 'Jakarta' },
@@ -19,7 +20,7 @@ const halalTypes = ['Certified Halal', 'Muslim Owned', 'Halal Ingredients'];
 const categories = ['Semua', 'Cafe', 'Street Food', 'Fine Dining', 'Bakery', 'Western'];
 const priceRanges = ['$ Murah', '$$ Sedang', '$$$ Mahal'];
 
-export default function SearchPage() {
+function SearchPageContent() {
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get('q') || '';
 
@@ -120,15 +121,7 @@ export default function SearchPage() {
         if (userLoc) {
             const withDistance = filtered.map(p => {
                 if (!p.lat || !p.lng) return { ...p, distNum: 9999 };
-                const R = 6371; // Earth's radius in km
-                const dLat = (p.lat - userLoc.lat) * Math.PI / 180;
-                const dLng = (p.lng - userLoc.lng) * Math.PI / 180;
-                const a =
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(userLoc.lat * Math.PI / 180) * Math.cos(p.lat * Math.PI / 180) *
-                    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return { ...p, distNum: R * c };
+                return { ...p, distNum: calculateDistance(userLoc.lat, userLoc.lng, p.lat, p.lng) };
             });
 
             // Filter by selected max distance
@@ -187,7 +180,7 @@ export default function SearchPage() {
                         </div>
                         <div className={styles.filterGroup}>
                             <div className={styles.filterLabel}>Jarak Maksimum</div>
-                            <input type="range" min="1" max="50" value={distance} onChange={(e) => setDistance(e.target.value)} className={styles.rangeSlider} />
+                            <input type="range" min="1" max="50" value={distance} onChange={(e) => setDistance(Number(e.target.value))} className={styles.rangeSlider} />
                             <div className={styles.rangeValue}>{distance} km</div>
                         </div>
                         <div className={styles.filterGroup}>
@@ -280,5 +273,17 @@ export default function SearchPage() {
                 </section>
             )}
         </div>
+    );
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="page container" style={{ paddingTop: '80px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                ⏳ Memuat pencarian...
+            </div>
+        }>
+            <SearchPageContent />
+        </Suspense>
     );
 }

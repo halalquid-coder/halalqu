@@ -8,6 +8,33 @@ import { db } from '../../lib/firebase';
 import { getRestaurantReviews, submitReport, toggleBookmark } from '../../lib/firestore';
 import { useUser } from '../../context/UserContext';
 
+function checkIsOpen(placeData) {
+    if (!placeData) return false;
+    if (placeData.isTemporarilyClosed) return false;
+    if (!placeData.openTime || !placeData.closeTime || !placeData.operatingDays) return true;
+
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const now = new Date();
+    const currentDay = days[now.getDay()];
+
+    if (!placeData.operatingDays.includes(currentDay)) return false;
+
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const openParts = placeData.openTime.split(':').map(Number);
+    const closeParts = placeData.closeTime.split(':').map(Number);
+
+    const currentMins = currentHour * 60 + currentMinute;
+    const openMins = openParts[0] * 60 + openParts[1];
+    const closeMins = closeParts[0] * 60 + closeParts[1];
+
+    if (openMins <= closeMins) {
+        return currentMins >= openMins && currentMins < closeMins;
+    } else {
+        return currentMins >= openMins || currentMins < closeMins;
+    }
+}
+
 export default function RestaurantDetailPage() {
     const { user } = useUser();
     const params = useParams();
@@ -53,8 +80,10 @@ export default function RestaurantDetailPage() {
                         phone: data.phone || '',
                         lat: data.lat || null,
                         lng: data.lng || null,
-                        hours: data.operatingHours || 'Informasi jam buka tidak tersedia',
-                        isOpen: true,
+                        hours: (data.openTime && data.closeTime)
+                            ? `${data.openTime} - ${data.closeTime}`
+                            : (data.operatingHours || 'Informasi jam buka tidak tersedia'),
+                        isOpen: checkIsOpen(data),
                         lastChecked: data.certDate ? (data.certDate.toDate ? data.certDate.toDate().toLocaleDateString('id-ID') : new Date(data.certDate).toLocaleDateString('id-ID')) : 'Baru saja',
                         description: data.description || 'Restoran halal pilihan.',
                         certBody: data.certBody || 'Klaim Mandiri',

@@ -21,21 +21,21 @@ export default function ProfilePage() {
     };
 
     const userMenuItems = [
-        { icon: '', label: 'Review Saya', href: '/profile/reviews' },
-        { icon: '', label: 'Rekomendasi Saya', href: '/profile/places' },
-        { icon: '', label: 'Bookmark', href: '/bookmarks' },
+        { icon: '⭐', label: 'Review Saya', href: '/profile/reviews' },
+        { icon: '📍', label: 'Rekomendasi Saya', href: '/profile/places' },
+        { icon: '❤️', label: 'Bookmark', href: '/bookmarks' },
     ];
 
     const merchantMenuItems = [
-        { icon: '', label: 'Merchant Dashboard', href: '/merchant/dashboard', accent: true },
+        { icon: '🏪', label: 'Merchant Dashboard', href: '/merchant/dashboard', accent: true },
         ...userMenuItems,
     ];
 
     const menuItems = isMerchant ? merchantMenuItems : userMenuItems;
 
     const settingsItems = [
-        { icon: '', label: 'Pengaturan', href: '/profile/settings' },
-        { icon: '', label: 'Tentang Halalqu', href: '/about' },
+        { icon: '⚙️', label: 'Pengaturan', href: '/profile/settings' },
+        { icon: 'ℹ️', label: 'Tentang Halalqu', href: '/about' },
     ];
 
     if (authLoading || !user.isLoggedIn) {

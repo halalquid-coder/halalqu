@@ -24,7 +24,7 @@ export default function WriteReviewPage() {
         reader.onload = (ev) => {
             setPhotos(prev => {
                 const next = [...prev];
-                next[index] = { preview: ev.target.result, name: file.name };
+                next[index] = { preview: ev.target.result, name: file.name, file };
                 return next;
             });
         };
@@ -177,14 +177,23 @@ export default function WriteReviewPage() {
                 onClick={async () => {
                     setSubmitting(true);
                     try {
+                        // Upload photos to Firebase Storage
+                        const { uploadImage } = await import('../../../lib/firestore');
+                        const photoUrls = [];
+                        for (const photo of photos.filter(Boolean)) {
+                            const url = await uploadImage(photo.file, `reviews/${user.uid || 'anonymous'}/${Date.now()}_${photo.name}`);
+                            photoUrls.push(url);
+                        }
                         await submitReview({
                             userId: user.uid || 'anonymous',
                             userName: user.name || 'User',
                             placeId: params.id,
                             halalRating,
                             tasteRating,
+                            rating: tasteRating,
                             comment,
-                            photoCount: photos.filter(Boolean).length,
+                            photoUrls,
+                            photoCount: photoUrls.length,
                         });
                     } catch (e) {
                         console.log('Review submission error:', e);
