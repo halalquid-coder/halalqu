@@ -87,7 +87,7 @@ export default function RestaurantDetailPage() {
                         lastChecked: data.certDate ? (data.certDate.toDate ? data.certDate.toDate().toLocaleDateString('id-ID') : new Date(data.certDate).toLocaleDateString('id-ID')) : 'Baru saja',
                         description: data.description || 'Restoran halal pilihan.',
                         certBody: data.certBody || 'Klaim Mandiri',
-                        certExpiry: data.certExpiry || '-',
+                        certNumber: data.certNumber || '-',
                         menu: [],
                         images: data.images || [],
                         photo: data.imageUrl || ((data.photos && data.photos.length > 0) ? data.photos[0] : ((data.images && data.images.length > 0) ? data.images[0] : null)),
