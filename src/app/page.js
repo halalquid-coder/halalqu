@@ -79,28 +79,25 @@ export default function HomePage() {
 
             const withDistance = data.map(p => {
               if (!p.lat || !p.lng) {
-                return { ...p, distNum: null, distance: '~ km' };
+                return { ...p, distNum: null, distance: null };
               }
               const dist = calculateDistance(userLat, userLng, p.lat, p.lng);
-
-              return {
-                ...p,
-                distNum: dist,
-                distance: formatDistance(dist)
-              };
+              return { ...p, distNum: dist, distance: formatDistance(dist) };
             });
 
+            // Only show approved places that have coordinates AND within 3km
             const nearbyApproved = withDistance
-              .filter(p => p.status === 'approved' && (p.distNum === null || p.distNum <= 3))
-              .sort((a, b) => (a.distNum ?? 9999) - (b.distNum ?? 9999));
+              .filter(p => p.status === 'approved' && p.distNum !== null && p.distNum <= 3)
+              .sort((a, b) => a.distNum - b.distNum);
 
             setPlaces(nearbyApproved);
           }, () => {
-            // Fallback if no location
-            setPlaces(data.filter(p => p.status === 'approved').map(p => ({ ...p, distance: '~ km' })));
+            // No GPS available — don't show any nearby places
+            setPlaces([]);
           });
         } else {
-          setPlaces(data.filter(p => p.status === 'approved').map(p => ({ ...p, distance: '~ km' })));
+          // Geolocation not supported — don't show any nearby places
+          setPlaces([]);
         }
 
       } catch (e) {
