@@ -24,10 +24,16 @@ export default function AddPlacePage() {
     const [phone, setPhone] = useState('');
     const [lat, setLat] = useState(null);
     const [lng, setLng] = useState(null);
+    const [openTime, setOpenTime] = useState('');
+    const [closeTime, setCloseTime] = useState('');
+    const [operatingDays, setOperatingDays] = useState([]);
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [photos, setPhotos] = useState([null, null, null, null, null]);
     const fileRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+
+    const allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const toggleDay = (day) => setOperatingDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
 
     const handlePhotoSelect = (index, e) => {
         const file = e.target.files[0];
@@ -281,6 +287,40 @@ export default function AddPlacePage() {
                 </div>
             </div>
 
+            {/* Operational Hours & Days */}
+            <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
+                    🕐 Jam & Hari Operasional (opsional)
+                </label>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Jam Buka</label>
+                        <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)}
+                            style={{ width: '100%', padding: '12px var(--space-md)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Jam Tutup</label>
+                        <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
+                            style={{ width: '100%', padding: '12px var(--space-md)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', fontSize: '15px', background: 'var(--white)' }} />
+                    </div>
+                </div>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Hari Buka</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {allDays.map(day => (
+                        <button key={day} type="button" onClick={() => toggleDay(day)}
+                            style={{
+                                padding: '8px 14px', borderRadius: 'var(--radius-pill)', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                                border: `1.5px solid ${operatingDays.includes(day) ? 'var(--halalqu-green)' : 'var(--border)'}`,
+                                background: operatingDays.includes(day) ? 'var(--halalqu-green-light)' : 'var(--white)',
+                                color: operatingDays.includes(day) ? 'var(--halalqu-green)' : 'var(--text-secondary)',
+                                transition: 'all 0.2s ease',
+                            }}>
+                            {day}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Notes */}
             <div style={{ marginBottom: 'var(--space-xl)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
@@ -324,7 +364,10 @@ export default function AddPlacePage() {
                             photoUrls,
                             imageUrl: photoUrls[0] || '',
                             images: photoUrls,
-                            lat, lng
+                            lat, lng,
+                            openTime: openTime || null,
+                            closeTime: closeTime || null,
+                            operatingDays: operatingDays.length > 0 ? operatingDays : null,
                         });
                     } catch (e) {
                         console.log('Place submission error:', e);
