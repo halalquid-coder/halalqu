@@ -258,9 +258,9 @@ export function UserProvider({ children }) {
                 setUser(prev => ({
                     ...prev,
                     stats: profile.stats || prev.stats,
-                    role: profile.role || prev.role,
-                    merchantStatus: profile.merchantStatus || prev.merchantStatus,
-                    merchantInfo: profile.merchantInfo || prev.merchantInfo,
+                    role: profile.role || 'user',
+                    merchantStatus: profile.merchantStatus !== undefined ? profile.merchantStatus : prev.merchantStatus,
+                    merchantInfo: profile.merchantInfo !== undefined ? profile.merchantInfo : prev.merchantInfo,
                     bookmarks: profile.bookmarks || prev.bookmarks,
                 }));
             }
