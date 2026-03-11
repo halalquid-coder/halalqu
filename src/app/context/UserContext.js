@@ -1,8 +1,9 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { getUserProfile, createUserProfile, updateUserProfile } from '../lib/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const UserContext = createContext();
 
@@ -145,6 +146,34 @@ export function UserProvider({ children }) {
                         profile = await getUserProfile(firebaseUser.uid);
                     }
 
+                    // Self-healing: if user has role 'merchant' but no approved application exists, auto-reset
+                    let validatedRole = profile?.role || 'user';
+                    let validatedMerchantStatus = profile?.merchantStatus || null;
+                    let validatedMerchantInfo = profile?.merchantInfo || null;
+
+                    if (validatedRole === 'merchant') {
+                        try {
+                            const appQ = query(
+                                collection(db, 'merchant_applications'),
+                                where('userId', '==', firebaseUser.uid),
+                                where('status', '==', 'approved')
+                            );
+                            const appSnap = await getDocs(appQ);
+                            if (appSnap.empty) {
+                                // No approved application found — reset to user
+                                validatedRole = 'user';
+                                validatedMerchantStatus = null;
+                                validatedMerchantInfo = null;
+                                // Also fix in Firestore
+                                updateUserProfile(firebaseUser.uid, {
+                                    role: 'user', merchantStatus: null, merchantInfo: null
+                                }).catch(() => {});
+                            }
+                        } catch (e) {
+                            // If query fails, keep existing role
+                        }
+                    }
+
                     setUser({
                         isLoggedIn: true,
                         uid: firebaseUser.uid,
@@ -153,11 +182,11 @@ export function UserProvider({ children }) {
                         phone: profile?.phone || '',
                         photoURL: profile?.photoURL || firebaseUser.photoURL || null,
                         bio: profile?.bio || '',
-                        role: profile?.role || 'user',
-                        merchantStatus: profile?.merchantStatus || null,
+                        role: validatedRole,
+                        merchantStatus: validatedMerchantStatus,
                         stats: profile?.stats || { reviews: 0, places: 0, bookmarks: 0 },
                         contributorLevel: profile?.contributorLevel || 'bronze',
-                        merchantInfo: profile?.merchantInfo || null,
+                        merchantInfo: validatedMerchantInfo,
                         bookmarks: profile?.bookmarks || [],
                     });
 
