@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { matchesCountry } from '../../lib/country';
 
 const countryData = {
     'indonesia': {
@@ -229,64 +230,6 @@ const countryData = {
         ],
     },
 };
-
-// Country name variants (highest priority for matching)
-const countryNames = {
-    'indonesia': ['indonesia'],
-    'malaysia': ['malaysia'],
-    'singapura': ['singapore', 'singapura'],
-    'thailand': ['thailand'],
-    'jepang': ['japan', 'jepang', 'nippon'],
-    'korea': ['korea'],
-    'turki': ['turkey', 'turki', 'türkiye'],
-    'uae': ['united arab emirates', 'uae'],
-    'arab-saudi': ['saudi arabia', 'saudi'],
-    'mesir': ['egypt', 'mesir'],
-    'india': ['india'],
-    'uk': ['united kingdom', 'england', 'inggris'],
-    'australia': ['australia'],
-    'amerika': ['united states', 'usa', 'u.s.a'],
-};
-
-// City keywords (only used if no country name matched)
-const cityKeywords = {
-    'indonesia': ['jakarta', 'bandung', 'surabaya', 'yogyakarta', 'bali', 'medan', 'semarang', 'makassar', 'denpasar', 'malang', 'solo', 'bogor', 'depok', 'tangerang', 'bekasi', 'palembang', 'karangasem', 'gianyar', 'tabanan', 'badung', 'buleleng', 'klungkung', 'bangli', 'jembrana', 'lombok', 'mataram'],
-    'malaysia': ['kuala lumpur', 'penang', 'johor', 'melaka', 'kota kinabalu', 'langkawi', 'putrajaya', 'selangor', 'sabah', 'sarawak'],
-    'singapura': [],
-    'thailand': ['bangkok', 'phuket', 'chiang mai', 'pattaya'],
-    'jepang': ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya'],
-    'korea': ['seoul', 'busan', 'incheon', 'daegu'],
-    'turki': ['istanbul', 'ankara', 'antalya'],
-    'uae': ['dubai', 'abu dhabi', 'sharjah'],
-    'arab-saudi': ['riyadh', 'jeddah', 'mecca', 'medina', 'makkah', 'madinah'],
-    'mesir': ['cairo', 'alexandria'],
-    'india': ['mumbai', 'delhi', 'hyderabad', 'bangalore', 'chennai', 'kolkata'],
-    'uk': ['london', 'manchester', 'birmingham'],
-    'australia': ['sydney', 'melbourne', 'brisbane', 'perth'],
-    'amerika': ['new york', 'los angeles', 'chicago', 'houston'],
-};
-
-// Determine which country an address belongs to (exclusive)
-function getCountryForAddress(address) {
-    if (!address) return null;
-    const lower = address.toLowerCase();
-
-    // Pass 1: Check country names first (highest priority)
-    for (const [slug, names] of Object.entries(countryNames)) {
-        if (names.some(n => lower.includes(n))) return slug;
-    }
-
-    // Pass 2: Check city keywords (only if no country name matched)
-    for (const [slug, cities] of Object.entries(cityKeywords)) {
-        if (cities.some(c => lower.includes(c))) return slug;
-    }
-
-    return null;
-}
-
-function matchesCountry(address, slug) {
-    return getCountryForAddress(address) === slug;
-}
 
 export default function CountryDetailPage() {
     const params = useParams();

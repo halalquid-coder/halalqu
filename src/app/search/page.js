@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { calculateDistance } from '../lib/distance';
+import { getCountrySlugFromName, matchesCountry } from '../lib/country';
 
 const popularCities = [
     { emoji: '🇮🇩', name: 'Jakarta' },
@@ -125,7 +126,13 @@ function SearchPageContent() {
             // Country filter from travel page
             let matchCountry = true;
             if (filterCountry) {
-                matchCountry = p.address.toLowerCase().includes(filterCountry.toLowerCase());
+                const targetSlug = getCountrySlugFromName(filterCountry);
+                if (targetSlug) {
+                    matchCountry = matchesCountry(p.address, targetSlug);
+                } else {
+                    // Fallback to simple substring if country name is unknown
+                    matchCountry = p.address.toLowerCase().includes(filterCountry.toLowerCase());
+                }
             }
 
             return matchText && matchCatParams && matchActiveCat && matchActiveHalal && matchCountry;
