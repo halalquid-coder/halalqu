@@ -3,8 +3,9 @@ import { db } from '../../lib/firebase';
 import ArticleClient from './ArticleClient';
 
 export async function generateMetadata({ params }) {
+    const { id } = await params;
     try {
-        const snap = await getDoc(doc(db, 'articles', params.id));
+        const snap = await getDoc(doc(db, 'articles', id));
         if (snap.exists()) {
             const article = snap.data();
             const description = article.summary || (article.content ? article.content.substring(0, 160) + '...' : 'Baca artikel di Halalqu');
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }) {
                     ...(article.coverImage && { images: [article.coverImage] }),
                 },
                 alternates: {
-                    canonical: `https://halalqu.online/article/${params.id}`,
+                    canonical: `https://halalqu.online/article/${id}`,
                 },
             };
         }
@@ -44,19 +45,24 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ArticlePage({ params }) {
-    // Fetch related articles server-side for faster loading
+    const { id } = await params;
+
+    // Fetch related articles server-side
     let relatedArticles = [];
+    let jsonLd = null;
     try {
-        const snap = await getDocs(collection(db, 'articles'));
-        const currentSnap = await getDoc(doc(db, 'articles', params.id));
+        const [snap, currentSnap] = await Promise.all([
+            getDocs(collection(db, 'articles')),
+            getDoc(doc(db, 'articles', id)),
+        ]);
         const current = currentSnap.exists() ? currentSnap.data() : null;
 
         if (current) {
+            // Related articles
             relatedArticles = snap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
-                .filter(a => a.id !== params.id && a.status === 'published')
+                .filter(a => a.id !== id && a.status === 'published')
                 .sort((a, b) => {
-                    // Prioritize same category, then same country
                     let scoreA = 0, scoreB = 0;
                     if (a.category === current.category) scoreA += 2;
                     if (b.category === current.category) scoreB += 2;
@@ -66,27 +72,20 @@ export default async function ArticlePage({ params }) {
                 })
                 .slice(0, 4)
                 .map(a => ({ id: a.id, title: a.title, coverImage: a.coverImage || '', category: a.category || '', country: a.country || '' }));
-        }
-    } catch (e) { /* ok */ }
 
-    // Build JSON-LD
-    let jsonLd = null;
-    try {
-        const snap = await getDoc(doc(db, 'articles', params.id));
-        if (snap.exists()) {
-            const a = snap.data();
+            // JSON-LD
             jsonLd = {
                 '@context': 'https://schema.org',
                 '@type': 'Article',
-                headline: a.title,
-                description: a.summary || (a.content ? a.content.substring(0, 160) : ''),
-                image: a.coverImage || undefined,
-                author: { '@type': 'Person', name: a.authorName || 'Halalqu' },
+                headline: current.title,
+                description: current.summary || (current.content ? current.content.substring(0, 160) : ''),
+                image: current.coverImage || undefined,
+                author: { '@type': 'Person', name: current.authorName || 'Halalqu' },
                 publisher: { '@type': 'Organization', name: 'Halalqu', url: 'https://halalqu.online' },
-                datePublished: a.createdAt?.toDate?.()?.toISOString(),
-                dateModified: a.updatedAt?.toDate?.()?.toISOString(),
-                mainEntityOfPage: `https://halalqu.online/article/${params.id}`,
-                keywords: Array.isArray(a.tags) ? a.tags.join(', ') : '',
+                datePublished: current.createdAt?.toDate?.()?.toISOString(),
+                dateModified: current.updatedAt?.toDate?.()?.toISOString(),
+                mainEntityOfPage: `https://halalqu.online/article/${id}`,
+                keywords: Array.isArray(current.tags) ? current.tags.join(', ') : '',
             };
         }
     } catch (e) { /* ok */ }
@@ -99,7 +98,7 @@ export default async function ArticlePage({ params }) {
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
             )}
-            <ArticleClient id={params.id} relatedArticles={relatedArticles} />
+            <ArticleClient id={id} relatedArticles={relatedArticles} />
         </>
     );
 }
