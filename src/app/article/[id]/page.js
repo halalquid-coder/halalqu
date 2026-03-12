@@ -53,7 +53,7 @@ export default function ArticleDetailPage() {
     );
 
     return (
-        <div className="page container" style={{ paddingTop: 'var(--space-md)', paddingBottom: '96px', maxWidth: '640px' }}>
+        <div className="page container" style={{ paddingTop: 'var(--space-md)', paddingBottom: '96px' }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--space-lg)' }}>
                 <button onClick={() => router.back()} style={{
