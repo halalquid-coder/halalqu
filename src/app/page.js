@@ -9,6 +9,7 @@ import { requestNotificationPermission, db } from './lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { getUserNotifications } from './lib/firestore';
 import { calculateDistance, formatDistance } from './lib/distance';
+import { getCountryForAddress, slugToName } from './lib/country';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
 
@@ -27,6 +28,8 @@ export default function HomePage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [fcmToken, setFcmToken] = useState(null);
   const [places, setPlaces] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [userCountry, setUserCountry] = useState('Indonesia');
   const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
@@ -44,13 +47,19 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch real places for the map
+  // Fetch real places and products for the map & listings
   useEffect(() => {
-    async function loadPlaces() {
+    async function loadData() {
       try {
-        const q = query(collection(db, 'places'));
-        const snap = await getDocs(q);
-        const data = snap.docs.map(doc => {
+        const [placesSnap, productsSnap] = await Promise.all([
+           getDocs(query(collection(db, 'places'))),
+           getDocs(query(collection(db, 'products'), where('status', '==', 'active')))
+        ]);
+
+        const productsData = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProducts(productsData);
+
+        const data = placesSnap.docs.map(doc => {
           const val = doc.data();
           return {
             id: doc.id,
@@ -73,9 +82,23 @@ export default function HomePage() {
 
         // Get user location and filter places by distance (< 3km) if available
         if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition((pos) => {
+          navigator.geolocation.getCurrentPosition(async (pos) => {
             const userLat = pos.coords.latitude;
             const userLng = pos.coords.longitude;
+
+            // Reverse geocode to detect country for product filtering
+            try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${userLat}&lon=${userLng}`);
+              const geodata = await res.json();
+              if (geodata && geodata.display_name) {
+                const slug = getCountryForAddress(geodata.display_name);
+                if (slug && slugToName[slug]) {
+                  setUserCountry(slugToName[slug]);
+                }
+              }
+            } catch (err) {
+              console.warn("Reverse geocode failed, using default info", err);
+            }
 
             const withDistance = data.map(p => {
               if (!p.lat || !p.lng) {
@@ -101,10 +124,10 @@ export default function HomePage() {
         }
 
       } catch (e) {
-        console.error("Failed to load places for map:", e);
+        console.error("Failed to load data:", e);
       }
     }
-    loadPlaces();
+    loadData();
   }, []);
 
   // Derived data for monetization sections
@@ -116,6 +139,11 @@ export default function HomePage() {
     const db2 = b.createdAt?.seconds || 0;
     return db2 - da;
   }).slice(0, 5);
+
+  const localProducts = products.filter(p => {
+    if (p.halalCountry) return p.halalCountry.toLowerCase() === userCountry.toLowerCase();
+    return userCountry.toLowerCase() === 'indonesia';
+  }).slice(0, 6);
 
   // Fetch real notifications from Firestore
   useEffect(() => {
@@ -574,6 +602,42 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🛒 SECTION: Produk Halal Negara Tersebut */}
+      {/* ═══════════════════════════════════════════ */}
+      <section className={styles.sponsoredSection} style={{ marginTop: '32px' }}>
+        <div className="section-header">
+          <h2 className="section-title">Produk Terpopuler di {userCountry}</h2>
+          <Link href={`/search?type=product&country=${encodeURIComponent(userCountry)}`} className="section-link">Lihat Semua →</Link>
+        </div>
+
+        {localProducts.length > 0 ? (
+          <div className={styles.sponsoredScroll}>
+            {localProducts.map((p, i) => (
+              <Link key={p.id} href={`/product/${p.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                {p.imageUrl ? (
+                  <div style={{
+                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
+                    <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.sponsoredEmoji}>🛒</div>
+                )}
+                <h3 className={styles.sponsoredName}>{p.name}</h3>
+                <div className={styles.sponsoredMeta}>
+                  <span className={`badge badge-certified`} style={{ fontSize: '10px' }}>Halal</span>
+                </div>
+                <span className={styles.sponsoredCategory}>{p.category || 'Belanja'}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada produk untuk wilayah ini.</p>
         )}
       </section>
     </div>

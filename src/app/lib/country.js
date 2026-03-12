@@ -52,6 +52,23 @@ const nameToSlug = {
     'amerika serikat': 'amerika',
 };
 
+export const slugToName = {
+    'indonesia': 'Indonesia',
+    'malaysia': 'Malaysia',
+    'singapura': 'Singapura',
+    'thailand': 'Thailand',
+    'jepang': 'Jepang',
+    'korea': 'Korea Selatan',
+    'turki': 'Turki',
+    'uae': 'Uni Emirat Arab',
+    'arab-saudi': 'Arab Saudi',
+    'mesir': 'Mesir',
+    'india': 'India',
+    'uk': 'Inggris',
+    'australia': 'Australia',
+    'amerika': 'Amerika Serikat',
+};
+
 export function getCountrySlugFromName(name) {
     if (!name) return null;
     return nameToSlug[name.toLowerCase()] || null;
