@@ -360,7 +360,7 @@ export default function CountryDetailPage() {
                 <div style={{ marginBottom: 'var(--space-xl)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                         <h2 style={{ fontSize: '18px', margin: 0 }}>🏪 Merchant di {country.name}</h2>
-                        <Link href={`/search?country=${countryParam}`} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--halalqu-green)' }}>
+                        <Link href={`/travel/${params.id}/merchants`} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--halalqu-green)' }}>
                             Lihat Semua →
                         </Link>
                     </div>
