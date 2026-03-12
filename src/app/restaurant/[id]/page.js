@@ -73,6 +73,7 @@ export default function RestaurantDetailPage() {
                         emoji: '🍽️',
                         rating: data.rating || 0,
                         reviews: data.reviewCount || 0,
+                        views: data.views || 0,
                         badge: data.certBody ? 'certified' : 'muslim-owned',
                         badgeLabel: data.certBody ? '✅ Certified Halal' : '🕌 Muslim Owned',
                         category: data.category || 'Restoran',
@@ -243,7 +244,9 @@ export default function RestaurantDetailPage() {
 
                 <div className={styles.badgeRow}>
                     <span className={`badge badge-${resto.badge}`}>{resto.badgeLabel}</span>
-                    <span className="stars">⭐ {resto.rating} ({resto.reviews} review)</span>
+                    <span className="stars">
+                        ⭐ {resto.rating} ({resto.reviews} review) <span style={{ color: 'var(--text-muted)', margin: '0 4px' }}>•</span> 👁️ {resto.views} dilihat
+                    </span>
                 </div>
 
                 <div className={styles.metaRow}>
