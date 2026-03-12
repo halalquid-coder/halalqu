@@ -230,32 +230,62 @@ const countryData = {
     },
 };
 
-// Keywords to match addresses by country
-const countryKeywords = {
-    'indonesia': ['indonesia', 'jakarta', 'bandung', 'surabaya', 'yogyakarta', 'bali', 'medan', 'semarang', 'makassar', 'denpasar', 'malang', 'solo', 'bogor', 'depok', 'tangerang', 'bekasi', 'palembang'],
-    'malaysia': ['malaysia', 'kuala lumpur', 'penang', 'johor', 'melaka', 'kota kinabalu', 'langkawi', 'putrajaya', 'selangor', 'sabah', 'sarawak'],
+// Country name variants (highest priority for matching)
+const countryNames = {
+    'indonesia': ['indonesia'],
+    'malaysia': ['malaysia'],
     'singapura': ['singapore', 'singapura'],
-    'thailand': ['thailand', 'bangkok', 'phuket', 'chiang mai', 'pattaya'],
-    'jepang': ['japan', 'jepang', 'tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya'],
-    'korea': ['korea', 'seoul', 'busan', 'incheon', 'daegu'],
-    'turki': ['turkey', 'turki', 'istanbul', 'ankara', 'antalya'],
-    'uae': ['uae', 'dubai', 'abu dhabi', 'sharjah', 'emirates'],
-    'arab-saudi': ['saudi', 'arabia', 'riyadh', 'jeddah', 'mecca', 'medina', 'makkah', 'madinah'],
-    'mesir': ['egypt', 'mesir', 'cairo', 'alexandria'],
-    'india': ['india', 'mumbai', 'delhi', 'hyderabad', 'bangalore', 'chennai', 'kolkata'],
-    'uk': ['united kingdom', 'england', 'london', 'manchester', 'birmingham', 'inggris'],
-    'australia': ['australia', 'sydney', 'melbourne', 'brisbane', 'perth'],
-    'amerika': ['united states', 'usa', 'new york', 'los angeles', 'chicago', 'houston', 'california', 'texas', 'florida'],
+    'thailand': ['thailand'],
+    'jepang': ['japan', 'jepang', 'nippon'],
+    'korea': ['korea'],
+    'turki': ['turkey', 'turki', 'türkiye'],
+    'uae': ['united arab emirates', 'uae'],
+    'arab-saudi': ['saudi arabia', 'saudi'],
+    'mesir': ['egypt', 'mesir'],
+    'india': ['india'],
+    'uk': ['united kingdom', 'england', 'inggris'],
+    'australia': ['australia'],
+    'amerika': ['united states', 'usa', 'u.s.a'],
 };
 
-function matchesCountry(address, slug) {
-    if (!address) return false;
+// City keywords (only used if no country name matched)
+const cityKeywords = {
+    'indonesia': ['jakarta', 'bandung', 'surabaya', 'yogyakarta', 'bali', 'medan', 'semarang', 'makassar', 'denpasar', 'malang', 'solo', 'bogor', 'depok', 'tangerang', 'bekasi', 'palembang', 'karangasem', 'gianyar', 'tabanan', 'badung', 'buleleng', 'klungkung', 'bangli', 'jembrana', 'lombok', 'mataram'],
+    'malaysia': ['kuala lumpur', 'penang', 'johor', 'melaka', 'kota kinabalu', 'langkawi', 'putrajaya', 'selangor', 'sabah', 'sarawak'],
+    'singapura': [],
+    'thailand': ['bangkok', 'phuket', 'chiang mai', 'pattaya'],
+    'jepang': ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya'],
+    'korea': ['seoul', 'busan', 'incheon', 'daegu'],
+    'turki': ['istanbul', 'ankara', 'antalya'],
+    'uae': ['dubai', 'abu dhabi', 'sharjah'],
+    'arab-saudi': ['riyadh', 'jeddah', 'mecca', 'medina', 'makkah', 'madinah'],
+    'mesir': ['cairo', 'alexandria'],
+    'india': ['mumbai', 'delhi', 'hyderabad', 'bangalore', 'chennai', 'kolkata'],
+    'uk': ['london', 'manchester', 'birmingham'],
+    'australia': ['sydney', 'melbourne', 'brisbane', 'perth'],
+    'amerika': ['new york', 'los angeles', 'chicago', 'houston'],
+};
+
+// Determine which country an address belongs to (exclusive)
+function getCountryForAddress(address) {
+    if (!address) return null;
     const lower = address.toLowerCase();
-    const keywords = countryKeywords[slug] || [];
-    if (!keywords.some(kw => lower.includes(kw))) return false;
-    // Exclusive check: make sure it doesn't match a more specific country first
-    // e.g. 'Bali, Indonesia' should not also match 'india' because 'bali' is only in indonesia keywords
-    return true;
+
+    // Pass 1: Check country names first (highest priority)
+    for (const [slug, names] of Object.entries(countryNames)) {
+        if (names.some(n => lower.includes(n))) return slug;
+    }
+
+    // Pass 2: Check city keywords (only if no country name matched)
+    for (const [slug, cities] of Object.entries(cityKeywords)) {
+        if (cities.some(c => lower.includes(c))) return slug;
+    }
+
+    return null;
+}
+
+function matchesCountry(address, slug) {
+    return getCountryForAddress(address) === slug;
 }
 
 export default function CountryDetailPage() {
