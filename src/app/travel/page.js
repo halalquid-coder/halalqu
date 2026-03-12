@@ -3,28 +3,27 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const countries = [
-    { slug: 'indonesia', emoji: '🇮🇩', name: 'Indonesia', color: '#DC2626', desc: 'Negeri halal terbesar di dunia' },
-    { slug: 'malaysia', emoji: '🇲🇾', name: 'Malaysia', color: '#1D4ED8', desc: 'Pusat industri halal global' },
-    { slug: 'singapura', emoji: '🇸🇬', name: 'Singapura', color: '#DC2626', desc: 'Kuliner halal premium Asia' },
-    { slug: 'thailand', emoji: '🇹🇭', name: 'Thailand', color: '#1D4ED8', desc: 'Street food halal yang unik' },
-    { slug: 'jepang', emoji: '🇯🇵', name: 'Jepang', color: '#DC2626', desc: 'Ramen & sushi halal' },
-    { slug: 'korea', emoji: '🇰🇷', name: 'Korea Selatan', color: '#1D4ED8', desc: 'K-Food halal trending' },
-    { slug: 'turki', emoji: '🇹🇷', name: 'Turki', color: '#DC2626', desc: 'Kebab & kuliner Ottoman' },
-    { slug: 'uae', emoji: '🇦🇪', name: 'UAE', color: '#047857', desc: 'Dubai & Abu Dhabi halal dining' },
-    { slug: 'arab-saudi', emoji: '🇸🇦', name: 'Arab Saudi', color: '#047857', desc: 'Haramain & kuliner Arab' },
-    { slug: 'mesir', emoji: '🇪🇬', name: 'Mesir', color: '#B45309', desc: 'Kuliner Timur Tengah autentik' },
-    { slug: 'india', emoji: '🇮🇳', name: 'India', color: '#EA580C', desc: 'Mughlai & biryani halal' },
-    { slug: 'uk', emoji: '🇬🇧', name: 'Inggris', color: '#1D4ED8', desc: 'London halal food scene' },
-    { slug: 'australia', emoji: '🇦🇺', name: 'Australia', color: '#1D4ED8', desc: 'Multicultural halal dining' },
-    { slug: 'amerika', emoji: '🇺🇸', name: 'Amerika Serikat', color: '#1D4ED8', desc: 'Halal food movement' },
+    { slug: 'indonesia', emoji: '🇮🇩', name: 'Indonesia', color: '#DC2626' },
+    { slug: 'malaysia', emoji: '🇲🇾', name: 'Malaysia', color: '#1D4ED8' },
+    { slug: 'singapura', emoji: '🇸🇬', name: 'Singapura', color: '#DC2626' },
+    { slug: 'thailand', emoji: '🇹🇭', name: 'Thailand', color: '#1D4ED8' },
+    { slug: 'jepang', emoji: '🇯🇵', name: 'Jepang', color: '#DC2626' },
+    { slug: 'korea', emoji: '🇰🇷', name: 'Korea Selatan', color: '#1D4ED8' },
+    { slug: 'turki', emoji: '🇹🇷', name: 'Turki', color: '#DC2626' },
+    { slug: 'uae', emoji: '🇦🇪', name: 'UAE', color: '#047857' },
+    { slug: 'arab-saudi', emoji: '🇸🇦', name: 'Arab Saudi', color: '#047857' },
+    { slug: 'mesir', emoji: '🇪🇬', name: 'Mesir', color: '#B45309' },
+    { slug: 'india', emoji: '🇮🇳', name: 'India', color: '#EA580C' },
+    { slug: 'uk', emoji: '🇬🇧', name: 'Inggris', color: '#1D4ED8' },
+    { slug: 'australia', emoji: '🇦🇺', name: 'Australia', color: '#1D4ED8' },
+    { slug: 'amerika', emoji: '🇺🇸', name: 'Amerika Serikat', color: '#1D4ED8' },
 ];
 
 export default function TravelPage() {
     const [search, setSearch] = useState('');
 
     const filtered = countries.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.desc.toLowerCase().includes(search.toLowerCase())
+        c.name.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -72,9 +71,6 @@ export default function TravelPage() {
                         <div>
                             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '14px' }}>
                                 {country.name}
-                            </div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.4 }}>
-                                {country.desc}
                             </div>
                         </div>
                     </Link>
