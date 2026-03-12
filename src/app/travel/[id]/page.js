@@ -245,14 +245,17 @@ const countryKeywords = {
     'india': ['india', 'mumbai', 'delhi', 'hyderabad', 'bangalore', 'chennai', 'kolkata'],
     'uk': ['united kingdom', 'england', 'london', 'manchester', 'birmingham', 'inggris'],
     'australia': ['australia', 'sydney', 'melbourne', 'brisbane', 'perth'],
-    'amerika': ['united states', 'usa', 'amerika', 'new york', 'los angeles', 'chicago', 'houston'],
+    'amerika': ['united states', 'usa', 'new york', 'los angeles', 'chicago', 'houston', 'california', 'texas', 'florida'],
 };
 
 function matchesCountry(address, slug) {
     if (!address) return false;
     const lower = address.toLowerCase();
     const keywords = countryKeywords[slug] || [];
-    return keywords.some(kw => lower.includes(kw));
+    if (!keywords.some(kw => lower.includes(kw))) return false;
+    // Exclusive check: make sure it doesn't match a more specific country first
+    // e.g. 'Bali, Indonesia' should not also match 'india' because 'bali' is only in indonesia keywords
+    return true;
 }
 
 export default function CountryDetailPage() {
@@ -276,6 +279,8 @@ export default function CountryDetailPage() {
                 const allProducts = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 const countryProducts = allProducts.filter(p => {
                     if (p.halalCountry) return p.halalCountry.toLowerCase() === country.name.toLowerCase();
+                    // Products without halalCountry default to Indonesia
+                    if (params.id === 'indonesia') return true;
                     return false;
                 });
                 setProducts(countryProducts);
