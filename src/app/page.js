@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useUser } from './context/UserContext';
 import { requestNotificationPermission, db } from './lib/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, where } from 'firebase/firestore';
 import { getUserNotifications } from './lib/firestore';
 import { calculateDistance, formatDistance } from './lib/distance';
 import { getCountryForAddress, slugToName } from './lib/country';
