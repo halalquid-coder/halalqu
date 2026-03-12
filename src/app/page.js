@@ -30,6 +30,8 @@ export default function HomePage() {
   const [places, setPlaces] = useState([]);
   const [products, setProducts] = useState([]);
   const [userCountry, setUserCountry] = useState('Indonesia');
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
@@ -260,15 +262,15 @@ export default function HomePage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Link href="/search" style={{
+              <button onClick={() => setShowSearchBar(!showSearchBar)} style={{
                 background: 'rgba(255,255,255,0.2)', border: 'none',
                 width: '36px', height: '36px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', backdropFilter: 'blur(8px)',
-                color: 'white', fontSize: '16px', textDecoration: 'none'
+                color: 'white', fontSize: '16px',
               }}>
-                🔍
-              </Link>
+                {showSearchBar ? '✕' : '🔍'}
+              </button>
 
               {/* Notification Bell */}
               <div ref={notifRef} style={{ position: 'relative', display: 'flex' }}>
@@ -379,6 +381,33 @@ export default function HomePage() {
             Cari di Sekitarku
           </button>
         </div>
+
+        {/* Search Bar (toggled by search icon) */}
+        {showSearchBar && (
+          <form onSubmit={e => { e.preventDefault(); if (searchQuery.trim()) router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); }} style={{
+            display: 'flex', gap: '8px', padding: '0 var(--space-md) var(--space-md)',
+            position: 'relative', zIndex: 2,
+            animation: 'fadeIn 0.2s ease',
+          }}>
+            <input
+              type="text" placeholder="Cari restoran, merchant, produk..."
+              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              autoFocus
+              style={{
+                flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-lg)',
+                border: 'none', fontSize: '14px', outline: 'none',
+                background: 'rgba(255,255,255,0.95)', color: 'var(--charcoal)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              }}
+            />
+            <button type="submit" style={{
+              padding: '12px 18px', background: 'var(--white)', border: 'none',
+              borderRadius: 'var(--radius-lg)', fontWeight: 600, cursor: 'pointer',
+              fontSize: '14px', color: 'var(--halalqu-green)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            }}>Cari</button>
+          </form>
+        )}
       </section>
 
       {/* ═══════════════════════════════════════════ */}
@@ -492,6 +521,48 @@ export default function HomePage() {
         <HalalMap restaurants={places} />
       </section>
 
+      {/* Restaurant List — Di Sekitarmu (Horizontal Scroll) */}
+      <section className={styles.restaurantSection}>
+        <div className="section-header">
+          <h2 className="section-title">Di Sekitarmu</h2>
+          <Link href="/search" className="section-link">Lihat Semua →</Link>
+        </div>
+
+        {places.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px' }}>Belum ada restoran terdekat.</p>
+        ) : (
+          <div className={styles.sponsoredScroll}>
+            {places.map((resto, i) => (
+              <Link
+                key={resto.id}
+                href={`/restaurant/${resto.id}`}
+                className={styles.sponsoredCard}
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                {resto.photo ? (
+                  <div style={{
+                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
+                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                  }}>
+                    <img src={resto.photo} alt={resto.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div className={styles.sponsoredEmoji}>{resto.emoji || '🍽️'}</div>
+                )}
+                <h3 className={styles.sponsoredName}>{resto.name}</h3>
+                <div className={styles.sponsoredMeta}>
+                  <span>⭐ {resto.rating}</span>
+                  <span className={`badge badge-${resto.badge}`} style={{ fontSize: '10px' }}>{resto.badgeLabel}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>📍</span> {resto.distance || '~ km'}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* ═══════════════════════════════════════════ */}
       {/* 🆕 SECTIONS: Baru Dibuka & Top Rated */}
       {/* ═══════════════════════════════════════════ */}
@@ -563,47 +634,7 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Restaurant List — Di Sekitarmu (Horizontal Scroll) */}
-      <section className={styles.restaurantSection}>
-        <div className="section-header">
-          <h2 className="section-title">Di Sekitarmu</h2>
-          <Link href="/search" className="section-link">Lihat Semua →</Link>
-        </div>
 
-        {places.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px' }}>Belum ada restoran terdekat.</p>
-        ) : (
-          <div className={styles.sponsoredScroll}>
-            {places.map((resto, i) => (
-              <Link
-                key={resto.id}
-                href={`/restaurant/${resto.id}`}
-                className={styles.sponsoredCard}
-                style={{ animationDelay: `${i * 0.1}s` }}
-              >
-                {resto.photo ? (
-                  <div style={{
-                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={resto.photo} alt={resto.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                ) : (
-                  <div className={styles.sponsoredEmoji}>{resto.emoji || '🍽️'}</div>
-                )}
-                <h3 className={styles.sponsoredName}>{resto.name}</h3>
-                <div className={styles.sponsoredMeta}>
-                  <span>⭐ {resto.rating}</span>
-                  <span className={`badge badge-${resto.badge}`} style={{ fontSize: '10px' }}>{resto.badgeLabel}</span>
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>📍</span> {resto.distance || '~ km'}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
 
       {/* ═══════════════════════════════════════════ */}
       {/* 🛒 SECTION: Produk Halal Negara Tersebut */}
