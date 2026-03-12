@@ -1,10 +1,11 @@
 'use client';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
-export default function ArticleClient({ id }) {
+export default function ArticleClient({ id, relatedArticles = [] }) {
     const router = useRouter();
     const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,7 +18,6 @@ export default function ArticleClient({ id }) {
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     setArticle({ id: snap.id, ...snap.data() });
-                    // Increment views
                     updateDoc(docRef, { views: increment(1) }).catch(() => {});
                 }
             } catch (e) { console.error(e); }
@@ -51,6 +51,8 @@ export default function ArticleClient({ id }) {
         </div>
     );
 
+    const tags = Array.isArray(article.tags) ? article.tags : [];
+
     return (
         <div className="page container" style={{ paddingTop: 'var(--space-md)', paddingBottom: '96px' }}>
             {/* Header */}
@@ -71,14 +73,14 @@ export default function ArticleClient({ id }) {
             {/* Cover Image */}
             {article.coverImage && (
                 <div style={{
-                    width: '100%', height: '200px', borderRadius: 'var(--radius-xl)',
+                    width: '100%', height: '220px', borderRadius: 'var(--radius-xl)',
                     overflow: 'hidden', marginBottom: 'var(--space-lg)', background: 'var(--halalqu-green-light)',
                 }}>
                     <img src={article.coverImage} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
             )}
 
-            {/* Tags */}
+            {/* Tags & Category */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
                 <span style={{
                     padding: '4px 12px', borderRadius: 'var(--radius-pill)',
@@ -92,6 +94,13 @@ export default function ArticleClient({ id }) {
                         fontSize: '12px', fontWeight: 600,
                     }}>{article.country}</span>
                 )}
+                {tags.map((tag, i) => (
+                    <span key={i} style={{
+                        padding: '4px 12px', borderRadius: 'var(--radius-pill)',
+                        background: '#F3F4F6', color: '#6B7280',
+                        fontSize: '11px', fontWeight: 500,
+                    }}>#{tag}</span>
+                ))}
             </div>
 
             {/* Title */}
@@ -128,7 +137,7 @@ export default function ArticleClient({ id }) {
                 ))}
             </div>
 
-            {/* Footer */}
+            {/* Share Footer */}
             <div style={{
                 marginTop: 'var(--space-2xl)', padding: 'var(--space-lg)', background: 'var(--white)',
                 borderRadius: 'var(--radius-lg)', textAlign: 'center', boxShadow: 'var(--shadow-sm)',
@@ -143,6 +152,45 @@ export default function ArticleClient({ id }) {
                     📤 Bagikan Artikel
                 </button>
             </div>
+
+            {/* Related Articles */}
+            {relatedArticles.length > 0 && (
+                <div style={{ marginTop: 'var(--space-2xl)' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: 'var(--space-md)', color: 'var(--charcoal)' }}>
+                        📖 Artikel Terkait
+                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-sm)' }}>
+                        {relatedArticles.map(ra => (
+                            <Link key={ra.id} href={`/article/${ra.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <div style={{
+                                    background: 'var(--white)', borderRadius: 'var(--radius-lg)',
+                                    overflow: 'hidden', boxShadow: 'var(--shadow-sm)',
+                                    transition: 'transform 0.2s, box-shadow 0.2s',
+                                }}>
+                                    {ra.coverImage ? (
+                                        <img src={ra.coverImage} alt={ra.title} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{
+                                            width: '100%', height: '100px', background: 'var(--halalqu-green-light)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px',
+                                        }}>📰</div>
+                                    )}
+                                    <div style={{ padding: '10px' }}>
+                                        <p style={{
+                                            fontSize: '12px', fontWeight: 600, lineHeight: 1.3, margin: '0 0 4px',
+                                            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                                            color: 'var(--charcoal)',
+                                        }}>{ra.title}</p>
+                                        <span style={{
+                                            fontSize: '10px', color: 'var(--halalqu-green)', fontWeight: 500,
+                                        }}>{ra.category}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
