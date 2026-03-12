@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const countries = [
     { slug: 'indonesia', emoji: '🇮🇩', name: 'Indonesia', color: '#DC2626' },
@@ -21,10 +23,29 @@ const countries = [
 
 export default function TravelPage() {
     const [search, setSearch] = useState('');
+    const [articles, setArticles] = useState([]);
+
+    useEffect(() => {
+        async function loadArticles() {
+            try {
+                const snap = await getDocs(
+                    query(collection(db, 'articles'), where('status', '==', 'published'), orderBy('createdAt', 'desc'), limit(6))
+                );
+                setArticles(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } catch (e) { console.warn('Error loading articles:', e); }
+        }
+        loadArticles();
+    }, []);
 
     const filtered = countries.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    const formatDate = (ts) => {
+        if (!ts) return '';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
 
     return (
         <div className="page container" style={{ paddingTop: 'var(--space-xl)', paddingBottom: '96px' }}>
@@ -82,6 +103,68 @@ export default function TravelPage() {
                     <div style={{ fontSize: '48px', marginBottom: 'var(--space-sm)' }}>🔍</div>
                     <p>Negara &quot;{search}&quot; tidak ditemukan</p>
                 </div>
+            )}
+
+            {/* ═══════════════════════════════════════════ */}
+            {/* 📰 SECTION: Artikel & Panduan Travel */}
+            {/* ═══════════════════════════════════════════ */}
+            {articles.length > 0 && (
+                <section style={{ marginTop: 'var(--space-2xl)' }}>
+                    <div className="section-header">
+                        <h2 className="section-title">📰 Artikel & Panduan</h2>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', paddingBottom: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
+                        {articles.map(article => (
+                            <Link key={article.id} href={`/article/${article.id}`} style={{
+                                flexShrink: 0, width: '260px', background: 'var(--white)',
+                                borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                                textDecoration: 'none', color: 'inherit',
+                                boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                            }}>
+                                <div style={{ height: '130px', background: 'var(--halalqu-green-light)', position: 'relative' }}>
+                                    {article.coverImage ? (
+                                        <img src={article.coverImage} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>📰</div>
+                                    )}
+                                    <div style={{
+                                        position: 'absolute', top: '8px', left: '8px',
+                                        padding: '3px 10px', borderRadius: 'var(--radius-pill)',
+                                        background: 'var(--halalqu-green)', color: 'white',
+                                        fontSize: '10px', fontWeight: 600,
+                                    }}>
+                                        {article.category}
+                                    </div>
+                                </div>
+                                <div style={{ padding: '12px' }}>
+                                    <h3 style={{
+                                        fontSize: '14px', fontWeight: 700, margin: '0 0 6px',
+                                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden', lineHeight: 1.4,
+                                    }}>
+                                        {article.title}
+                                    </h3>
+                                    {article.summary && (
+                                        <p style={{
+                                            fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 8px',
+                                            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden', lineHeight: 1.4,
+                                        }}>
+                                            {article.summary}
+                                        </p>
+                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                        <span>📅 {formatDate(article.createdAt)}</span>
+                                        <span>·</span>
+                                        <span>👁️ {article.views || 0}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
             )}
         </div>
     );
