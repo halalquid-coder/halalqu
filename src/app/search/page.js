@@ -25,7 +25,7 @@ function SearchPageContent() {
     const initialQuery = searchParams.get('q') || '';
 
     const [searchQuery, setSearchQuery] = useState(initialQuery);
-    const [distance, setDistance] = useState(10);
+    const [distance, setDistance] = useState(3);
     const [activeHalal, setActiveHalal] = useState(null);
     const [activeCategory, setActiveCategory] = useState(0);
     const [activePrice, setActivePrice] = useState(null);
@@ -180,8 +180,7 @@ function SearchPageContent() {
                         </div>
                         <div className={styles.filterGroup}>
                             <div className={styles.filterLabel}>Jarak Maksimum</div>
-                            <input type="range" min="1" max="50" value={distance} onChange={(e) => setDistance(Number(e.target.value))} className={styles.rangeSlider} />
-                            <div className={styles.rangeValue}>{distance} km</div>
+                            <div className={styles.rangeValue} style={{ padding: '8px 0', fontWeight: 600 }}>📍 3 km (radius tetap)</div>
                         </div>
                         <div className={styles.filterGroup}>
                             <div className={styles.filterLabel}>Kisaran Harga</div>
