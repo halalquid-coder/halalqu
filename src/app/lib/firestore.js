@@ -437,9 +437,10 @@ export async function getUserNotifications(uid, role = 'user') {
     const pSnap = await getDocs(pQ);
     const personal = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Fetch user profile to get read global notifications
+    // Fetch user profile to get read global notifications and registration date
     const userDoc = await getDoc(doc(db, 'users', uid));
     const readGlobal = userDoc.exists() ? (userDoc.data().readGlobalNotifications || []) : [];
+    const userCreatedAt = userDoc.exists() ? userDoc.data().createdAt : null;
 
     // 2. Fetch global broadcast notifications
     const globalTargets = ['all'];
@@ -457,7 +458,13 @@ export async function getUserNotifications(uid, role = 'user') {
             ...d.data(),
             isGlobal: true,
             read: readGlobal.includes(d.id)
-        }));
+        })).filter(n => {
+            // Only show broadcasts created AFTER the user registered
+            if (!userCreatedAt || !n.createdAt) return true;
+            const userTime = userCreatedAt.seconds || 0;
+            const notifTime = n.createdAt.seconds || 0;
+            return notifTime >= userTime;
+        });
     } catch (e) {
         console.warn('global_notifications not found or error:', e);
     }
