@@ -17,7 +17,7 @@ const popularCities = [
 ];
 
 const halalTypes = ['Certified Halal', 'Muslim Owned', 'Halal Ingredients'];
-const categories = ['Semua', 'Cafe', 'Street Food', 'Fine Dining', 'Bakery', 'Western'];
+const categories = ['Semua', 'Restaurant', 'Cafe', 'Street Food', 'Fine Dining', 'Bakery', 'Minuman', 'Dessert'];
 const priceRanges = ['$ Murah', '$$ Sedang', '$$$ Mahal'];
 
 function SearchPageContent() {
@@ -80,6 +80,7 @@ function SearchPageContent() {
     }, []);
 
     const filterCategory = searchParams.get('category');
+    const filterCountry = searchParams.get('country');
 
     // Search when query or filters change
     useEffect(() => {
@@ -98,24 +99,39 @@ function SearchPageContent() {
 
             let matchCatParams = true;
             if (filterCategory) {
-                matchCatParams = p.badgeLabel.includes(filterCategory) || p.category === filterCategory;
+                matchCatParams = p.category.includes(filterCategory) || p.badgeLabel.includes(filterCategory);
             }
 
             let matchActiveCat = true;
             if (activeCategory > 0) {
-                matchActiveCat = p.category === categories[activeCategory];
+                // Use includes to handle emoji-prefixed categories like '🍽 Restaurant'
+                matchActiveCat = p.category.includes(categories[activeCategory]);
             }
 
             let matchActiveHalal = true;
             if (activeHalal !== null) {
-                const halalLabel = halalTypes[activeHalal];
-                matchActiveHalal = p.badgeLabel.includes(halalLabel.split(' ')[1]) || p.badgeLabel.includes(halalLabel);
+                if (activeHalal === 0) {
+                    // Certified Halal — match places with certBody
+                    matchActiveHalal = p.badge === 'certified';
+                } else if (activeHalal === 1) {
+                    // Muslim Owned
+                    matchActiveHalal = p.badge === 'muslim-owned';
+                } else {
+                    // Halal Ingredients — show all
+                    matchActiveHalal = true;
+                }
             }
 
-            return matchText && matchCatParams && matchActiveCat && matchActiveHalal;
+            // Country filter from travel page
+            let matchCountry = true;
+            if (filterCountry) {
+                matchCountry = p.address.toLowerCase().includes(filterCountry.toLowerCase());
+            }
+
+            return matchText && matchCatParams && matchActiveCat && matchActiveHalal && matchCountry;
         });
 
-        setIsSearching(filtered.length > 0 || q.length > 0 || filterCategory !== null);
+        setIsSearching(filtered.length > 0 || q.length > 0 || filterCategory !== null || filterCountry !== null);
 
         // Calculate distance synchronously if user location is known
         if (userLoc) {

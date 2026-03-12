@@ -230,25 +230,60 @@ const countryData = {
     },
 };
 
+// Keywords to match addresses by country
+const countryKeywords = {
+    'indonesia': ['indonesia', 'jakarta', 'bandung', 'surabaya', 'yogyakarta', 'bali', 'medan', 'semarang', 'makassar', 'denpasar', 'malang', 'solo', 'bogor', 'depok', 'tangerang', 'bekasi', 'palembang'],
+    'malaysia': ['malaysia', 'kuala lumpur', 'penang', 'johor', 'melaka', 'kota kinabalu', 'langkawi', 'putrajaya', 'selangor', 'sabah', 'sarawak'],
+    'singapura': ['singapore', 'singapura'],
+    'thailand': ['thailand', 'bangkok', 'phuket', 'chiang mai', 'pattaya'],
+    'jepang': ['japan', 'jepang', 'tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya'],
+    'korea': ['korea', 'seoul', 'busan', 'incheon', 'daegu'],
+    'turki': ['turkey', 'turki', 'istanbul', 'ankara', 'antalya'],
+    'uae': ['uae', 'dubai', 'abu dhabi', 'sharjah', 'emirates'],
+    'arab-saudi': ['saudi', 'arabia', 'riyadh', 'jeddah', 'mecca', 'medina', 'makkah', 'madinah'],
+    'mesir': ['egypt', 'mesir', 'cairo', 'alexandria'],
+    'india': ['india', 'mumbai', 'delhi', 'hyderabad', 'bangalore', 'chennai', 'kolkata'],
+    'uk': ['united kingdom', 'england', 'london', 'manchester', 'birmingham', 'inggris'],
+    'australia': ['australia', 'sydney', 'melbourne', 'brisbane', 'perth'],
+    'amerika': ['united states', 'usa', 'amerika', 'new york', 'los angeles', 'chicago', 'houston'],
+};
+
+function matchesCountry(address, slug) {
+    if (!address) return false;
+    const lower = address.toLowerCase();
+    const keywords = countryKeywords[slug] || [];
+    return keywords.some(kw => lower.includes(kw));
+}
+
 export default function CountryDetailPage() {
     const params = useParams();
     const country = countryData[params.id];
-    const [merchantCount, setMerchantCount] = useState(0);
-    const [productCount, setProductCount] = useState(0);
+    const [merchants, setMerchants] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function loadCounts() {
+        async function loadData() {
+            if (!country) { setLoading(false); return; }
             try {
                 const placesSnap = await getDocs(query(collection(db, 'places'), where('status', '==', 'approved')));
-                setMerchantCount(placesSnap.size);
-            } catch (e) { console.warn(e); }
+                const allPlaces = placesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const countryPlaces = allPlaces.filter(p => matchesCountry(p.address, params.id));
+                setMerchants(countryPlaces);
+            } catch (e) { console.warn('Error loading merchants:', e); }
             try {
                 const productsSnap = await getDocs(query(collection(db, 'products'), where('status', '==', 'active')));
-                setProductCount(productsSnap.size);
-            } catch (e) { console.warn(e); }
+                const allProducts = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const countryProducts = allProducts.filter(p => {
+                    if (p.halalCountry) return p.halalCountry.toLowerCase() === country.name.toLowerCase();
+                    return false;
+                });
+                setProducts(countryProducts);
+            } catch (e) { console.warn('Error loading products:', e); }
+            setLoading(false);
         }
-        loadCounts();
-    }, []);
+        loadData();
+    }, [params.id]);
 
     if (!country) {
         return (
@@ -261,6 +296,7 @@ export default function CountryDetailPage() {
     }
 
     const color = country.color;
+    const countryParam = encodeURIComponent(country.name);
 
     return (
         <div className="page container" style={{ paddingTop: 0, paddingBottom: '96px' }}>
@@ -298,12 +334,12 @@ export default function CountryDetailPage() {
                 <div style={{ flex: 1, background: 'var(--white)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ fontSize: '22px' }}>🏪</div>
                     <div style={{ fontSize: '11px', fontWeight: 600, marginTop: '4px', color: 'var(--text-secondary)' }}>Merchant</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>{merchantCount} terdaftar</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>{loading ? '...' : `${merchants.length} terdaftar`}</div>
                 </div>
                 <div style={{ flex: 1, background: 'var(--white)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ fontSize: '22px' }}>🛍</div>
                     <div style={{ fontSize: '11px', fontWeight: 600, marginTop: '4px', color: 'var(--text-secondary)' }}>Produk</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>{productCount} produk</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>{loading ? '...' : `${products.length} produk`}</div>
                 </div>
             </div>
 
@@ -327,7 +363,7 @@ export default function CountryDetailPage() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-sm)' }}>
                     {country.merchantCategories.map((cat, i) => (
-                        <Link key={i} href={`/search?q=&category=${encodeURIComponent(cat.query)}`} style={{
+                        <Link key={i} href={`/search?category=${encodeURIComponent(cat.query)}&country=${countryParam}`} style={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                             padding: 'var(--space-md) var(--space-sm)', background: 'var(--white)',
                             borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)',
@@ -340,6 +376,41 @@ export default function CountryDetailPage() {
                     ))}
                 </div>
             </div>
+
+            {/* Merchant List */}
+            {!loading && merchants.length > 0 && (
+                <div style={{ marginBottom: 'var(--space-xl)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                        <h2 style={{ fontSize: '18px', margin: 0 }}>🏪 Merchant di {country.name}</h2>
+                        <Link href={`/search?country=${countryParam}`} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--halalqu-green)' }}>
+                            Lihat Semua →
+                        </Link>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', paddingBottom: 'var(--space-sm)' }}>
+                        {merchants.slice(0, 8).map(m => (
+                            <Link key={m.id} href={`/restaurant/${m.id}`} style={{
+                                flexShrink: 0, width: '160px', background: 'var(--white)',
+                                borderRadius: 'var(--radius-md)', overflow: 'hidden',
+                                boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)',
+                                textDecoration: 'none', color: 'inherit',
+                            }}>
+                                <div style={{ width: '100%', height: '100px', background: '#f1f5f9' }}>
+                                    {(m.imageUrl || (m.images && m.images[0])) ? (
+                                        <img src={m.imageUrl || m.images[0]} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', color: '#cbd5e1' }}>🏪</div>
+                                    )}
+                                </div>
+                                <div style={{ padding: '10px' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.category || 'Restoran'}</div>
+                                    {m.certBody && <div style={{ fontSize: '10px', color: '#059669', fontWeight: 600, marginTop: '4px' }}>✅ {m.certBody.toUpperCase()}</div>}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Product Categories */}
             <div style={{ marginBottom: 'var(--space-xl)' }}>
@@ -363,10 +434,54 @@ export default function CountryDetailPage() {
                 </div>
             </div>
 
+            {/* Product List */}
+            {!loading && products.length > 0 && (
+                <div style={{ marginBottom: 'var(--space-xl)' }}>
+                    <h2 style={{ fontSize: '18px', marginBottom: 'var(--space-md)' }}>📦 Produk dari {country.name}</h2>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', paddingBottom: 'var(--space-sm)' }}>
+                        {products.slice(0, 8).map(p => (
+                            <Link key={p.id} href={`/product/${p.id}`} style={{
+                                flexShrink: 0, width: '140px', background: 'var(--white)',
+                                borderRadius: 'var(--radius-md)', overflow: 'hidden',
+                                boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)',
+                                textDecoration: 'none', color: 'inherit',
+                            }}>
+                                <div style={{ width: '100%', height: '100px', background: '#f1f5f9' }}>
+                                    {(p.images && p.images[0]) ? (
+                                        <img src={p.images[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', color: '#cbd5e1' }}>📦</div>
+                                    )}
+                                </div>
+                                <div style={{ padding: '8px' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Loading state */}
+            {loading && (
+                <div style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--text-muted)' }}>
+                    <p>⏳ Memuat data merchant & produk...</p>
+                </div>
+            )}
+
+            {/* Empty state */}
+            {!loading && merchants.length === 0 && products.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 'var(--space-xl)', background: 'var(--white)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', marginBottom: 'var(--space-xl)' }}>
+                    <div style={{ fontSize: '48px', marginBottom: 'var(--space-sm)' }}>🔍</div>
+                    <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Belum ada merchant & produk dari {country.name} saat ini.</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Jadi yang pertama menambahkan!</p>
+                </div>
+            )}
+
             {/* Browse All */}
             <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                <Link href="/search" className="btn btn-primary" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
-                    🔍 Cari Semua Merchant
+                <Link href={`/search?country=${countryParam}`} className="btn btn-primary" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+                    🔍 Semua Merchant {country.name}
                 </Link>
                 <Link href="/product" className="btn" style={{
                     flex: 1, textAlign: 'center', textDecoration: 'none',
