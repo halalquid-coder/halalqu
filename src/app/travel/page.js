@@ -28,10 +28,13 @@ export default function TravelPage() {
     useEffect(() => {
         async function loadArticles() {
             try {
-                const snap = await getDocs(
-                    query(collection(db, 'articles'), where('status', '==', 'published'), orderBy('createdAt', 'desc'), limit(6))
-                );
-                setArticles(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                const snap = await getDocs(collection(db, 'articles'));
+                const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const published = all
+                    .filter(a => a.status === 'published')
+                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+                    .slice(0, 6);
+                setArticles(published);
             } catch (e) { console.warn('Error loading articles:', e); }
         }
         loadArticles();
