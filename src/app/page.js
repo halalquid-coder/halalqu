@@ -484,21 +484,18 @@ export default function HomePage() {
               <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.sponsoredBadge}>Pilihan Halalqu</div>
                 {place.photo ? (
-                  <div style={{
-                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+                  <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
                 ) : (
                   <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
                 )}
-                <h3 className={styles.sponsoredName}>{place.name}</h3>
-                <div className={styles.sponsoredMeta}>
-                  <span>⭐ {place.rating}</span>
-                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                <div className={styles.sponsoredInfo}>
+                  <h3 className={styles.sponsoredName}>{place.name}</h3>
+                  <div className={styles.sponsoredMeta}>
+                    <span>⭐ {place.rating}</span>
+                    <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                  </div>
+                  <span className={styles.sponsoredCategory}>{place.category}</span>
                 </div>
-                <span className={styles.sponsoredCategory}>{place.category}</span>
               </Link>
             ))}
           </div>
@@ -540,22 +537,19 @@ export default function HomePage() {
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 {resto.photo ? (
-                  <div style={{
-                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={resto.photo} alt={resto.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+                  <img src={resto.photo} alt={resto.name} className={styles.coverPhoto} />
                 ) : (
                   <div className={styles.sponsoredEmoji}>{resto.emoji || '🍽️'}</div>
                 )}
-                <h3 className={styles.sponsoredName}>{resto.name}</h3>
-                <div className={styles.sponsoredMeta}>
-                  <span>⭐ {resto.rating}</span>
-                  <span className={`badge badge-${resto.badge}`} style={{ fontSize: '10px' }}>{resto.badgeLabel}</span>
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>📍</span> {resto.distance || '~ km'}
+                <div className={styles.sponsoredInfo}>
+                  <h3 className={styles.sponsoredName}>{resto.name}</h3>
+                  <div className={styles.sponsoredMeta}>
+                    <span>⭐ {resto.rating}</span>
+                    <span className={`badge badge-${resto.badge}`} style={{ fontSize: '10px' }}>{resto.badgeLabel}</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--halalqu-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                    <span>📍</span> {resto.distance || '~ km'}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -578,18 +572,15 @@ export default function HomePage() {
               <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.newCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.newBadge}>Baru</div>
                 {place.photo ? (
-                  <div style={{
-                    width: '100%', height: '80px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+                  <img src={place.photo} alt={place.name} className={styles.newEmoji} style={{ objectFit: 'cover', fontSize: 'unset' }} />
                 ) : (
                   <div className={styles.newEmoji}>{place.emoji || '🍽️'}</div>
                 )}
-                <h3 className={styles.newName}>{place.name}</h3>
-                <div className={styles.newMeta}>
-                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '9px' }}>{place.badgeLabel}</span>
+                <div className={styles.newInfo}>
+                  <h3 className={styles.newName}>{place.name}</h3>
+                  <div className={styles.newMeta}>
+                    <span className={`badge badge-${place.badge}`} style={{ fontSize: '9px' }}>{place.badgeLabel}</span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -609,23 +600,20 @@ export default function HomePage() {
           <div className={styles.sponsoredScroll}>
             {topRated.map((place, i) => (
               <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={styles.topRatedRank}>#{i + 1}</div>
+                <div className={styles.topRatedRank} style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, zIndex: 2 }}>#{i + 1}</div>
                 {place.photo ? (
-                  <div style={{
-                    width: '100%', height: '80px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+                  <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
                 ) : (
                   <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
                 )}
-                <h3 className={styles.sponsoredName}>{place.name}</h3>
-                <div className={styles.sponsoredMeta}>
-                  <span style={{ color: '#F59E0B', fontWeight: 700 }}>⭐ {place.rating}</span>
-                  <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                <div className={styles.sponsoredInfo}>
+                  <h3 className={styles.sponsoredName}>{place.name}</h3>
+                  <div className={styles.sponsoredMeta}>
+                    <span>⭐ {place.rating}</span>
+                    <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                  </div>
+                  <span className={styles.sponsoredCategory}>{place.category}</span>
                 </div>
-                <span className={styles.sponsoredCategory}>{place.category}</span>
               </Link>
             ))}
           </div>
