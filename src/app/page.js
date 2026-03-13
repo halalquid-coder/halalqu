@@ -54,8 +54,8 @@ export default function HomePage() {
     async function loadData() {
       try {
         const [placesSnap, productsSnap] = await Promise.all([
-           getDocs(query(collection(db, 'places'))),
-           getDocs(query(collection(db, 'products'), where('status', '==', 'active')))
+          getDocs(query(collection(db, 'places'))),
+          getDocs(query(collection(db, 'products'), where('status', '==', 'active')))
         ]);
 
         const productsData = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -562,7 +562,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════ */}
       <section className={styles.newSection}>
         <div className="section-header">
-          <h2 className="section-title">Baru Buka</h2>
+          <h2 className="section-title">Baru</h2>
           <Link href="/search?sort=new" className="section-link">Lihat Semua →</Link>
         </div>
 
