@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useUser } from './context/UserContext';
 import { requestNotificationPermission, db } from './lib/firebase';
-import { collection, query, getDocs, where } from 'firebase/firestore';
+import { collection, query, getDocs, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getUserNotifications } from './lib/firestore';
 import { calculateDistance, formatDistance } from './lib/distance';
 import { getCountryForAddress, slugToName } from './lib/country';
@@ -48,6 +48,12 @@ export default function HomePage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Track active user: update lastActiveAt whenever logged-in user opens home
+  useEffect(() => {
+    if (!user.isLoggedIn || !user.uid) return;
+    updateDoc(doc(db, 'users', user.uid), { lastActiveAt: serverTimestamp() }).catch(() => {});
+  }, [user.uid, user.isLoggedIn]);
 
   // Fetch real places and products for the map & listings
   useEffect(() => {
