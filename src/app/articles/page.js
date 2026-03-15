@@ -82,7 +82,7 @@ export default function AllArticlesPage() {
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     {filtered.map(article => (
-                        <Link key={article.id} href={`/article/${article.id}`} style={{
+                        <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{
                             display: 'flex', gap: 'var(--space-md)', textDecoration: 'none', color: 'inherit',
                             background: 'var(--white)', borderRadius: 'var(--radius-lg)',
                             overflow: 'hidden', boxShadow: 'var(--shadow-sm)',
