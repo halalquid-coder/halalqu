@@ -117,7 +117,7 @@ export default function TravelPage() {
             {/* ═══════════ ARTICLE SLIDER (replaces search bar) ═══════════ */}
             {sliderArticles.length > 0 && (
                 <section style={{ marginBottom: 'var(--space-xl)' }}>
-                    <Link href={`/article/${sliderArticles[sliderIdx]?.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link href={`/article/${sliderArticles[sliderIdx]?.slug || sliderArticles[sliderIdx]?.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div style={{
                             position: 'relative', borderRadius: 'var(--radius-xl)', overflow: 'hidden',
                             height: '180px', background: 'var(--halalqu-green-light)',
@@ -262,7 +262,7 @@ export default function TravelPage() {
 
                     <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', paddingBottom: 'var(--space-sm)', marginTop: 'var(--space-sm)', scrollbarWidth: 'none' }}>
                         {articles.slice(0, 6).map(article => (
-                            <Link key={article.id} href={`/article/${article.id}`} style={{
+                            <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{
                                 flexShrink: 0, width: '240px', background: 'var(--white)',
                                 borderRadius: 'var(--radius-lg)', overflow: 'hidden',
                                 textDecoration: 'none', color: 'inherit',
