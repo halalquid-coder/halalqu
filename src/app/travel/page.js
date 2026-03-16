@@ -26,6 +26,7 @@ export default function TravelPage() {
     const [prayerTimes, setPrayerTimes] = useState(null);
     const [prayerLoading, setPrayerLoading] = useState(true);
     const [sliderIdx, setSliderIdx] = useState(0);
+    const [findingMosque, setFindingMosque] = useState(false);
     const sliderRef = useRef(null);
 
     useEffect(() => {
@@ -111,6 +112,28 @@ export default function TravelPage() {
     };
     const nextPrayer = getNextPrayer();
 
+    // Find nearest mosque
+    const handleFindMosque = () => {
+        if (!navigator.geolocation) {
+            alert('Geolokasi tidak didukung oleh browser Anda.');
+            return;
+        }
+        setFindingMosque(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setFindingMosque(false);
+                const { latitude, longitude } = pos.coords;
+                // Buka Google Maps dengan query masjid. Zoom 15 kira-kira setara dengan radius 2-3 km
+                window.open(`https://www.google.com/maps/search/masjid/@${latitude},${longitude},15z`, '_blank');
+            },
+            (err) => {
+                setFindingMosque(false);
+                alert('Gagal mendapatkan lokasi. Pastikan izin lokasi (GPS) diaktifkan di browser/perangkat Anda.');
+            },
+            { timeout: 10000, enableHighAccuracy: true }
+        );
+    };
+
     return (
         <div className="page container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: '96px' }}>
 
@@ -162,6 +185,35 @@ export default function TravelPage() {
                     </div>
                 </section>
             )}
+
+            {/* ═══════════ CARI MESJID TERDEKAT ═══════════ */}
+            <section style={{ marginBottom: 'var(--space-xl)', padding: '0 4px' }}>
+                <button
+                    onClick={handleFindMosque}
+                    disabled={findingMosque}
+                    style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: 'linear-gradient(135deg, var(--halalqu-green), #10B981)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 'var(--radius-xl)',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        cursor: findingMosque ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        boxShadow: '0 6px 16px rgba(16, 185, 129, 0.25)',
+                        transition: 'transform 0.2s, background 0.3s',
+                        opacity: findingMosque ? 0.7 : 1,
+                    }}
+                >
+                    <span style={{ fontSize: '22px' }}>🕌</span>
+                    {findingMosque ? 'Mencari lokasi Anda...' : 'Cari Mesjid Terdekat (Opsional 3km)'}
+                </button>
+            </section>
 
             {/* ═══════════ HORIZONTAL SCROLL COUNTRIES ═══════════ */}
             <section>
