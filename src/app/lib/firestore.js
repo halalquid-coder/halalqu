@@ -28,6 +28,11 @@ export async function createUserProfile(uid, data) {
         readGlobalNotifications: [],
         stats: { reviews: 0, places: 0, bookmarks: 0 },
         contributorLevel: 'bronze',
+        // Freemium scan quota
+        tier: 'free',
+        scanQuota: 5,
+        scanUsed: 0,
+        scanResetDate: null,
         createdAt: serverTimestamp(),
     });
 
@@ -44,6 +49,59 @@ export async function createUserProfile(uid, data) {
 
 export async function updateUserProfile(uid, data) {
     await updateDoc(doc(db, 'users', uid), data);
+}
+
+// ============================================
+// 🔋 Scan Quota Management
+// ============================================
+
+export async function checkAndResetScanQuota(uid) {
+    const userRef = doc(db, 'users', uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+    const tier = data.tier || 'free';
+    const scanQuota = data.scanQuota || 5;
+    let scanUsed = data.scanUsed || 0;
+    const scanResetDate = data.scanResetDate;
+
+    // Premium users have unlimited scans
+    if (tier === 'premium') {
+        return { tier, scanQuota: Infinity, scanUsed, remaining: Infinity };
+    }
+
+    // Check if we need to reset (new month)
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastResetMonth = scanResetDate
+        ? (scanResetDate.toDate ? scanResetDate.toDate() : new Date(scanResetDate))
+        : null;
+    const lastResetStr = lastResetMonth
+        ? `${lastResetMonth.getFullYear()}-${String(lastResetMonth.getMonth() + 1).padStart(2, '0')}`
+        : null;
+
+    if (!lastResetStr || lastResetStr !== currentMonth) {
+        // Reset scan count for new month
+        scanUsed = 0;
+        await updateDoc(userRef, {
+            scanUsed: 0,
+            scanResetDate: serverTimestamp(),
+        });
+    }
+
+    return { tier, scanQuota, scanUsed, remaining: Math.max(0, scanQuota - scanUsed) };
+}
+
+export async function incrementScanUsage(uid) {
+    const userRef = doc(db, 'users', uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    await updateDoc(userRef, {
+        scanUsed: (data.scanUsed || 0) + 1,
+    });
 }
 
 // ============================================

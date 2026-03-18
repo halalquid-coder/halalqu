@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../context/UserContext';
 import { analyzeWithLocalDB, parseIngredientList } from '../lib/halalDatabase';
+import { checkAndResetScanQuota, incrementScanUsage } from '../lib/firestore';
 
 const statusConfig = {
     safe: { icon: '✅', label: 'Halal', color: 'var(--halalqu-green)', bg: 'var(--halalqu-green-light)' },
@@ -37,6 +38,8 @@ export default function ScanPage() {
     const [capturedImage, setCapturedImage] = useState(null);
     const [analysisMethod, setAnalysisMethod] = useState('');
     const [scanHistory, setScanHistory] = useState([]);
+    const [scanQuotaInfo, setScanQuotaInfo] = useState(null); // { tier, scanQuota, scanUsed, remaining }
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
@@ -68,6 +71,25 @@ export default function ScanPage() {
         window.addEventListener('halalqu-reset-scan', handleReset);
         return () => window.removeEventListener('halalqu-reset-scan', handleReset);
     }, []);
+
+    // Load scan quota on mount and when user changes
+    useEffect(() => {
+        async function loadQuota() {
+            if (user?.isLoggedIn && user?.uid) {
+                try {
+                    const info = await checkAndResetScanQuota(user.uid);
+                    setScanQuotaInfo(info);
+                } catch (e) { console.warn('Quota check failed:', e); }
+            } else {
+                // Guest: check localStorage
+                try {
+                    const guestScans = parseInt(localStorage.getItem('halalqu-guest-scans') || '0', 10);
+                    setScanQuotaInfo({ tier: 'guest', scanQuota: 3, scanUsed: guestScans, remaining: Math.max(0, 3 - guestScans) });
+                } catch (e) { /* SSR */ }
+            }
+        }
+        loadQuota();
+    }, [user?.isLoggedIn, user?.uid]);
 
     // Camera controls
     const startCamera = async () => {
@@ -171,10 +193,23 @@ export default function ScanPage() {
 
     // Analyze ingredients (from image or manual text)
     const analyzeIngredients = async (imageData = null, manualText = null) => {
-        if (!user?.isLoggedIn && scanHistory.length >= 1) {
-            alert('⚠️ Batas Scan Tamu Tercapai\n\nAnda hanya dapat menggunakan fitur scan 1 kali sebagai tamu.\nSilakan daftar atau login untuk menikmati fitur scan tanpa batas!');
-            router.push('/login');
-            return;
+        // ═══ FREEMIUM QUOTA CHECK ═══
+        if (!user?.isLoggedIn) {
+            // Guest: max 3 total scans
+            const guestScans = parseInt(localStorage.getItem('halalqu-guest-scans') || '0', 10);
+            if (guestScans >= 3) {
+                setScanQuotaInfo({ tier: 'guest', scanQuota: 3, scanUsed: guestScans, remaining: 0 });
+                setShowUpgradeModal(true);
+                return;
+            }
+        } else if (user.tier !== 'premium') {
+            // Registered free user: check Firestore quota
+            const info = await checkAndResetScanQuota(user.uid);
+            if (info && info.remaining <= 0) {
+                setScanQuotaInfo(info);
+                setShowUpgradeModal(true);
+                return;
+            }
         }
 
         setStep('analyze');
@@ -238,6 +273,20 @@ export default function ScanPage() {
             setLogoDetails(data.logoDetails || '');
             setAnalysisMethod('🤖 AI Vision (Gemini)');
             setStep('results');
+
+            // ═══ INCREMENT QUOTA ═══
+            if (user?.isLoggedIn && user?.uid) {
+                await incrementScanUsage(user.uid).catch(() => {});
+                const updated = await checkAndResetScanQuota(user.uid).catch(() => null);
+                if (updated) setScanQuotaInfo(updated);
+            } else {
+                // Guest: increment localStorage
+                try {
+                    const g = parseInt(localStorage.getItem('halalqu-guest-scans') || '0', 10) + 1;
+                    localStorage.setItem('halalqu-guest-scans', String(g));
+                    setScanQuotaInfo({ tier: 'guest', scanQuota: 3, scanUsed: g, remaining: Math.max(0, 3 - g) });
+                } catch (e) { /* ignore */ }
+            }
 
             // Generate a preview string for history
             const previewStr = data.halalLogo ? `[Logo Halal] ${data.logoDetails}` : aiIngredients.slice(0, 3).map(i => i.name).join(', ') || 'Analisis Gambar';
@@ -318,6 +367,51 @@ export default function ScanPage() {
                     Pindai komposisi produk untuk deteksi bahan kritis halal/haram
                 </p>
             </div>
+
+            {/* Quota Badge */}
+            {scanQuotaInfo && scanQuotaInfo.tier !== 'premium' && (
+                <div onClick={() => scanQuotaInfo.remaining <= 0 && setShowUpgradeModal(true)} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 14px', borderRadius: 'var(--radius-lg)',
+                    background: scanQuotaInfo.remaining > 0 ? 'var(--halalqu-green-light)' : '#FDE8E8',
+                    border: `1px solid ${scanQuotaInfo.remaining > 0 ? 'var(--halalqu-green)' : 'var(--danger)'}`,
+                    marginBottom: 'var(--space-md)', cursor: scanQuotaInfo.remaining <= 0 ? 'pointer' : 'default',
+                    transition: 'all 0.2s ease',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>{scanQuotaInfo.remaining > 0 ? '🔋' : '🪫'}</span>
+                        <div>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: scanQuotaInfo.remaining > 0 ? 'var(--halalqu-green)' : 'var(--danger)' }}>
+                                {scanQuotaInfo.remaining > 0
+                                    ? `${scanQuotaInfo.remaining}/${scanQuotaInfo.scanQuota} scan tersisa`
+                                    : 'Kuota scan habis!'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {scanQuotaInfo.tier === 'guest' ? 'Daftar untuk lebih banyak scan'
+                                    : 'Reset tiap bulan · Upgrade untuk unlimited'}
+                            </div>
+                        </div>
+                    </div>
+                    {scanQuotaInfo.remaining <= 0 && (
+                        <Link href="/pricing" style={{
+                            padding: '6px 12px', borderRadius: 'var(--radius-pill)',
+                            background: 'var(--halalqu-green)', color: 'white',
+                            fontSize: '11px', fontWeight: 700, textDecoration: 'none',
+                        }}>Upgrade ⚡</Link>
+                    )}
+                </div>
+            )}
+            {scanQuotaInfo && scanQuotaInfo.tier === 'premium' && (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 14px', borderRadius: 'var(--radius-lg)',
+                    background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
+                    border: '1px solid #F59E0B', marginBottom: 'var(--space-md)',
+                }}>
+                    <span style={{ fontSize: '16px' }}>👑</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#92400E' }}>Premium — Unlimited Scan</span>
+                </div>
+            )}
 
             {/* Step Progress */}
             <div style={{ display: 'flex', gap: '4px', marginBottom: 'var(--space-xl)' }}>
@@ -719,6 +813,80 @@ export default function ScanPage() {
 
             {/* Hidden canvas for capture */}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+            {/* ═══ UPGRADE MODAL ═══ */}
+            {showUpgradeModal && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 999, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.6)', padding: '16px',
+                    animation: 'fadeInUp 0.3s ease',
+                }}>
+                    <div style={{
+                        background: 'var(--white)', borderRadius: 'var(--radius-xl)',
+                        padding: 'var(--space-xl)', maxWidth: '360px', width: '100%',
+                        textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                    }}>
+                        <div style={{ fontSize: '48px', marginBottom: 'var(--space-md)' }}>🪫</div>
+                        <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--charcoal)', marginBottom: '8px' }}>
+                            Kuota Scan Habis!
+                        </h2>
+                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-lg)' }}>
+                            {!user?.isLoggedIn
+                                ? 'Anda sudah menggunakan 3 scan gratis sebagai tamu. Daftar sekarang untuk mendapatkan 5 scan/bulan!'
+                                : 'Kuota scan bulanan Anda sudah habis. Upgrade ke Premium untuk scan tanpa batas!'}
+                        </p>
+
+                        {/* Tier comparison mini */}
+                        <div style={{
+                            background: '#1a1a2e', borderRadius: 'var(--radius-lg)',
+                            padding: 'var(--space-md)', marginBottom: 'var(--space-lg)',
+                            textAlign: 'left',
+                        }}>
+                            {[
+                                { level: 'Guest (Tamu)', access: '3x Scan Total', active: !user?.isLoggedIn },
+                                { level: 'Registered (Free)', access: '5x Scan / Bulan', active: user?.isLoggedIn && user?.tier !== 'premium' },
+                                { level: 'Premium (Sub)', access: 'Unlimited / Kuota Besar', active: false },
+                            ].map((row, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '10px 12px',
+                                    borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                    opacity: row.active ? 1 : 0.6,
+                                }}>
+                                    <span style={{ color: row.active ? '#F59E0B' : '#9CA3AF', fontWeight: 700, fontSize: '13px' }}>
+                                        {row.level}
+                                    </span>
+                                    <span style={{ color: '#D1D5DB', fontSize: '13px' }}>{row.access}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {!user?.isLoggedIn ? (
+                                <Link href="/login" style={{
+                                    padding: '12px', borderRadius: 'var(--radius-md)',
+                                    background: 'var(--halalqu-green)', color: 'white',
+                                    fontWeight: 700, fontSize: '14px', textDecoration: 'none',
+                                    textAlign: 'center',
+                                }}>Daftar / Login Sekarang</Link>
+                            ) : (
+                                <Link href="/pricing" style={{
+                                    padding: '12px', borderRadius: 'var(--radius-md)',
+                                    background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: 'white',
+                                    fontWeight: 700, fontSize: '14px', textDecoration: 'none',
+                                    textAlign: 'center',
+                                }}>⚡ Upgrade ke Premium</Link>
+                            )}
+                            <button onClick={() => setShowUpgradeModal(false)} style={{
+                                padding: '10px', borderRadius: 'var(--radius-md)',
+                                background: 'transparent', border: '1px solid var(--border)',
+                                color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
+                            }}>Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
                 @keyframes pulse {

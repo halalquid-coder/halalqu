@@ -120,6 +120,10 @@ const defaultUser = {
     contributorLevel: 'bronze',
     merchantInfo: null,
     bookmarks: [],
+    // Freemium scan
+    tier: 'free',
+    scanQuota: 5,
+    scanUsed: 0,
 };
 
 export function UserProvider({ children }) {
@@ -188,6 +192,10 @@ export function UserProvider({ children }) {
                         contributorLevel: profile?.contributorLevel || 'bronze',
                         merchantInfo: validatedMerchantInfo,
                         bookmarks: profile?.bookmarks || [],
+                        // Freemium scan
+                        tier: profile?.tier || 'free',
+                        scanQuota: profile?.scanQuota ?? 5,
+                        scanUsed: profile?.scanUsed ?? 0,
                     });
 
                     // Restore preferences
