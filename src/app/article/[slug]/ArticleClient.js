@@ -5,6 +5,22 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
+const parseLinks = (text) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, index) => {
+        if (part.match(urlRegex)) {
+            return (
+                <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ 
+                    color: 'var(--halalqu-green)', textDecoration: 'underline', fontWeight: 500, wordBreak: 'break-all'
+                }}>
+                    {part}
+                </a>
+            );
+        }
+        return part;
+    });
+};
+
 export default function ArticleClient({ id, relatedArticles = [] }) {
     const router = useRouter();
     const [article, setArticle] = useState(null);
@@ -133,7 +149,7 @@ export default function ArticleClient({ id, relatedArticles = [] }) {
             {/* Content */}
             <div style={{ fontSize: '15px', lineHeight: 1.8, color: 'var(--charcoal)' }}>
                 {article.content.split('\n\n').map((paragraph, i) => (
-                    <p key={i} style={{ marginBottom: 'var(--space-md)' }}>{paragraph}</p>
+                    <p key={i} style={{ marginBottom: 'var(--space-md)' }}>{parseLinks(paragraph)}</p>
                 ))}
             </div>
 
