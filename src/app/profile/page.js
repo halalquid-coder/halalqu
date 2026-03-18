@@ -21,6 +21,7 @@ export default function ProfilePage() {
     };
 
     const userMenuItems = [
+        { icon: '👑', label: 'Subscribe Premium', href: '/subscribe' },
         { icon: '⭐', label: 'Review Saya', href: '/profile/reviews' },
         { icon: '📍', label: 'Rekomendasi Saya', href: '/profile/places' },
         { icon: '❤️', label: 'Bookmark', href: '/bookmarks' },
