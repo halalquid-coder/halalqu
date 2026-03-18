@@ -22,6 +22,25 @@ const categories = [
   { emoji: '🕌', label: 'Muslim Owned', path: '/search?category=Muslim%20Owned' },
 ];
 
+// Data Mock untuk produk populer jika kosong di DB
+const MOCK_PRODUCTS = {
+  skincare: [
+    { id: 'mock-skin-1', name: 'Wardah Renew You Anti Aging', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&q=80', sellerName: 'Wardah Official' },
+    { id: 'mock-skin-2', name: 'Safi White Expert Purifying', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1570194065650-d99fb4b8f7fa?w=500&q=80', sellerName: 'Safi Indonesia' },
+    { id: 'mock-skin-3', name: 'Emina Bright Stuff Face Wash', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=500&q=80', sellerName: 'Emina Cosmetics' },
+  ],
+  mie: [
+    { id: 'mock-mie-1', name: 'Indomie Goreng Original', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1612929633738-8fe01f746794?w=500&q=80', sellerName: 'Indofood' },
+    { id: 'mock-mie-2', name: 'Samyang Green Buldak (Halal)', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1596796538561-bd8c3a1ad136?w=500&q=80', sellerName: 'Samyang Foods' },
+    { id: 'mock-mie-3', name: 'Lemonilo Mie Goreng', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=80', sellerName: 'Lemonilo' },
+  ],
+  bumbu: [
+    { id: 'mock-bumbu-1', name: 'Royco Kaldu Sapi', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&q=80', sellerName: 'Unilever' },
+    { id: 'mock-bumbu-2', name: 'Bango Kecap Manis', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1615485903936-eebbbaf52de7?w=500&q=80', sellerName: 'Bango' },
+    { id: 'mock-bumbu-3', name: 'Sajiku Tepung Bumbu', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?w=500&q=80', sellerName: 'Ajinomoto' },
+  ]
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(0);
@@ -571,6 +590,53 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {/* ═══════════════════════════════════════════ */}
+      {/* 🛍️ SECTIONS: KATEGORI PRODUK TERPOPULER */}
+      {/* ═══════════════════════════════════════════ */}
+      {(() => {
+        const renderProductCategory = (title, keyword, mockData) => {
+          let items = products.filter(p => (p.category || '').toLowerCase().includes(keyword));
+          if (items.length === 0) items = mockData;
+
+          return (
+            <section className={styles.sponsoredSection} style={{ marginTop: '32px' }}>
+              <div className="section-header">
+                <h2 className="section-title">{title}</h2>
+                <Link href={`/search?type=product&category=${encodeURIComponent(title)}`} className="section-link">Lihat Semua →</Link>
+              </div>
+
+              <div className={styles.sponsoredScroll}>
+                {items.map((p, i) => (
+                  <Link key={p.id} href={`/product/${p.id.startsWith('mock') ? '' : p.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s`, width: '160px', flexShrink: 0 }}>
+                    <div style={{
+                      width: '100%', height: '140px', borderRadius: 'var(--radius-md)',
+                      marginBottom: '10px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
+                    }}>
+                      <img src={p.imageUrl || p.image || p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div className={styles.sponsoredInfo} style={{ padding: '0 4px', background: 'transparent' }}>
+                      <h3 className={styles.sponsoredName} style={{ fontSize: '14px', lineHeight: 1.3, marginBottom: '6px' }}>{p.name}</h3>
+                      <div className={styles.sponsoredMeta} style={{ marginBottom: '4px' }}>
+                        <span className={`badge badge-certified`} style={{ fontSize: '10px', padding: '2px 6px' }}>Halal</span>
+                      </div>
+                      <span className={styles.sponsoredCategory} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.category || title}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        };
+
+        return (
+          <>
+            {renderProductCategory('Skincare', 'skincare', MOCK_PRODUCTS.skincare)}
+            {renderProductCategory('Mie Instant', 'mie', MOCK_PRODUCTS.mie)}
+            {renderProductCategory('Bumbu Masak', 'bumbu', MOCK_PRODUCTS.bumbu)}
+          </>
+        );
+      })()}
 
       {/* ═══════════════════════════════════════════ */}
       {/* 🆕 SECTIONS: Baru Dibuka & Top Rated */}

@@ -4,6 +4,13 @@ import { useState } from 'react';
 
 const slides = [
     {
+        emoji: '📷',
+        bg: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        title: 'Scan Komposisi Pintar',
+        desc: 'Sistem AI canggih kami membaca komposisi bahan dalam hitungan detik untuk memastikan kehalalan produk secara akurat.',
+        illustration: '🤖',
+    },
+    {
         emoji: '📍',
         bg: 'linear-gradient(135deg, #2E9B5A 0%, #3DBF6E 100%)',
         title: 'Temukan di Sekitarmu',
