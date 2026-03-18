@@ -55,6 +55,15 @@ export default function HomePage() {
     updateDoc(doc(db, 'users', user.uid), { lastActiveAt: serverTimestamp() }).catch(() => {});
   }, [user.uid, user.isLoggedIn]);
 
+  // Onboarding Check
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('halalqu-onboarding-seen');
+    if (!hasSeen) {
+      localStorage.setItem('halalqu-onboarding-seen', 'true');
+      router.push('/onboarding');
+    }
+  }, [router]);
+
   // Fetch real places and products for the map & listings
   useEffect(() => {
     async function loadData() {

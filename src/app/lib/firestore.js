@@ -534,6 +534,37 @@ export async function getUserNotifications(uid, role = 'user') {
 
 
 // ============================================
+// 💳 Payments
+// ============================================
+
+export async function submitPayment(data) {
+    const docRef = await addDoc(collection(db, 'payments'), {
+        userId: data.userId,
+        userName: data.userName || '',
+        userEmail: data.userEmail || '',
+        plan: data.plan || 'premium',
+        method: data.method, // 'qris' or 'bank_transfer'
+        amount: data.amount || 0,
+        proofUrl: data.proofUrl || '',
+        status: 'pending', // pending, approved, rejected
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
+export async function getUserPayments(uid) {
+    const q = query(collection(db, 'payments'), where('userId', '==', uid));
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+}
+
+export async function getPaymentConfig() {
+    const snap = await getDoc(doc(db, 'app_config', 'payment'));
+    return snap.exists() ? snap.data() : null;
+}
+
+// ============================================
 // 📸 Image Upload (Firebase Storage)
 // ============================================
 
