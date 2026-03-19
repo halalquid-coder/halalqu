@@ -8,9 +8,14 @@ import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const categories = ['🍽 Restaurant', '☕ Cafe', '🍛 Street Food', '🥘 Fine Dining', '🍰 Bakery', '🍕 Western', '🍜 Asian'];
 const halalTypes = [
-    { value: 'certified', label: '✅ Certified Halal', desc: 'Memiliki sertifikat halal resmi' },
-    { value: 'muslim-owned', label: '🕌 Muslim Owned', desc: 'Dimiliki oleh Muslim, tanpa sertifikat resmi' },
-    { value: 'halal-ingredients', label: '🥗 Halal Ingredients', desc: 'Bahan halal tapi belum tersertifikasi' },
+    { value: 'certified', label: '✅ Sertifikat Halal', desc: 'Memiliki sertifikat halal resmi dari lembaga berwenang' },
+    { value: 'self-claim', label: '🕌 Klaim Mandiri', desc: 'Dijamin halal tanpa sertifikat resmi' },
+];
+
+const selfClaimOptions = [
+    { id: 'muslim-owned', label: 'Pemilik Muslim' },
+    { id: 'no-pork', label: 'Tidak mengandung Babi' },
+    { id: 'no-alcohol', label: 'Tidak memuat alkohol sengaja ditambahkan/industri miras' }
 ];
 
 export default function AddPlacePage() {
@@ -19,9 +24,12 @@ export default function AddPlacePage() {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [category, setCategory] = useState(null);
-    const [halalTypesList, setHalalTypesList] = useState([]);
+    const [halalType, setHalalType] = useState(''); // Only one main type: 'certified' or 'self-claim'
+    const [selfClaimChecks, setSelfClaimChecks] = useState([]); // Array of checked point IDs
     const [certBody, setCertBody] = useState('');
     const [certNumber, setCertNumber] = useState('');
+    const [certPhoto, setCertPhoto] = useState(null);
+    const certPhotoRef = useRef(null);
     const [notes, setNotes] = useState('');
     const [phone, setPhone] = useState('');
     const [instagram, setInstagram] = useState('');
@@ -33,11 +41,23 @@ export default function AddPlacePage() {
     const [operatingDays, setOperatingDays] = useState([]);
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [photos, setPhotos] = useState([null, null, null, null, null]);
-    const fileRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+    const [photos, setPhotos] = useState([null, null, null, null]); // 4 photos: Logo, Resto, Menu, Lainnya
+    const fileRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
     const allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
     const toggleDay = (day) => setOperatingDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+    
+    const toggleSelfClaim = (id) => setSelfClaimChecks(prev => prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]);
+
+    const handleCertPhotoSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setCertPhoto({ preview: ev.target.result, name: file.name, file });
+        };
+        reader.readAsDataURL(file);
+    };
 
     const handlePhotoSelect = (index, e) => {
         const file = e.target.files[0];
@@ -105,7 +125,7 @@ export default function AddPlacePage() {
             <div style={{
                 display: 'flex', gap: '4px', marginBottom: 'var(--space-xl)',
             }}>
-                {[name, address, category !== null, halalTypesList.length > 0].map((done, i) => (
+                {[name, address, category !== null, halalType !== ''].map((done, i) => (
                     <div key={i} style={{
                         flex: 1, height: '4px', borderRadius: '2px',
                         background: done ? 'var(--halalqu-green)' : 'var(--border)',
@@ -213,26 +233,34 @@ export default function AddPlacePage() {
             {/* Halal Type */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
-                    Jenis Halal <span style={{ color: 'var(--danger)' }}>*</span> <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--text-muted)'}}>(Bisa pilih lebih dari satu)</span>
+                    Klasifikasi Halal <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                     {halalTypes.map((type) => (
                         <button key={type.value}
-                            onClick={() => setHalalTypesList(prev => prev.includes(type.value) ? prev.filter(v => v !== type.value) : [...prev, type.value])}
+                            onClick={() => {
+                                setHalalType(type.value);
+                                if (type.value === 'certified') setSelfClaimChecks([]);
+                                if (type.value === 'self-claim') {
+                                    setCertBody('');
+                                    setCertNumber('');
+                                    setCertPhoto(null);
+                                }
+                            }}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                                 padding: 'var(--space-md)', borderRadius: 'var(--radius-md)',
-                                border: `2px solid ${halalTypesList.includes(type.value) ? 'var(--halalqu-green)' : 'var(--border)'}`,
-                                background: halalTypesList.includes(type.value) ? 'var(--halalqu-green-light)' : 'var(--white)',
+                                border: `2px solid ${halalType === type.value ? 'var(--halalqu-green)' : 'var(--border)'}`,
+                                background: halalType === type.value ? 'var(--halalqu-green-light)' : 'var(--white)',
                                 cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease',
                             }}>
                             <div style={{
-                                width: '20px', height: '20px', borderRadius: '4px',
-                                border: `2px solid ${halalTypesList.includes(type.value) ? 'var(--halalqu-green)' : 'var(--light-gray)'}`,
+                                width: '20px', height: '20px', borderRadius: '10px',
+                                border: `2px solid ${halalType === type.value ? 'var(--halalqu-green)' : 'var(--light-gray)'}`,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                             }}>
-                                {halalTypesList.includes(type.value) && (
-                                    <div style={{ width: '12px', height: '12px', background: 'var(--halalqu-green)', borderRadius: '2px' }} />
+                                {halalType === type.value && (
+                                    <div style={{ width: '10px', height: '10px', background: 'var(--halalqu-green)', borderRadius: '5px' }} />
                                 )}
                             </div>
                             <div>
@@ -243,7 +271,7 @@ export default function AddPlacePage() {
                     ))}
                 </div>
 
-                {halalTypesList.includes('certified') && (
+                {halalType === 'certified' && (
                     <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: '#F9FAFB', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Lembaga Sertifikasi Halal <span style={{ color: 'var(--danger)' }}>*</span></label>
                         <select value={certBody} onChange={e => setCertBody(e.target.value)} style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)', marginBottom: 'var(--space-sm)' }}>
@@ -256,8 +284,38 @@ export default function AddPlacePage() {
                             <option value="AFIC (Australia)">AFIC (Australia)</option>
                             <option value="HFCE (Lainnya)">Lainnya / Global</option>
                         </select>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Nomor Sertifikat (Opsional)</label>
-                        <input type="text" value={certNumber} onChange={e => setCertNumber(e.target.value)} placeholder="Contoh: ID12345678" style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)' }} />
+
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Nomor Sertifikat <span style={{ color: 'var(--danger)' }}>*</span></label>
+                        <input type="text" value={certNumber} onChange={e => setCertNumber(e.target.value)} placeholder="Contoh: ID12345678" style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)', marginBottom: 'var(--space-sm)' }} />
+
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Foto Sertifikat <span style={{ color: 'var(--danger)' }}>*</span></label>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <input type="file" accept="image/*" ref={certPhotoRef} onChange={handleCertPhotoSelect} style={{ display: 'none' }} />
+                            {certPhoto ? (
+                                <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '2px solid var(--halalqu-green)' }}>
+                                    <img src={certPhoto.preview} alt="Cert" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <button onClick={() => setCertPhoto(null)} style={{ position: 'absolute', top: 0, right: 0, background: 'var(--danger)', color: 'white', border: 'none', width: '20px', height: '20px', fontSize: '12px', cursor: 'pointer' }}>✕</button>
+                                </div>
+                            ) : (
+                                <button type="button" onClick={() => certPhotoRef.current?.click()} style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1.5px dashed var(--border)', background: 'var(--white)', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    📸 Unggah Foto Sertifikat
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {halalType === 'self-claim' && (
+                    <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: '#F9FAFB', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '10px', color: 'var(--charcoal)' }}>Centang poin yang sesuai: <span style={{ color: 'var(--danger)' }}>*</span></label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {selfClaimOptions.map(opt => (
+                                <label key={opt.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer' }}>
+                                    <input type="checkbox" checked={selfClaimChecks.includes(opt.id)} onChange={() => toggleSelfClaim(opt.id)} style={{ marginTop: '4px', width: '16px', height: '16px' }} />
+                                    <span style={{ fontSize: '13px', color: 'var(--charcoal)', lineHeight: 1.4 }}>{opt.label}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
@@ -265,13 +323,13 @@ export default function AddPlacePage() {
             {/* Photo Upload — FUNCTIONAL */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
-                    Foto Bukti Rekomendasi (max 5)
+                    Foto Bukti Rekomendasi (max 4)
                 </label>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                    Upload **Logo** di kotak pertama. (Logo hanya untuk thumbnail dan tidak masuk carousel foto halaman lengkap). Ikuti sisanya sesuai urutan.
+                    Upload **Logo** di kotak pertama. (Logo hanya untuk thumbnail). Ikuti sisanya sesuai urutan.
                 </p>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                    {['Logo', 'Restoran', 'Menu', 'Sertifikat', 'Lainnya'].map((label, i) => (
+                    {['Logo', 'Restoran', 'Menu', 'Lainnya'].map((label, i) => (
                         <div key={i} style={{ position: 'relative' }}>
                             <input type="file" accept="image/*" ref={fileRefs[i]}
                                 onChange={(e) => handlePhotoSelect(i, e)}
@@ -400,13 +458,32 @@ export default function AddPlacePage() {
             <button className="btn btn-primary btn-full"
                 disabled={submitting}
                 onClick={async () => {
+                    if (!name || !address || category === null || !halalType) {
+                        alert('Mohon isi semua field yang wajib (*)');
+                        return;
+                    }
+                    if (halalType === 'certified' && (!certBody || !certNumber || !certPhoto)) {
+                        alert('Untuk Sertifikat Halal, pastikan Lembaga, Nomor, dan Foto Sertifikat terisi/terunggah!');
+                        return;
+                    }
+                    if (halalType === 'self-claim' && selfClaimChecks.length < 3) {
+                        alert('Untuk Klaim Mandiri, Anda wajib menyetujui (mencentang) ketiga poin!');
+                        return;
+                    }
+
                     setSubmitting(true);
                     try {
-                        // Upload photos to Firebase Storage
                         const { uploadImage } = await import('../lib/firestore');
+                        
+                        // Upload cert photo if certified
+                        let certPhotoUrl = null;
+                        if (halalType === 'certified' && certPhoto) {
+                            certPhotoUrl = await uploadImage(certPhoto.file, `certs/${user.uid || 'anonymous'}/${Date.now()}_${certPhoto.name}`);
+                        }
+
+                        // Upload other photos
                         const photoUrls = [];
                         let logoUrl = null;
-                        
                         for (let i = 0; i < photos.length; i++) {
                             const photo = photos[i];
                             if (photo) {
@@ -419,14 +496,17 @@ export default function AddPlacePage() {
                             }
                         }
                         
+                        const finalHalalTypes = halalType === 'self-claim' ? [halalType, ...selfClaimChecks] : [halalType];
+
                         await submitPlace({
                             userId: user.uid || 'anonymous',
                             name, address, phone,
                             category: categories[category] || '',
-                            halalType: halalTypesList.join(', ') || '',
-                            halalTypes: halalTypesList,
-                            certBody: halalTypesList.includes('certified') ? certBody : '',
-                            certNumber: halalTypesList.includes('certified') ? certNumber : '',
+                            halalType: finalHalalTypes.join(', ') || '',
+                            halalTypes: finalHalalTypes,
+                            certBody: halalType === 'certified' ? certBody : '',
+                            certNumber: halalType === 'certified' ? certNumber : '',
+                            certPhotoUrl: certPhotoUrl || '',
                             notes,
                             description: notes,
                             instagram: instagram || '',

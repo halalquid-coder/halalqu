@@ -7,10 +7,15 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 
-const halalTypesData = [
-    { value: 'certified', label: '✅ Certified Halal', desc: 'Memiliki sertifikat halal resmi' },
-    { value: 'muslim-owned', label: '🕌 Muslim Owned', desc: 'Dimiliki oleh Muslim, tanpa sertifikat resmi' },
-    { value: 'halal-ingredients', label: '🥗 Halal Ingredients', desc: 'Bahan halal tapi belum tersertifikasi' },
+const halalTypes = [
+    { value: 'certified', label: '✅ Sertifikat Halal', desc: 'Memiliki sertifikat halal resmi dari lembaga berwenang' },
+    { value: 'self-claim', label: '🕌 Klaim Mandiri', desc: 'Dijamin halal tanpa sertifikat resmi' },
+];
+
+const selfClaimOptions = [
+    { id: 'muslim-owned', label: 'Pemilik Muslim' },
+    { id: 'no-pork', label: 'Tidak mengandung Babi' },
+    { id: 'no-alcohol', label: 'Tidak memuat alkohol sengaja ditambahkan/industri miras' }
 ];
 
 const statusColors = {
@@ -63,6 +68,8 @@ export default function MyPlacesPage() {
     const handleEdit = (place) => {
         const imgs = place.images || (place.photos) || (place.imageUrl ? [place.imageUrl] : []);
         setEditingId(place.id);
+        const oldTypes = place.halalTypes || (place.halalType ? place.halalType.split(', ').filter(Boolean) : []);
+        const isCertified = oldTypes.includes('certified');
         setEditForm({
             name: place.name || '',
             category: place.category || '',
@@ -73,7 +80,8 @@ export default function MyPlacesPage() {
             certNumber: place.certNumber || '',
             instagram: place.instagram || '',
             tiktok: place.tiktok || '',
-            halalTypesList: place.halalTypes || (place.halalType ? place.halalType.split(', ').filter(Boolean) : []),
+            halalType: isCertified ? 'certified' : (oldTypes.length > 0 ? 'self-claim' : ''),
+            selfClaimChecks: isCertified ? [] : oldTypes.filter(t => ['muslim-owned','no-pork','no-alcohol'].includes(t)),
             lat: place.lat || null,
             lng: place.lng || null,
         });
@@ -121,14 +129,27 @@ export default function MyPlacesPage() {
                     uploadedUrls.push(url);
                 }
             }
+            if (editForm.halalType === 'certified' && (!editForm.certBody || !editForm.certNumber)) {
+                alert('Lembaga dan Nomor Sertifikat wajib diisi!');
+                setSaving(false);
+                return;
+            }
+            if (editForm.halalType === 'self-claim' && editForm.selfClaimChecks?.length < 3) {
+                alert('Ketiga poin Klaim Mandiri wajib dicentang!');
+                setSaving(false);
+                return;
+            }
+
+            const finalHalalTypes = editForm.halalType === 'self-claim' ? [editForm.halalType, ...(editForm.selfClaimChecks || [])] : (editForm.halalType ? [editForm.halalType] : []);
+
             setUploadProgress('Menyimpan data...');
             const allImages = [...existingImages, ...uploadedUrls];
             await updateDoc(doc(db, 'places', editingId), {
                 ...editForm,
-                halalType: editForm.halalTypesList?.join(', ') || '',
-                halalTypes: editForm.halalTypesList || [],
-                certBody: editForm.halalTypesList?.includes('certified') ? editForm.certBody : '',
-                certNumber: editForm.halalTypesList?.includes('certified') ? editForm.certNumber : '',
+                halalType: finalHalalTypes.join(', ') || '',
+                halalTypes: finalHalalTypes,
+                certBody: editForm.halalType === 'certified' ? editForm.certBody : '',
+                certNumber: editForm.halalType === 'certified' ? editForm.certNumber : '',
                 images: allImages,
                 instagram: editForm.instagram || '',
                 tiktok: editForm.tiktok || '',
@@ -314,17 +335,20 @@ export default function MyPlacesPage() {
 
                                             {/* Halal Types */}
                                             <div>
-                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Jenis Halal</label>
+                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Klasifikasi Halal *</label>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                    {halalTypesData.map(ht => {
-                                                        const active = editForm.halalTypesList?.includes(ht.value);
+                                                    {halalTypes.map(ht => {
+                                                        const active = editForm.halalType === ht.value;
                                                         return (
                                                             <button key={ht.value} onClick={() => setEditForm(prev => {
-                                                                const list = prev.halalTypesList || [];
-                                                                return { ...prev, halalTypesList: active ? list.filter(v => v !== ht.value) : [...list, ht.value] };
+                                                                if (ht.value === 'certified') {
+                                                                    return { ...prev, halalType: ht.value, selfClaimChecks: [] };
+                                                                } else {
+                                                                    return { ...prev, halalType: ht.value, certBody: '', certNumber: '' };
+                                                                }
                                                             })} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '8px', border: `1.5px solid ${active ? 'var(--halalqu-green)' : 'var(--border)'}`, background: active ? 'var(--halalqu-green-light)' : 'white', cursor: 'pointer', textAlign: 'left' }}>
-                                                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1.5px solid ${active ? 'var(--halalqu-green)' : 'var(--light-gray)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                                    {active && <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--halalqu-green)' }} />}
+                                                                <div style={{ width: '16px', height: '16px', borderRadius: '8px', border: `1.5px solid ${active ? 'var(--halalqu-green)' : 'var(--light-gray)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    {active && <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: 'var(--halalqu-green)' }} />}
                                                                 </div>
                                                                 <div>
                                                                     <div style={{ fontSize: '13px', fontWeight: 600 }}>{ht.label}</div>
@@ -335,7 +359,7 @@ export default function MyPlacesPage() {
                                                     })}
                                                 </div>
                                                 
-                                                {editForm.halalTypesList?.includes('certified') && (
+                                                {editForm.halalType === 'certified' && (
                                                     <div style={{ marginTop: '8px', padding: '12px', background: '#F9FAFB', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                                         <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Lembaga Sertifikasi Halal *</label>
                                                         <select value={editForm.certBody || ''} onChange={e => setEditForm({ ...editForm, certBody: e.target.value })} style={{ ...inputStyle, marginBottom: '8px', padding: '8px' }}>
@@ -348,8 +372,37 @@ export default function MyPlacesPage() {
                                                             <option value="AFIC (Australia)">AFIC (Australia)</option>
                                                             <option value="HFCE (Lainnya)">Lainnya / Global</option>
                                                         </select>
-                                                        <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Nomor Sertifikat</label>
+                                                        <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Nomor Sertifikat *</label>
                                                         <input value={editForm.certNumber || ''} onChange={e => setEditForm({ ...editForm, certNumber: e.target.value })} style={{ ...inputStyle, padding: '8px' }} placeholder="Contoh: ID12345678" />
+                                                        
+                                                        {editForm.certPhotoUrl && (
+                                                            <div style={{ marginTop: '12px' }}>
+                                                                <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block', color: 'var(--halalqu-green)' }}>✓ Foto Sertifikat Tersimpan</label>
+                                                                <img src={editForm.certPhotoUrl} alt="Cert" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '2px solid var(--halalqu-green)' }} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {editForm.halalType === 'self-claim' && (
+                                                    <div style={{ marginTop: '8px', padding: '12px', background: '#F9FAFB', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                        <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>Centang poin yang sesuai: *</label>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {selfClaimOptions.map(opt => {
+                                                                const checked = editForm.selfClaimChecks?.includes(opt.id);
+                                                                return (
+                                                                    <label key={opt.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', cursor: 'pointer' }}>
+                                                                        <input type="checkbox" checked={checked} onChange={() => {
+                                                                            setEditForm(prev => {
+                                                                                const list = prev.selfClaimChecks || [];
+                                                                                return { ...prev, selfClaimChecks: checked ? list.filter(x => x !== opt.id) : [...list, opt.id] };
+                                                                            });
+                                                                        }} style={{ marginTop: '3px', width: '14px', height: '14px' }} />
+                                                                        <span style={{ fontSize: '12px', lineHeight: 1.4 }}>{opt.label}</span>
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
