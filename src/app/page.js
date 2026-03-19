@@ -459,7 +459,7 @@ export default function HomePage() {
             </div>
             {recommendedIn3km.length > 0 ? (
               <div className={styles.sponsoredScroll}>
-                {recommendedIn3km.map((place, i) => (
+                {recommendedIn3km.slice(0, 5).map((place, i) => (
                   <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                     {place.photo ? (
                       <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
@@ -476,6 +476,16 @@ export default function HomePage() {
                     </div>
                   </Link>
                 ))}
+                
+                {/* CTA Card at the end of scroll */}
+                <Link href="/add-place" className={styles.sponsoredCard} style={{ 
+                  animationDelay: `0.5s`, 
+                  display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', 
+                  background: '#FFF8E7', border: '1px dashed #D4920A', minHeight: '180px' 
+                }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>+</div>
+                  <h3 style={{ fontSize: '13px', color: '#D4920A', textAlign: 'center', padding: '0 8px' }}>Rekomendasikan Tempat Baru</h3>
+                </Link>
               </div>
             ) : (
               <div style={{
