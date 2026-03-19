@@ -555,7 +555,7 @@ export default function HomePage() {
       {/* Restaurant List — Di Sekitarmu (Horizontal Scroll) */}
       <section className={styles.restaurantSection}>
         <div className="section-header">
-          <h2 className="section-title">Di Sekitarmu</h2>
+          <h2 className="section-title">Restoran di Sekitarmu</h2>
           <Link href="/search" className="section-link">Lihat Semua →</Link>
         </div>
 
