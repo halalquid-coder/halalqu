@@ -19,7 +19,9 @@ export default function AddPlacePage() {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [category, setCategory] = useState(null);
-    const [halalType, setHalalType] = useState(null);
+    const [halalTypesList, setHalalTypesList] = useState([]);
+    const [certBody, setCertBody] = useState('');
+    const [certNumber, setCertNumber] = useState('');
     const [notes, setNotes] = useState('');
     const [phone, setPhone] = useState('');
     const [lat, setLat] = useState(null);
@@ -101,7 +103,7 @@ export default function AddPlacePage() {
             <div style={{
                 display: 'flex', gap: '4px', marginBottom: 'var(--space-xl)',
             }}>
-                {[name, address, category !== null, halalType !== null].map((done, i) => (
+                {[name, address, category !== null, halalTypesList.length > 0].map((done, i) => (
                     <div key={i} style={{
                         flex: 1, height: '4px', borderRadius: '2px',
                         background: done ? 'var(--halalqu-green)' : 'var(--border)',
@@ -209,26 +211,26 @@ export default function AddPlacePage() {
             {/* Halal Type */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
-                    Jenis Halal <span style={{ color: 'var(--danger)' }}>*</span>
+                    Jenis Halal <span style={{ color: 'var(--danger)' }}>*</span> <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--text-muted)'}}>(Bisa pilih lebih dari satu)</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                     {halalTypes.map((type) => (
                         <button key={type.value}
-                            onClick={() => setHalalType(type.value)}
+                            onClick={() => setHalalTypesList(prev => prev.includes(type.value) ? prev.filter(v => v !== type.value) : [...prev, type.value])}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                                 padding: 'var(--space-md)', borderRadius: 'var(--radius-md)',
-                                border: `2px solid ${halalType === type.value ? 'var(--halalqu-green)' : 'var(--border)'}`,
-                                background: halalType === type.value ? 'var(--halalqu-green-light)' : 'var(--white)',
+                                border: `2px solid ${halalTypesList.includes(type.value) ? 'var(--halalqu-green)' : 'var(--border)'}`,
+                                background: halalTypesList.includes(type.value) ? 'var(--halalqu-green-light)' : 'var(--white)',
                                 cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease',
                             }}>
                             <div style={{
-                                width: '20px', height: '20px', borderRadius: '50%',
-                                border: `2px solid ${halalType === type.value ? 'var(--halalqu-green)' : 'var(--light-gray)'}`,
+                                width: '20px', height: '20px', borderRadius: '4px',
+                                border: `2px solid ${halalTypesList.includes(type.value) ? 'var(--halalqu-green)' : 'var(--light-gray)'}`,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                             }}>
-                                {halalType === type.value && (
-                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--halalqu-green)' }} />
+                                {halalTypesList.includes(type.value) && (
+                                    <div style={{ width: '12px', height: '12px', background: 'var(--halalqu-green)', borderRadius: '2px' }} />
                                 )}
                             </div>
                             <div>
@@ -238,15 +240,36 @@ export default function AddPlacePage() {
                         </button>
                     ))}
                 </div>
+
+                {halalTypesList.includes('certified') && (
+                    <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: '#F9FAFB', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Lembaga Sertifikasi Halal <span style={{ color: 'var(--danger)' }}>*</span></label>
+                        <select value={certBody} onChange={e => setCertBody(e.target.value)} style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)', marginBottom: 'var(--space-sm)' }}>
+                            <option value="">Pilih Lembaga...</option>
+                            <option value="MUI / BPJPH (Indonesia)">MUI / BPJPH (Indonesia)</option>
+                            <option value="JAKIM (Malaysia)">JAKIM (Malaysia)</option>
+                            <option value="MUIS (Singapura)">MUIS (Singapura)</option>
+                            <option value="CICOT (Thailand)">CICOT (Thailand)</option>
+                            <option value="HCE (Eropa)">Halal Certification Europe</option>
+                            <option value="AFIC (Australia)">AFIC (Australia)</option>
+                            <option value="HFCE (Lainnya)">Lainnya / Global</option>
+                        </select>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: 'var(--charcoal)' }}>Nomor Sertifikat (Opsional)</label>
+                        <input type="text" value={certNumber} onChange={e => setCertNumber(e.target.value)} placeholder="Contoh: ID12345678" style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)' }} />
+                    </div>
+                )}
             </div>
 
             {/* Photo Upload — FUNCTIONAL */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
-                    Foto Sertifikat / Bukti Halal (max 5)
+                    Foto Bukti Rekomendasi (max 5)
                 </label>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    Upload **Logo** di kotak pertama. (Logo hanya untuk thumbnail dan tidak masuk carousel foto halaman lengkap). Ikuti sisanya sesuai urutan.
+                </p>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-                    {['Sertifikat', 'Resto', 'Menu', 'Dalam', 'Lainnya'].map((label, i) => (
+                    {['Logo', 'Restoran', 'Menu', 'Sertifikat', 'Lainnya'].map((label, i) => (
                         <div key={i} style={{ position: 'relative' }}>
                             <input type="file" accept="image/*" ref={fileRefs[i]}
                                 onChange={(e) => handlePhotoSelect(i, e)}
@@ -351,18 +374,30 @@ export default function AddPlacePage() {
                         // Upload photos to Firebase Storage
                         const { uploadImage } = await import('../lib/firestore');
                         const photoUrls = [];
-                        for (const photo of photos.filter(Boolean)) {
-                            const url = await uploadImage(photo.file, `places/${user.uid || 'anonymous'}/${Date.now()}_${photo.name}`);
-                            photoUrls.push(url);
+                        let logoUrl = null;
+                        
+                        for (let i = 0; i < photos.length; i++) {
+                            const photo = photos[i];
+                            if (photo) {
+                                const url = await uploadImage(photo.file, `places/${user.uid || 'anonymous'}/${Date.now()}_${photo.name}`);
+                                if (i === 0) {
+                                    logoUrl = url;
+                                } else {
+                                    photoUrls.push(url);
+                                }
+                            }
                         }
+                        
                         await submitPlace({
                             userId: user.uid || 'anonymous',
                             name, address, phone,
                             category: categories[category] || '',
-                            halalType: halalType || '',
+                            halalType: halalTypesList.join(', ') || '',
+                            halalTypes: halalTypesList,
+                            certBody: halalTypesList.includes('certified') ? certBody : '',
+                            certNumber: halalTypesList.includes('certified') ? certNumber : '',
                             notes,
-                            photoUrls,
-                            imageUrl: photoUrls[0] || '',
+                            imageUrl: logoUrl || photoUrls[0] || '',
                             images: photoUrls,
                             lat, lng,
                             openTime: openTime || null,
