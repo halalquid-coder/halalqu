@@ -87,6 +87,8 @@ export default function RestaurantDetailPage() {
                         isOpen: checkIsOpen(data),
                         lastChecked: data.certDate ? (data.certDate.toDate ? data.certDate.toDate().toLocaleDateString('id-ID') : new Date(data.certDate).toLocaleDateString('id-ID')) : 'Baru saja',
                         description: data.description || 'Restoran halal pilihan.',
+                        instagram: data.instagram || '',
+                        tiktok: data.tiktok || '',
                         certBody: data.certBody || 'Klaim Mandiri',
                         certNumber: data.certNumber || '-',
                         menu: [],
@@ -262,6 +264,20 @@ export default function RestaurantDetailPage() {
                         🕐 {resto.hours}
                     </span>
                 </div>
+                {(resto.instagram || resto.tiktok) && (
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                        {resto.instagram && (
+                            <a href={`https://instagram.com/${resto.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#E1306C', textDecoration: 'none', fontWeight: 600, background: 'var(--white)', padding: '6px 12px', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                                📸 {resto.instagram}
+                            </a>
+                        )}
+                        {resto.tiktok && (
+                            <a href={`https://tiktok.com/@${resto.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#000000', textDecoration: 'none', fontWeight: 600, background: 'var(--white)', padding: '6px 12px', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+                                🎵 {resto.tiktok}
+                            </a>
+                        )}
+                    </div>
+                )}
 
                 <div className="trust-banner" style={{ marginTop: 'var(--space-md)' }}>
                     📅 Last Checked: {resto.lastChecked}

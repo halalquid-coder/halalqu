@@ -24,6 +24,8 @@ export default function AddPlacePage() {
     const [certNumber, setCertNumber] = useState('');
     const [notes, setNotes] = useState('');
     const [phone, setPhone] = useState('');
+    const [instagram, setInstagram] = useState('');
+    const [tiktok, setTiktok] = useState('');
     const [lat, setLat] = useState(null);
     const [lng, setLng] = useState(null);
     const [openTime, setOpenTime] = useState('');
@@ -344,6 +346,35 @@ export default function AddPlacePage() {
                 </div>
             </div>
 
+            {/* Social Media */}
+            <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
+                    📱 Sosial Media (opsional)
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                        <span style={{ fontSize: '20px', width: '32px', textAlign: 'center' }}>📸</span>
+                        <input type="text" placeholder="@username_instagram" value={instagram}
+                            onChange={(e) => setInstagram(e.target.value)}
+                            style={{
+                                flex: 1, padding: '12px var(--space-md)', borderRadius: 'var(--radius-md)',
+                                border: '1.5px solid var(--border)', fontSize: '14px', background: 'var(--white)',
+                            }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                        <span style={{ fontSize: '20px', width: '32px', textAlign: 'center' }}>🎵</span>
+                        <input type="text" placeholder="@username_tiktok" value={tiktok}
+                            onChange={(e) => setTiktok(e.target.value)}
+                            style={{
+                                flex: 1, padding: '12px var(--space-md)', borderRadius: 'var(--radius-md)',
+                                border: '1.5px solid var(--border)', fontSize: '14px', background: 'var(--white)',
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* Notes */}
             <div style={{ marginBottom: 'var(--space-xl)' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--charcoal)' }}>
@@ -397,6 +428,9 @@ export default function AddPlacePage() {
                             certBody: halalTypesList.includes('certified') ? certBody : '',
                             certNumber: halalTypesList.includes('certified') ? certNumber : '',
                             notes,
+                            description: notes,
+                            instagram: instagram || '',
+                            tiktok: tiktok || '',
                             imageUrl: logoUrl || photoUrls[0] || '',
                             images: photoUrls,
                             lat, lng,

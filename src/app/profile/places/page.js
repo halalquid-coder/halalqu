@@ -71,6 +71,8 @@ export default function MyPlacesPage() {
             description: place.description || '',
             certBody: place.certBody || '',
             certNumber: place.certNumber || '',
+            instagram: place.instagram || '',
+            tiktok: place.tiktok || '',
             halalTypesList: place.halalTypes || (place.halalType ? place.halalType.split(', ').filter(Boolean) : []),
             lat: place.lat || null,
             lng: place.lng || null,
@@ -128,6 +130,8 @@ export default function MyPlacesPage() {
                 certBody: editForm.halalTypesList?.includes('certified') ? editForm.certBody : '',
                 certNumber: editForm.halalTypesList?.includes('certified') ? editForm.certNumber : '',
                 images: allImages,
+                instagram: editForm.instagram || '',
+                tiktok: editForm.tiktok || '',
                 imageUrl: editForm.imageUrl || allImages[0] || placeDoc?.photo || '',
                 updatedAt: serverTimestamp(),
             });
@@ -349,6 +353,21 @@ export default function MyPlacesPage() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {/* Social Media */}
+                                            <div>
+                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Sosial Media (opsional)</label>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontSize: '16px' }}>📸</span>
+                                                        <input value={editForm.instagram || ''} onChange={e => setEditForm({ ...editForm, instagram: e.target.value })} style={{ ...inputStyle, flex: 1 }} placeholder="@username_instagram" />
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontSize: '16px' }}>🎵</span>
+                                                        <input value={editForm.tiktok || ''} onChange={e => setEditForm({ ...editForm, tiktok: e.target.value })} style={{ ...inputStyle, flex: 1 }} placeholder="@username_tiktok" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div>
                                                 <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Deskripsi</label>
                                                 <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Ceritakan tentang tempat ini..." />
