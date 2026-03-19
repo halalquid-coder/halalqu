@@ -2,9 +2,16 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '../../context/UserContext';
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
+
+const halalTypesData = [
+    { value: 'certified', label: '✅ Certified Halal', desc: 'Memiliki sertifikat halal resmi' },
+    { value: 'muslim-owned', label: '🕌 Muslim Owned', desc: 'Dimiliki oleh Muslim, tanpa sertifikat resmi' },
+    { value: 'halal-ingredients', label: '🥗 Halal Ingredients', desc: 'Bahan halal tapi belum tersertifikasi' },
+];
 
 const statusColors = {
     approved: { bg: '#D1FAE5', color: '#065F46', label: '✅ Disetujui' },
@@ -63,6 +70,10 @@ export default function MyPlacesPage() {
             phone: place.phone || '',
             description: place.description || '',
             certBody: place.certBody || '',
+            certNumber: place.certNumber || '',
+            halalTypesList: place.halalTypes || (place.halalType ? place.halalType.split(', ').filter(Boolean) : []),
+            lat: place.lat || null,
+            lng: place.lng || null,
         });
         setExistingImages(imgs);
         setNewFiles([]);
@@ -112,8 +123,12 @@ export default function MyPlacesPage() {
             const allImages = [...existingImages, ...uploadedUrls];
             await updateDoc(doc(db, 'places', editingId), {
                 ...editForm,
+                halalType: editForm.halalTypesList?.join(', ') || '',
+                halalTypes: editForm.halalTypesList || [],
+                certBody: editForm.halalTypesList?.includes('certified') ? editForm.certBody : '',
+                certNumber: editForm.halalTypesList?.includes('certified') ? editForm.certNumber : '',
                 images: allImages,
-                imageUrl: allImages[0] || '',
+                imageUrl: editForm.imageUrl || allImages[0] || placeDoc?.photo || '',
                 updatedAt: serverTimestamp(),
             });
             setEditingId(null);
@@ -129,6 +144,16 @@ export default function MyPlacesPage() {
         } finally {
             setSaving(false);
             setUploadProgress('');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Apakah kamu yakin ingin menghapus tempat ini secara permanen?')) return;
+        try {
+            await deleteDoc(doc(db, 'places', id));
+            await loadPlaces();
+        } catch (e) {
+            alert('Gagal menghapus tempat: ' + e.message);
         }
     };
 
@@ -203,6 +228,9 @@ export default function MyPlacesPage() {
                                                     ✏️ Edit
                                                 </button>
                                             )}
+                                            <button onClick={() => handleDelete(place.id)} style={{ padding: '6px 14px', borderRadius: 'var(--radius-sm)', background: '#FEE2E2', color: '#991B1B', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}>
+                                                🗑️ Hapus
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -258,16 +286,68 @@ export default function MyPlacesPage() {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Alamat</label>
-                                                <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} style={inputStyle} placeholder="Alamat lengkap" />
+                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Alamat *</label>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <AddressAutocomplete
+                                                        value={editForm.address}
+                                                        onChange={(val) => setEditForm(prev => ({ ...prev, address: val }))}
+                                                        onLocationSelect={(loc) => setEditForm(prev => ({ ...prev, lat: loc.lat, lng: loc.lng }))}
+                                                    />
+                                                    <button type="button" onClick={() => {
+                                                        if (!navigator.geolocation) return alert('Browser tidak mendukung lokasi');
+                                                        navigator.geolocation.getCurrentPosition(
+                                                            (pos) => setEditForm(prev => ({ ...prev, lat: pos.coords.latitude, lng: pos.coords.longitude })),
+                                                            () => alert('Gagal dapat lokasi'), { timeout: 10000 }
+                                                        );
+                                                    }} style={{ padding: '0 16px', borderRadius: 'var(--radius-md)', background: editForm.lat && editForm.lng ? 'var(--halalqu-green)' : 'var(--bg)', color: editForm.lat && editForm.lng ? 'white' : 'inherit', border: '1px solid var(--border)', cursor: 'pointer' }}>📍</button>
+                                                </div>
+                                                {editForm.lat && editForm.lng && <span style={{fontSize:'10px', color:'var(--halalqu-green)', fontWeight:600}}>✓ Kordinat: {editForm.lat.toFixed(5)}, {editForm.lng.toFixed(5)}</span>}
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Nomor Telepon</label>
                                                 <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} style={inputStyle} placeholder="08xx-xxxx-xxxx" />
                                             </div>
+
+                                            {/* Halal Types */}
                                             <div>
-                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Sertifikasi Halal</label>
-                                                <input value={editForm.certBody} onChange={e => setEditForm({ ...editForm, certBody: e.target.value })} style={inputStyle} placeholder="cth: MUI, BPJPH, Klaim Mandiri" />
+                                                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Jenis Halal</label>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    {halalTypesData.map(ht => {
+                                                        const active = editForm.halalTypesList?.includes(ht.value);
+                                                        return (
+                                                            <button key={ht.value} onClick={() => setEditForm(prev => {
+                                                                const list = prev.halalTypesList || [];
+                                                                return { ...prev, halalTypesList: active ? list.filter(v => v !== ht.value) : [...list, ht.value] };
+                                                            })} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '8px', border: `1.5px solid ${active ? 'var(--halalqu-green)' : 'var(--border)'}`, background: active ? 'var(--halalqu-green-light)' : 'white', cursor: 'pointer', textAlign: 'left' }}>
+                                                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1.5px solid ${active ? 'var(--halalqu-green)' : 'var(--light-gray)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                    {active && <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--halalqu-green)' }} />}
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontSize: '13px', fontWeight: 600 }}>{ht.label}</div>
+                                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ht.desc}</div>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                
+                                                {editForm.halalTypesList?.includes('certified') && (
+                                                    <div style={{ marginTop: '8px', padding: '12px', background: '#F9FAFB', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                        <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Lembaga Sertifikasi Halal *</label>
+                                                        <select value={editForm.certBody || ''} onChange={e => setEditForm({ ...editForm, certBody: e.target.value })} style={{ ...inputStyle, marginBottom: '8px', padding: '8px' }}>
+                                                            <option value="">Pilih Lembaga...</option>
+                                                            <option value="MUI / BPJPH (Indonesia)">MUI / BPJPH (Indonesia)</option>
+                                                            <option value="JAKIM (Malaysia)">JAKIM (Malaysia)</option>
+                                                            <option value="MUIS (Singapura)">MUIS (Singapura)</option>
+                                                            <option value="CICOT (Thailand)">CICOT (Thailand)</option>
+                                                            <option value="HCE (Eropa)">Halal Certification Europe</option>
+                                                            <option value="AFIC (Australia)">AFIC (Australia)</option>
+                                                            <option value="HFCE (Lainnya)">Lainnya / Global</option>
+                                                        </select>
+                                                        <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Nomor Sertifikat</label>
+                                                        <input value={editForm.certNumber || ''} onChange={e => setEditForm({ ...editForm, certNumber: e.target.value })} style={{ ...inputStyle, padding: '8px' }} placeholder="Contoh: ID12345678" />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Deskripsi</label>

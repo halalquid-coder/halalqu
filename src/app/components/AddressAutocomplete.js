@@ -84,7 +84,7 @@ export default function AddressAutocomplete({ value, onChange, onLocationSelect 
                 autocompleteService.current.getPlacePredictions({
                     input: searchTerm,
                     sessionToken: sessionToken.current,
-                    componentRestrictions: { country: 'id' }, // Restrict to Indonesia (optional)
+                    componentRestrictions: { country: ['id', 'sg', 'my'] }, // Restrict to Indonesia, Singapore, Malaysia
                 }, (predictions, status) => {
                     setIsLoading(false);
                     if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
@@ -109,7 +109,7 @@ export default function AddressAutocomplete({ value, onChange, onLocationSelect 
         // FALLBACK TO NOMINATIM OPENSTREETMAP (if no Google API Key)
         try {
             const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=5&addressdetails=1&countrycodes=id&accept-language=id&email=admin@halalqu.com`
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=5&addressdetails=1&countrycodes=id,sg,my&accept-language=id&email=admin@halalqu.com`
             );
             if (!res.ok) {
                 console.warn('Nominatim returned status:', res.status);
