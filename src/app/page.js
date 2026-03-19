@@ -484,7 +484,7 @@ export default function HomePage() {
                 border: '1px dashed #D4920A'
               }}>
                 <p style={{fontSize: '13px', color: '#D4920A', marginBottom: '8px'}}>Belum ada rekomendasi di radius 3km Anda.</p>
-                <Link href="/profile/places/add" style={{
+                <Link href="/add-place" style={{
                   display: 'inline-block', padding: '6px 14px', background: 'var(--halalqu-green)', 
                   color: 'white', borderRadius: 'var(--radius-md)', fontSize: '12px', fontWeight: 600, textDecoration: 'none'
                 }}>+ Rekomendasikan Tempat</Link>
