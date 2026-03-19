@@ -22,25 +22,6 @@ const categories = [
   { emoji: '🕌', label: 'Muslim Owned', path: '/search?category=Muslim%20Owned' },
 ];
 
-// Data Mock untuk produk populer jika kosong di DB
-const MOCK_PRODUCTS = {
-  skincare: [
-    { id: 'mock-skin-1', name: 'Wardah Renew You Anti Aging', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&q=80', sellerName: 'Wardah Official' },
-    { id: 'mock-skin-2', name: 'Safi White Expert Purifying', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1570194065650-d99fb4b8f7fa?w=500&q=80', sellerName: 'Safi Indonesia' },
-    { id: 'mock-skin-3', name: 'Emina Bright Stuff Face Wash', category: 'Skincare', imageUrl: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=500&q=80', sellerName: 'Emina Cosmetics' },
-  ],
-  mie: [
-    { id: 'mock-mie-1', name: 'Indomie Goreng Original', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1612929633738-8fe01f746794?w=500&q=80', sellerName: 'Indofood' },
-    { id: 'mock-mie-2', name: 'Samyang Green Buldak (Halal)', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1596796538561-bd8c3a1ad136?w=500&q=80', sellerName: 'Samyang Foods' },
-    { id: 'mock-mie-3', name: 'Lemonilo Mie Goreng', category: 'Mie Instant', imageUrl: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=80', sellerName: 'Lemonilo' },
-  ],
-  bumbu: [
-    { id: 'mock-bumbu-1', name: 'Royco Kaldu Sapi', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&q=80', sellerName: 'Unilever' },
-    { id: 'mock-bumbu-2', name: 'Bango Kecap Manis', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1615485903936-eebbbaf52de7?w=500&q=80', sellerName: 'Bango' },
-    { id: 'mock-bumbu-3', name: 'Sajiku Tepung Bumbu', category: 'Bumbu Masak', imageUrl: 'https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?w=500&q=80', sellerName: 'Ajinomoto' },
-  ]
-};
-
 export default function HomePage() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(0);
@@ -112,6 +93,7 @@ export default function HomePage() {
             photo: val.imageUrl || ((val.photos && val.photos.length > 0) ? val.photos[0] : ((val.images && val.images.length > 0) ? val.images[0] : null)),
             promoDiscount: val.promoDiscount || null,
             createdAt: val.createdAt || null,
+            submittedBy: val.submittedBy || null,
             ...val
           };
         });
@@ -167,19 +149,12 @@ export default function HomePage() {
   }, []);
 
   // Derived data for monetization sections
-  const premiumPlaces = places.filter(p => p.isPremium);
-  const promoPlaces = places.filter(p => p.promoDiscount);
   const topRated = [...places].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
   const newPlaces = [...places].sort((a, b) => {
     const da = a.createdAt?.seconds || 0;
     const db2 = b.createdAt?.seconds || 0;
     return db2 - da;
   }).slice(0, 5);
-
-  const localProducts = products.filter(p => {
-    if (p.halalCountry) return p.halalCountry.toLowerCase() === userCountry.toLowerCase();
-    return userCountry.toLowerCase() === 'indonesia';
-  }).slice(0, 6);
 
   // Fetch real notifications from Firestore
   useEffect(() => {
@@ -226,7 +201,7 @@ export default function HomePage() {
       if (!contextNotif) {
         await toggleNotifications();
       }
-      alert('Notifikasi dalam aplikasi diaktifkan! 🔔\nKamu akan menerima notifikasi di bell icon.');
+      alert('Notifikasi dalam aplikasi diaktifkan! 🔔\\nKamu akan menerima notifikasi di bell icon.');
     } catch (e) {
       console.error('Notification opt-in error:', e);
       setFcmToken('in-app-enabled');
@@ -471,88 +446,60 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* 🎉 SECTION 2: Promo & Diskon */}
+      {/* 👑 SECTION 2: Rekomendasi Pilihan Sekitarmu */}
       {/* ═══════════════════════════════════════════ */}
-      <section className={styles.promoSection}>
-        <div className="section-header">
-          <h2 className="section-title">Promo & Diskon</h2>
-          <Link href="/search?promo=true" className="section-link">Lihat Semua →</Link>
-        </div>
-
-        {promoPlaces.length > 0 ? (
-          <div className={styles.promoScroll}>
-            {promoPlaces.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.promoCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={styles.promoEmoji}>{place.emoji || '🍽️'}</div>
-                <div className={styles.promoBadge}>Diskon {place.promoDiscount}%</div>
-                <div className={styles.promoInfo}>
-                  <h3>{place.name}</h3>
-                  <p>{place.category}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.promoEmptyBanner}>
-            <div className={styles.promoEmptyIcon}>🎁</div>
-            <div>
-              <h3>Belum ada promo saat ini</h3>
-              <p>Nantikan promo menarik dari merchant Makanan Halal di sekitarmu!</p>
+      {(() => {
+        const recommendedIn3km = places.filter(p => p.submittedBy && p.distNum !== null && p.distNum <= 3);
+        
+        return (
+          <section className={styles.sponsoredSection}>
+            <div className="section-header">
+              <h2 className="section-title">Rekomendasi Pilihan Sekitarmu</h2>
+              <Link href="/search?recommended=true" className="section-link">Lihat Semua →</Link>
             </div>
-          </div>
-        )}
-      </section>
-
-      {/* ═══════════════════════════════════════════ */}
-      {/* ⭐ SECTION 3: Rekomendasi Pilihan (Premium) */}
-      {/* ═══════════════════════════════════════════ */}
-      <section className={styles.sponsoredSection}>
-        <div className="section-header">
-          <h2 className="section-title">Rekomendasi Pilihan</h2>
-          <Link href="/search?featured=true" className="section-link">Lihat Semua →</Link>
-        </div>
-
-        {premiumPlaces.length > 0 ? (
-          <div className={styles.sponsoredScroll}>
-            {premiumPlaces.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className={styles.sponsoredBadge}>Pilihan Halalqu</div>
-                {place.photo ? (
-                  <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
-                ) : (
-                  <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
-                )}
-                <div className={styles.sponsoredInfo}>
-                  <h3 className={styles.sponsoredName}>{place.name}</h3>
-                  <div className={styles.sponsoredMeta}>
-                    <span>⭐ {place.rating}</span>
-                    <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
-                  </div>
-                  <span className={styles.sponsoredCategory}>{place.category}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.sponsoredEmptyBanner}>
-            <div style={{ fontSize: '36px' }}>🍽️</div>
-            <div>
-              <h3>Ingin restoran Anda tampil di sini?</h3>
-              <p>Daftarkan merchant Anda dan jadi rekomendasi pilihan Halalqu</p>
-            </div>
-            <Link href="/merchant/register" className={styles.sponsoredCta}>Daftar Merchant →</Link>
-          </div>
-        )}
-      </section>
-
-
+            {recommendedIn3km.length > 0 ? (
+              <div className={styles.sponsoredScroll}>
+                {recommendedIn3km.map((place, i) => (
+                  <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                    {place.photo ? (
+                      <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
+                    ) : (
+                      <div className={styles.sponsoredEmoji}>{place.emoji || '🍽️'}</div>
+                    )}
+                    <div className={styles.sponsoredInfo}>
+                      <h3 className={styles.sponsoredName}>{place.name}</h3>
+                      <div className={styles.sponsoredMeta}>
+                        <span>⭐ {place.rating}</span>
+                        <span className={`badge badge-${place.badge}`} style={{ fontSize: '10px' }}>{place.badgeLabel}</span>
+                      </div>
+                      <span className={styles.sponsoredCategory}>{place.category}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                background: '#FFF8E7', borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-md)', textAlign: 'center', margin: '0 16px',
+                border: '1px dashed #D4920A'
+              }}>
+                <p style={{fontSize: '13px', color: '#D4920A', marginBottom: '8px'}}>Belum ada rekomendasi di radius 3km Anda.</p>
+                <Link href="/profile/places/add" style={{
+                  display: 'inline-block', padding: '6px 14px', background: 'var(--halalqu-green)', 
+                  color: 'white', borderRadius: 'var(--radius-md)', fontSize: '12px', fontWeight: 600, textDecoration: 'none'
+                }}>+ Rekomendasikan Tempat</Link>
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Interactive Map */}
       <section className={styles.mapSection}>
         <HalalMap restaurants={places} />
       </section>
 
-      {/* Restaurant List — Di Sekitarmu (Horizontal Scroll) */}
+      {/* Restaurant List — Restoran di Sekitarmu (Horizontal Scroll) */}
       <section className={styles.restaurantSection}>
         <div className="section-header">
           <h2 className="section-title">Restoran di Sekitarmu</h2>
@@ -592,58 +539,11 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════ */}
-      {/* 🛍️ SECTIONS: KATEGORI PRODUK TERPOPULER */}
-      {/* ═══════════════════════════════════════════ */}
-      {(() => {
-        const renderProductCategory = (title, keyword, mockData) => {
-          let items = products.filter(p => (p.category || '').toLowerCase().includes(keyword));
-          if (items.length === 0) items = mockData;
-
-          return (
-            <section className={styles.sponsoredSection} style={{ marginTop: '32px' }}>
-              <div className="section-header">
-                <h2 className="section-title">{title}</h2>
-                <Link href={`/search?type=product&category=${encodeURIComponent(title)}`} className="section-link">Lihat Semua →</Link>
-              </div>
-
-              <div className={styles.sponsoredScroll}>
-                {items.map((p, i) => (
-                  <Link key={p.id} href={`/product/${p.id.startsWith('mock') ? '' : p.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s`, width: '160px', flexShrink: 0 }}>
-                    <div style={{
-                      width: '100%', height: '140px', borderRadius: 'var(--radius-md)',
-                      marginBottom: '10px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                    }}>
-                      <img src={p.imageUrl || p.image || p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div className={styles.sponsoredInfo} style={{ padding: '0 4px', background: 'transparent' }}>
-                      <h3 className={styles.sponsoredName} style={{ fontSize: '14px', lineHeight: 1.3, marginBottom: '6px' }}>{p.name}</h3>
-                      <div className={styles.sponsoredMeta} style={{ marginBottom: '4px' }}>
-                        <span className={`badge badge-certified`} style={{ fontSize: '10px', padding: '2px 6px' }}>Halal</span>
-                      </div>
-                      <span className={styles.sponsoredCategory} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.category || title}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          );
-        };
-
-        return (
-          <>
-            {renderProductCategory('Skincare', 'skincare', MOCK_PRODUCTS.skincare)}
-            {renderProductCategory('Mie Instant', 'mie', MOCK_PRODUCTS.mie)}
-            {renderProductCategory('Bumbu Masak', 'bumbu', MOCK_PRODUCTS.bumbu)}
-          </>
-        );
-      })()}
-
-      {/* ═══════════════════════════════════════════ */}
-      {/* 🆕 SECTIONS: Baru Dibuka & Top Rated */}
+      {/* 🆕 SECTIONS: Baru Bergabung & Top Rated */}
       {/* ═══════════════════════════════════════════ */}
       <section className={styles.newSection}>
         <div className="section-header">
-          <h2 className="section-title">Baru</h2>
+          <h2 className="section-title">Baru Bergabung</h2>
           <Link href="/search?sort=new" className="section-link">Lihat Semua →</Link>
         </div>
 
@@ -667,7 +567,7 @@ export default function HomePage() {
             ))}
           </div>
         ) : (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada restoran baru minggu ini.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 16px' }}>Belum ada restoran baru minggu ini.</p>
         )}
       </section>
 
@@ -699,47 +599,66 @@ export default function HomePage() {
             ))}
           </div>
         ) : (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada peringkat untuk saat ini.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 16px' }}>Belum ada peringkat untuk saat ini.</p>
         )}
       </section>
 
-
-
       {/* ═══════════════════════════════════════════ */}
-      {/* 🛒 SECTION: Produk Halal Negara Tersebut */}
+      {/* 🛍️ SECTIONS: KATEGORI PRODUK HALAL */}
       {/* ═══════════════════════════════════════════ */}
-      <section className={styles.sponsoredSection} style={{ marginTop: '32px' }}>
-        <div className="section-header">
-          <h2 className="section-title">Produk Terpopuler di {userCountry}</h2>
-          <Link href={`/search?type=product&country=${encodeURIComponent(userCountry)}`} className="section-link">Lihat Semua →</Link>
-        </div>
+      {(() => {
+        const renderProductCategory = (title, keyword) => {
+          // Filter by keyword AND country
+          const items = products.filter(p => 
+            (p.category || '').toLowerCase().includes(keyword) && 
+            (p.halalCountry ? p.halalCountry.toLowerCase() === userCountry.toLowerCase() : userCountry.toLowerCase() === 'indonesia')
+          );
 
-        {localProducts.length > 0 ? (
-          <div className={styles.sponsoredScroll}>
-            {localProducts.map((p, i) => (
-              <Link key={p.id} href={`/product/${p.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
-                {p.imageUrl ? (
-                  <div style={{
-                    width: '100%', height: '100px', borderRadius: 'var(--radius-md)',
-                    marginBottom: '8px', overflow: 'hidden', background: 'var(--halalqu-green-light)'
-                  }}>
-                    <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                ) : (
-                  <div className={styles.sponsoredEmoji}>🛒</div>
-                )}
-                <h3 className={styles.sponsoredName}>{p.name}</h3>
-                <div className={styles.sponsoredMeta}>
-                  <span className={`badge badge-certified`} style={{ fontSize: '10px' }}>Halal</span>
+          return (
+            <div style={{ marginTop: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 16px 12px', color: 'var(--charcoal)' }}>{title}</h3>
+              {items.length === 0 ? (
+                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 16px', fontStyle: 'italic' }}>Belum ada produk rilis untuk kategori ini.</p>
+              ) : (
+                <div className={styles.sponsoredScroll}>
+                  {items.map((p, i) => (
+                    <Link key={p.id} href={`/product/${p.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s`, width: '160px', flexShrink: 0 }}>
+                      <div style={{
+                        width: '100%', height: '140px', borderRadius: 'var(--radius-md)',
+                        marginBottom: '10px', overflow: 'hidden', background: 'var(--light-gray)'
+                      }}>
+                        {p.imageUrl || p.image || p.photoUrl ? (
+                          <img src={p.imageUrl || p.image || p.photoUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>🛍️</div>
+                        )}
+                      </div>
+                      <div className={styles.sponsoredInfo} style={{ padding: '0 4px', background: 'transparent' }}>
+                        <h3 className={styles.sponsoredName} style={{ fontSize: '13px', lineHeight: 1.3, marginBottom: '6px' }}>{p.name}</h3>
+                        <div className={styles.sponsoredMeta} style={{ marginBottom: '4px' }}>
+                          <span className={`badge badge-certified`} style={{ fontSize: '10px', padding: '2px 6px' }}>Halal</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                <span className={styles.sponsoredCategory}>{p.category || 'Belanja'}</span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Belum ada produk untuk wilayah ini.</p>
-        )}
-      </section>
+              )}
+            </div>
+          );
+        };
+
+        return (
+          <section style={{ marginTop: '32px', marginBottom: '40px' }}>
+            <div className="section-header">
+              <h2 className="section-title">Produk Halal di {userCountry}</h2>
+            </div>
+            {renderProductCategory('Skincare', 'skincare')}
+            {renderProductCategory('Mie Instan', 'mie')}
+            {renderProductCategory('Bumbu Masak', 'bumbu')}
+          </section>
+        );
+      })()}
+
     </div>
   );
 }
