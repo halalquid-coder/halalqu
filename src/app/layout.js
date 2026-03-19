@@ -16,6 +16,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <title>Halalqu — Cari Halal, Tanpa Ragu</title>
         <meta name="description" content="Temukan restoran dan makanan halal terdekat yang terverifikasi. Halalqu adalah kompas digital bagi umat Muslim untuk menemukan hidangan halal di mana pun." />
+        <meta name="google-site-verification" content="x6I51X42wYGqdfl5p4ozO7IUr5jWg2Iyt5gKjS0qwEQ" />
       </head>
       <body>
         <UserProvider>
