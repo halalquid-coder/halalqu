@@ -13,8 +13,9 @@ const CATEGORIES = ["sushi", "kopi", "ayam", "bakso", "mie-ayam", "nasi-padang",
 const capitalize = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
 export async function generateMetadata({ params }) {
-    const categoryslug = params.category;
-    const cityslug = params.city;
+    const resolvedParams = await params;
+    const categoryslug = resolvedParams.category;
+    const cityslug = resolvedParams.city;
 
     if (!categoryslug.endsWith('-halal')) return {};
 
@@ -34,7 +35,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProgrammaticSeoPage({ params }) {
-    const { category, city } = params;
+    const resolvedParams = await params;
+    const { category, city } = resolvedParams;
 
     // Only catch SEO routes ending with -halal
     if (!category.endsWith('-halal')) {
