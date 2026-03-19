@@ -3,6 +3,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Link from 'next/link';
 import Script from 'next/script';
+import { getRestaurantSlug } from '../../lib/utils';
 
 export const revalidate = 86400; // Cache for 24 hours (ISR)
 
@@ -92,7 +93,7 @@ export default async function ProgrammaticSeoPage({ params }) {
                     "addressCountry": "ID"
                 },
                 "servesCuisine": titleCat,
-                "url": `https://halalqu.online/restaurant/${place.id}`
+                "url": `https://halalqu.online/restaurant/${getRestaurantSlug(place.name, place.id)}`
             }
         }))
     };
@@ -132,7 +133,7 @@ export default async function ProgrammaticSeoPage({ params }) {
                         matchedPlaces.map((place) => {
                             const isCertified = place.halalTypes?.includes('certified');
                             return (
-                                <Link href={`/restaurant/${place.id}`} key={place.id} style={{ display: 'flex', textDecoration: 'none', color: 'inherit', background: 'var(--white)', padding: 'var(--space-md)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', gap: 'var(--space-md)' }}>
+                                <Link href={`/restaurant/${getRestaurantSlug(place.name, place.id)}`} key={place.id} style={{ display: 'flex', textDecoration: 'none', color: 'inherit', background: 'var(--white)', padding: 'var(--space-md)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', gap: 'var(--space-md)' }}>
                                     <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--bg)' }}>
                                         {place.imageUrl ? (
                                             <img src={place.imageUrl} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

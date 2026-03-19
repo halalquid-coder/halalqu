@@ -7,6 +7,7 @@ import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { getRestaurantReviews, submitReport, toggleBookmark } from '../../lib/firestore';
 import { useUser } from '../../context/UserContext';
+import { extractRestaurantId } from '../../lib/utils';
 
 function checkIsOpen(placeData) {
     if (!placeData) return false;
@@ -45,22 +46,24 @@ export default function RestaurantDetailPage() {
     const [reviews, setReviews] = useState([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    const placeId = extractRestaurantId(params?.id);
+
     // Reporting state
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState('Informasi Halal tidak akurat');
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
     useEffect(() => {
-        if (user?.isLoggedIn && params?.id) {
-            setIsBookmarked(user.bookmarks?.includes(params.id) || false);
+        if (user?.isLoggedIn && placeId) {
+            setIsBookmarked(user.bookmarks?.includes(placeId) || false);
         }
-    }, [user, params?.id]);
+    }, [user, placeId]);
 
     useEffect(() => {
         async function fetchPlace() {
-            if (!params?.id) return;
+            if (!placeId) return;
             try {
-                const docRef = doc(db, 'places', params.id);
+                const docRef = doc(db, 'places', placeId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     // Update view counter in the background
@@ -97,7 +100,7 @@ export default function RestaurantDetailPage() {
                     });
                     // Load reviews
                     try {
-                        const revs = await getRestaurantReviews(params.id);
+                        const revs = await getRestaurantReviews(placeId);
                         setReviews(revs.filter(r => r.status === 'approved'));
                     } catch (e) { console.error('Reviews fetch error:', e); }
                 }
@@ -108,7 +111,7 @@ export default function RestaurantDetailPage() {
             }
         }
         fetchPlace();
-    }, [params?.id]);
+    }, [placeId]);
 
     const handleShare = async () => {
         const shareData = {
@@ -152,7 +155,7 @@ export default function RestaurantDetailPage() {
         // Optimistic UI update
         setIsBookmarked(!isBookmarked);
         try {
-            const result = await toggleBookmark(user.uid, params.id);
+            const result = await toggleBookmark(user.uid, placeId);
             setIsBookmarked(result);
         } catch (e) {
             console.error('Bookmark error:', e);

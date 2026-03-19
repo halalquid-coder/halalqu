@@ -5,6 +5,7 @@ import { useUser } from '../context/UserContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { updateUserProfile } from '../lib/firestore';
+import { getRestaurantSlug } from '../lib/utils';
 
 const tabs = ['Semua', '✅ Certified', '🕌 Muslim Owned'];
 
@@ -103,7 +104,7 @@ export default function BookmarksPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     {filtered.map(resto => (
                         <div key={resto.id} style={{ display: 'flex', gap: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--white)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
-                            <Link href={`/restaurant/${resto.id}`} style={{ display: 'flex', gap: 'var(--space-md)', flex: 1, textDecoration: 'none', color: 'inherit' }}>
+                            <Link href={`/restaurant/${getRestaurantSlug(resto.name, resto.id)}`} style={{ display: 'flex', gap: 'var(--space-md)', flex: 1, textDecoration: 'none', color: 'inherit' }}>
                                 <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-md)', background: 'var(--halalqu-green-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>{resto.emoji}</div>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{resto.name}</div>

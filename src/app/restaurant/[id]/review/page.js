@@ -4,11 +4,16 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { useUser } from '../../../context/UserContext';
 import { submitReview } from '../../../lib/firestore';
+import { extractRestaurantId } from '../../../lib/utils';
 
 export default function WriteReviewPage() {
     const params = useParams();
     const router = useRouter();
     const { user, refreshUser } = useUser();
+    
+    // Safety check on getting actual ID
+    const placeId = extractRestaurantId(params?.id);
+
     const [halalRating, setHalalRating] = useState(null);
     const [tasteRating, setTasteRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -187,7 +192,7 @@ export default function WriteReviewPage() {
                         await submitReview({
                             userId: user.uid || 'anonymous',
                             userName: user.name || 'User',
-                            placeId: params.id,
+                            placeId: placeId,
                             halalRating,
                             tasteRating,
                             rating: tasteRating,

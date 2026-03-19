@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { matchesCountry } from '../../lib/country';
+import { getRestaurantSlug } from '../../lib/utils';
 
 const countryData = {
     'indonesia': {
@@ -366,7 +367,7 @@ export default function CountryDetailPage() {
                     </div>
                     <div style={{ display: 'flex', gap: 'var(--space-md)', overflowX: 'auto', paddingBottom: 'var(--space-sm)' }}>
                         {merchants.slice(0, 8).map(m => (
-                            <Link key={m.id} href={`/restaurant/${m.id}`} style={{
+                            <Link key={m.id} href={`/restaurant/${getRestaurantSlug(m.name, m.id)}`} style={{
                                 flexShrink: 0, width: '160px', background: 'var(--white)',
                                 borderRadius: 'var(--radius-md)', overflow: 'hidden',
                                 boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)',

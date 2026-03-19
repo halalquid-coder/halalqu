@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { matchesCountry, getCountrySlugFromName } from '../../../lib/country';
+import { getRestaurantSlug } from '../../../lib/utils';
 
 const countryData = {
     'indonesia': { name: 'Indonesia', emoji: '🇮🇩' },
@@ -89,7 +90,7 @@ export default function CountryMerchantsPage() {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-sm)' }}>
                     {merchants.map(m => (
-                        <Link key={m.id} href={`/restaurant/${m.id}`} style={{
+                        <Link key={m.id} href={`/restaurant/${getRestaurantSlug(m.name, m.id)}`} style={{
                             background: 'var(--white)',
                             borderRadius: 'var(--radius-lg)',
                             overflow: 'hidden',

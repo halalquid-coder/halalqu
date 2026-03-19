@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { getRestaurantSlug } from '../lib/utils';
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -136,7 +137,7 @@ export default function HalalMap({ restaurants = [] }) {
                     // Must attach the event listener after the InfoWindow mounts to the DOM
                     setTimeout(() => {
                         const btn = document.getElementById(`infowindow-btn-${loc.id}`);
-                        if (btn) btn.addEventListener('click', () => router.push(`/restaurant/${loc.id}`));
+                        if (btn) btn.addEventListener('click', () => router.push(`/restaurant/${getRestaurantSlug(loc.name, loc.id)}`));
                     }, 100);
                 });
 

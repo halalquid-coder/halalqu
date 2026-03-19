@@ -8,7 +8,9 @@ import { useUser } from './context/UserContext';
 import { requestNotificationPermission, db } from './lib/firebase';
 import { collection, query, getDocs, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getUserNotifications } from './lib/firestore';
+import BottomNav from './components/BottomNav';
 import { calculateDistance, formatDistance } from './lib/distance';
+import { getRestaurantSlug } from './lib/utils';
 import { getCountryForAddress, slugToName } from './lib/country';
 
 const HalalMap = dynamic(() => import('./components/HalalMap'), { ssr: false });
@@ -460,7 +462,7 @@ export default function HomePage() {
             {recommendedIn3km.length > 0 ? (
               <div className={styles.sponsoredScroll}>
                 {recommendedIn3km.slice(0, 5).map((place, i) => (
-                  <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
+                  <Link key={place.id} href={`/restaurant/${getRestaurantSlug(place.name, place.id)}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                     {place.photo ? (
                       <img src={place.photo} alt={place.name} className={styles.coverPhoto} />
                     ) : (
@@ -523,7 +525,7 @@ export default function HomePage() {
             {places.map((resto, i) => (
               <Link
                 key={resto.id}
-                href={`/restaurant/${resto.id}`}
+                href={`/restaurant/${getRestaurantSlug(resto.name, resto.id)}`}
                 className={styles.sponsoredCard}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
@@ -560,7 +562,7 @@ export default function HomePage() {
         {newPlaces.length > 0 ? (
           <div className={styles.newScroll}>
             {newPlaces.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.newCard} style={{ animationDelay: `${i * 0.1}s` }}>
+              <Link key={place.id} href={`/restaurant/${getRestaurantSlug(place.name, place.id)}`} className={styles.newCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.newBadge}>Baru</div>
                 {place.photo ? (
                   <img src={place.photo} alt={place.name} className={styles.newEmoji} style={{ objectFit: 'cover', fontSize: 'unset' }} />
@@ -590,7 +592,7 @@ export default function HomePage() {
         {topRated.length > 0 ? (
           <div className={styles.sponsoredScroll}>
             {topRated.map((place, i) => (
-              <Link key={place.id} href={`/restaurant/${place.id}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
+              <Link key={place.id} href={`/restaurant/${getRestaurantSlug(place.name, place.id)}`} className={styles.sponsoredCard} style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className={styles.topRatedRank} style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, zIndex: 2 }}>#{i + 1}</div>
                 {place.photo ? (
                   <img src={place.photo} alt={place.name} className={styles.coverPhoto} />

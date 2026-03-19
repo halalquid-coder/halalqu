@@ -7,6 +7,7 @@ import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { calculateDistance } from '../lib/distance';
 import { getCountrySlugFromName, matchesCountry } from '../lib/country';
+import { getRestaurantSlug } from '../lib/utils';
 
 const popularCities = [
     { emoji: '🇮🇩', name: 'Jakarta' },
@@ -250,7 +251,7 @@ function SearchPageContent() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                             {results.map(p => (
-                                <Link key={p.id} href={`/restaurant/${p.id}`} style={{
+                                <Link key={p.id} href={`/restaurant/${getRestaurantSlug(p.name, p.id)}`} style={{
                                     display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
                                     background: 'var(--white)', borderRadius: 'var(--radius-lg)',
                                     padding: 'var(--space-md)', boxShadow: 'var(--shadow-sm)',
